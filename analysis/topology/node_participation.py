@@ -7,6 +7,8 @@ def node_participation(adj, neuron_properties):
     import pandas as pd
     adj = adj.astype('bool').astype('int')  # Needed in case adj is not a 0,1 matrix
     par = flagser_count(adj.toarray())
-    par = {neuron_properties.index[i]: par[i] for i in np.arange(len(par))}
-    return pd.DataFrame.from_dict(par, orient="index").fillna(0)
+    par = {i: par[i] for i in np.arange(len(par))}
+    par=pd.DataFrame.from_dict(par, orient="index").fillna(0)
+    par=par.join(ninfo['gid'])
+    return par
 

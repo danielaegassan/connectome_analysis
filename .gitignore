@@ -1,0 +1,13 @@
+*.pyc
+*.swp
+coverage.xml
+*.egg-info
+.coverage
+doc/
+.tox
+build/
+dist/
+.eggs
+.idea
+extra/
+__pycache__

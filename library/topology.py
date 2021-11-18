@@ -29,7 +29,7 @@ def node_participation(adj, neuron_properties):
     import pyflagsercount
     import pandas as pd
     adj = adj.astype('bool').astype('int')  # Needed in case adj is not a 0,1 matrix
-    par=pyflagsercount.flagser_count(M,containment="delete_me")['contain_counts'][0]
+    par=pyflagsercount.flagser_count(M,containment="/gpfs/bbp.cscs.ch/home/egassant/delete_me/delete_me")['contain_counts'][0]
     par = {i: par[i] for i in np.arange(len(par))}
     par=pd.DataFrame.from_dict(par, orient="index").fillna(0).astype(int)
     par=par.join(ninfo['gid'])

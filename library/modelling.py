@@ -13,13 +13,76 @@ import itertools
 import progressbar
 import pickle
 
-HOT = plt.cm.get_cmap('hot')
+
+PROB_CMAP = plt.cm.get_cmap('hot')
+DATA_COLOR = 'tab:blue'
+MODEL_COLOR = 'tab:red'
+
+
+def run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs):
+    """
+    Main function for running model building, consisting of three steps:
+      Data extraction, model fitting, and (optionally) data/model visualization
+    """
+    print(f'INFO: Running order-{model_order} model building {kwargs}...')
+
+    # Subsampling (optional)
+    sample_size = kwargs.get('sample_size')
+    if sample_size is not None and sample_size > 0 and sample_size < nrn_table.shape[0]:
+        print(f'INFO: Subsampling to {sample_size} of {nrn_table.shape[0]} neurons')
+        np.random.seed(kwargs.get('sample_seed'))
+        sub_sel = np.random.permutation([True] * sample_size + [False] * (nrn_table.shape[0] - sample_size))
+        adj_matrix = adj_matrix.tocsr()[sub_sel, :].tocsc()[:, sub_sel].tocsr()
+        nrn_table = nrn_table.loc[sub_sel, :]
+
+    # Set modelling functions
+    if model_order == 2:
+        fct_extract = extract_2nd_order
+        fct_fit = build_2nd_order
+        fct_plot = plot_2nd_order
+    else:
+        assert False, f'ERROR: Order-{model_order} model building not supported!'
+
+    # Extract connection probability data
+    data_dict = fct_extract(adj_matrix, nrn_table, **kwargs)
+    save_data(data_dict, kwargs.get('data_dir'), model_name, 'data')
+
+    # Fit model
+    model_dict = fct_fit(**data_dict, **kwargs)
+    save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
+
+    # Visualize data/model (optional)
+    if kwargs.get('do_plot'):
+        fct_plot(adj_matrix, nrn_table, model_name, **data_dict, **model_dict, **kwargs)
+
+    return data_dict, model_dict
+
 
 ###################################################################################################
 # Helper functions for model building
 ###################################################################################################
 
-def get_model(model, model_inputs, model_params):
+def save_data(save_dict, save_dir, model_name, save_spec=None):
+    """Writes data/model dict to pickled data file"""
+    if not save_dir:
+        return
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+
+    if save_spec is None:
+        save_spec = ''
+    else:
+        save_spec = '__' + save_spec
+
+    save_file = os.path.join(save_dir, f'{model_name}{save_spec}.pickle')
+    with open(save_file, 'wb') as f:
+        pickle.dump(save_dict, f)
+
+    print(f'INFO: Pickled dict written to {save_file}')
+
+
+def get_model_function(model, model_inputs, model_params):
     """Returns model function from string representation [so any model function can be saved to file]."""
     input_str = ','.join(model_inputs + ['model_params=model_params']) # String representation of input variables
     input_param_str = ','.join(model_inputs + list(model_params.keys())) # String representation of input variables and model parameters
@@ -77,8 +140,13 @@ def extract_dependent_p_conn(adj_matrix, dep_matrices, dep_bins):
 #   2nd order (distance-dependent)
 ###################################################################################################
 
-def extract_2nd_order(adj_matrix, pos_table, bin_size_um=100, max_range_um=None):
+def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, **_):
     """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons."""
+
+    if coord_names is None:
+        coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
+
+    pos_table = nrn_table[coord_names].to_numpy()
 
     # Compute distance matrix
     dist_mat = compute_dist_matrix(pos_table, pos_table)
@@ -91,10 +159,10 @@ def extract_2nd_order(adj_matrix, pos_table, bin_size_um=100, max_range_um=None)
 
     p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat], [dist_bins])
 
-    return p_conn_dist, count_conn, count_all, dist_bins
+    return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 
 
-def build_2nd_order(p_conn_dist, dist_bins):
+def build_2nd_order(p_conn_dist, dist_bins, **_):
     """Build 2nd order model (exponential distance-dependent conn. prob.)."""
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
 
@@ -109,33 +177,30 @@ def build_2nd_order(p_conn_dist, dist_bins):
     model_inputs = ['d']
     model_params = {'a_opt': a_opt, 'b_opt': b_opt}
 
-    return model, model_inputs, model_params
+    return {'model': model, 'model_inputs': model_inputs, 'model_params': model_params}
 
 
-def plot_2nd_order(p_conn_dist, count_conn, count_all, dist_bins, src_cell_count, tgt_cell_count, model, model_inputs, model_params, out_dir=None, fn_prefix=None):
+def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, count_all, dist_bins, model, model_inputs, model_params, plot_dir=None, **_):
     """Visualize data vs. model (2nd order)."""
-    if out_dir is not None:
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-    if fn_prefix is None:
-        fn_prefix = ''
-    else:
-        fn_prefix = fn_prefix + '_'
+    if plot_dir is not None:
+        if not os.path.exists(plot_dir):
+            os.makedirs(plot_dir)
 
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
     dist_model = np.linspace(dist_bins[0], dist_bins[-1], 100)
 
     model_str = f'f(x) = {model_params["a_opt"]:.3f} * exp(-{model_params["b_opt"]:.3f} * x)'
-    model_fct = get_model(model, model_inputs, model_params)
+    model_fct = get_model_function(model, model_inputs, model_params)
 
     plt.figure(figsize=(12, 4), dpi=300)
 
     # Data vs. model
     plt.subplot(1, 2, 1)
-    plt.plot(dist_bins[:-1] + bin_offset, p_conn_dist, '.-', label=f'Data: N = {src_cell_count}x{tgt_cell_count} cells')
-    plt.plot(dist_model, model_fct(dist_model), '--', label='Model: ' + model_str)
+    plt.step(dist_bins, np.hstack([p_conn_dist[0], p_conn_dist]), color=DATA_COLOR, label=f'Data: N = {nrn_table.shape[0]}x{nrn_table.shape[0]} cells')
+    plt.plot(dist_bins[:-1] + bin_offset, p_conn_dist, '.', color=DATA_COLOR)
+    plt.plot(dist_model, model_fct(dist_model), '--', color=MODEL_COLOR, label='Model: ' + model_str)
     plt.grid()
-    plt.xlabel('Distance [$\\mu$m]')
+    plt.xlabel('Distance ($\\mu$m)')
     plt.ylabel('Conn. prob.')
     plt.title('Data vs. model fit')
     plt.legend()
@@ -149,7 +214,7 @@ def plot_2nd_order(p_conn_dist, count_conn, count_all, dist_bins, src_cell_count
     xv, zv = np.meshgrid(dx, dz)
     vdist = np.sqrt(xv**2 + zv**2)
     pdist = model_fct(vdist)
-    plt.imshow(pdist, interpolation='bilinear', extent=(-plot_range, plot_range, -plot_range, plot_range), cmap=HOT, vmin=0.0)
+    plt.imshow(pdist, interpolation='bilinear', extent=(-plot_range, plot_range, -plot_range, plot_range), cmap=PROB_CMAP, vmin=0.0)
     for r in r_markers:
         plt.gca().add_patch(plt.Circle((0, 0), r, edgecolor='w', linestyle='--', fill=False))
         plt.text(0, r, f'{r} $\\mu$m', color='w', ha='center', va='bottom')
@@ -162,23 +227,24 @@ def plot_2nd_order(p_conn_dist, count_conn, count_all, dist_bins, src_cell_count
 
     plt.suptitle(f'Distance-dependent connection probability model (2nd order)')
     plt.tight_layout()
-    if out_dir is not None:
-        out_fn = os.path.abspath(os.path.join(out_dir, fn_prefix + 'data_vs_model.png'))
-        print(f'INFO: Saving {out_fn}...')
+    if plot_dir is not None:
+        out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_vs_model.png'))
         plt.savefig(out_fn)
+        print(f'INFO: Figure saved to {out_fn}')
 
     # Data counts
-    plt.figure(figsize=(6, 4), dpi=300)
-    plt.bar(dist_bins[:-1] + bin_offset, count_all, width=1.5 * bin_offset, label='All pair count')
-    plt.bar(dist_bins[:-1] + bin_offset, count_conn, width=1.0 * bin_offset, label='Connection count')
+    plt.figure(figsize=(12, 4), dpi=300)
+    plt.bar(dist_bins[:-1] + bin_offset, count_all, width=2.0 * bin_offset, edgecolor='k', label='All pair count')
+    plt.bar(dist_bins[:-1] + bin_offset, count_conn, width=1.5 * bin_offset, label='Connection count')
     plt.gca().set_yscale('log')
+    plt.xticks(dist_bins, rotation=45)
     plt.grid()
-    plt.xlabel('Distance [$\\mu$m]')
+    plt.xlabel('Distance ($\\mu$m)')
     plt.ylabel('Count')
-    plt.title(f'Distance-dependent connection counts (N = {src_cell_count}x{tgt_cell_count} cells)')
+    plt.title(f'Distance-dependent connection counts (N = {nrn_table.shape[0]}x{nrn_table.shape[0]} cells)')
     plt.legend()
     plt.tight_layout()
-    if out_dir is not None:
-        out_fn = os.path.abspath(os.path.join(out_dir, fn_prefix + 'data_counts.png'))
-        print(f'INFO: Saving {out_fn}...')
+    if plot_dir is not None:
+        out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
+        print(f'INFO: Figure saved to {out_fn}')

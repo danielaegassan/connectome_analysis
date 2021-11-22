@@ -25,15 +25,16 @@ def node_participation(adj, neuron_properties):
     # Compute the number of simplices a vertex is part of
     # Input: adj adjancency matrix representing a graph with 0 in the diagonal, neuron_properties as data frame with index gid of nodes
     # Out: List L of lenght adj.shape[0] where L[i] is a list of the participation of vertex i in simplices of a given dimensio
-    # TODO:  Change pyflagsercontain so that it takes as input sparse matrices
+    # TODO:  Should we merge this with simplex counts so that we don't do the computation twice?
     import pyflagsercount
     import pandas as pd
     adj = adj.astype('bool').astype('int')  # Needed in case adj is not a 0,1 matrix
-    par=pyflagsercount.flagser_count(M,containment="/gpfs/bbp.cscs.ch/home/egassant/delete_me/delete_me")['contain_counts'][0]
+    par=pyflagsercount.flagser_count(M,containment=True,threads=1)['contain_counts']
     par = {i: par[i] for i in np.arange(len(par))}
     par=pd.DataFrame.from_dict(par, orient="index").fillna(0).astype(int)
     par=par.join(ninfo['gid'])
     return par
+
 
 
 

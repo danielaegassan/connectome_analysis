@@ -1,9 +1,11 @@
 import scipy.sparse as sp
 import numpy as np
 import pyflagsercount as pfc
+import pickle
 
 from pathlib import Path
 from tqdm import tqdm
+from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
 #TODO: rc_in_simplex, filtered_simplex_counts, persitence
 
@@ -143,3 +145,49 @@ def simplex_matrix(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False)
     np.save(temp_folder/"matrix.npy", simplex_matrix)
     vmessage("Saved simplex matrix")
     return simplex_matrix
+
+
+def simplex_matrix_list(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False) -> List[np.array]:
+    """
+    Returns the list of simplices in a list of matrices for storage. Each matrix is
+    a n_simplices x dim matrix, where n_simplices is the total number of simplices
+    with dimension dim.
+    
+    :param adj: Sparse csc matrix to compute the simplex list of.
+    :type: sp.scs_matrix
+    :param temp_folder: Relative path where to store the temporary flagser files to.
+    :type: Path
+    :param verbose: Whether to have the function print steps.
+    :type: bool
+
+    :return mlist: List of matrices containing the simplices. 
+    :rtype: List[np.array]
+    """
+    def vmessage(message):
+        if verbose:
+            print(message)
+    temp_folder.mkdir(exist_ok = True, parents=True)
+    for path in temp_folder.glob("*"):
+        raise FileExistsError("Found file in " + str(temp_folder.absolute()) + ". Aborting.")
+    vmessage("Flagser count started execution")
+    counts = pfc.flagser_count(adj, binary=str(temp_folder / "temp"), min_dim_print=1, threads = 1)
+    pointers = np.zeros((len(counts['cell_counts'])-1,), dtype=int)
+    vmessage("Flagser count completed execution")
+    mdim = len(counts['cell_counts'])
+    simplex_matrix_list = []
+    for dim, dim_length in enumerate(counts['cell_counts'][1:]):
+        simplex_matrix_list.append(np.zeros((dim_length, dim+2), dtype=np.int32))
+    vmessage("Parsing flagser output")
+    for path in temp_folder.glob("*"):
+        vmessage("Parsing " + str(path))
+        simplex_list = binary2simplex(path)
+        if verbose:
+            simplex_list = tqdm(simplex_list, desc="Parsed simplices", total = np.sum(counts['cell_counts'][1:]))
+        for simplex in simplex_list:
+             sdim = len(simplex)-2
+             simplex_matrix_list[sdim][pointers[sdim], :] = simplex
+             pointers[sdim]+=1
+    vmessage("Generated simplex matrix list")
+    pickle.dump(simplex_matrix_list, (temp_folder / "ml.pkl").open('wb'))
+    vmessage("Saved simplex matrix list")
+    return simplex_matrix_list

@@ -3,6 +3,7 @@ import numpy as np
 import pyflagsercount as pfc
 import pickle
 
+from functools import partial
 from pathlib import Path
 from tqdm import tqdm
 from typing import List
@@ -191,3 +192,34 @@ def simplex_matrix_list(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = F
     pickle.dump(simplex_matrix_list, (temp_folder / "ml.pkl").open('wb'))
     vmessage("Saved simplex matrix list")
     return simplex_matrix_list
+
+
+def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> List[np.ndarray]:
+    """
+    Function to count bidirectional edges in all positions for all simplices of a matrix.
+
+    :param adj: adjacency matrix of the whole graph.
+    :type: sp.csc_matrix
+    :param simplex_matrix_list: list of arrays containing the simplices. Each array is
+    a  n_simplices x simplex_dim array. Same output as simplex_matrix_list.
+    :type: List[np.ndarray]
+    
+    :return bedge_counts: list of 2d matrices with bidirectional edge counts per position.
+    :rtype: List[np.ndarray]
+    """
+    def extract_subm(simplex: np.ndarray, adj: np.ndarray)->np.ndarray:
+        return adj[simplex].T[simplex]
+
+    adj_dense = np.array(adj.toarray()) #conversion for speed. Sparse matrix not tested.
+    bedge_counts = []
+    for matrix in simplex_matrix_list:
+        bedge_counts.append(
+            np.sum(
+                np.apply_along_axis(
+                    partial(extract_subm, adj = adj_dense),
+                    1,
+                    matrix,
+                ), axis = 0
+            )
+        )
+    return bedge_counts

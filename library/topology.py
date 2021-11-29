@@ -200,6 +200,33 @@ def simplex_matrix_list(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = F
     return simplex_matrix_list
 
 
+def simplex_matrix_list_notemp(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
+    """
+    Returns the list of simplices in a list of matrices for storage. Each matrix is
+    a n_simplices x dim matrix, where n_simplices is the total number of simplices
+    with dimension dim. No temporary file needed!
+    
+    :param adj: Sparse csc matrix to compute the simplex list of.
+    :type: sp.scs_matrix
+    :param verbose: Whether to have the function print steps.
+    :type: bool
+
+    :return mlist: List of matrices containing the simplices. 
+    :rtype: List[np.array]
+    """
+    def vmessage(message):
+        if verbose:
+            print(message)
+    vmessage("Flagser count started execution")
+    result = pfc.flagser_count(adj, return_simplices=True, threads = 1)
+    vmessage("Flagser count completed execution")
+    coo_matrix = adj.tocoo()
+    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
+    for i in range(len(result['simplices']) -2):
+        result['simplices'][i+2] = np.array(result['simplices'][i+2])
+    return result['simplices'][1:]
+
+
 def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> List[np.ndarray]:
     """
     Function to count bidirectional edges in all positions for all simplices of a matrix.

@@ -1,7 +1,9 @@
+import tempfile
 import scipy.sparse as sp
 import numpy as np
 import pyflagsercount as pfc
 import pickle
+import logging
 
 from pathlib import Path
 from tqdm import tqdm
@@ -94,10 +96,17 @@ def node_participation(adj, neuron_properties):
     return par_frame
 
 
+
+LOG = logging.getLogger("connectome-analysis-topology")
+LOG.setLevel("INFO")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
+                    level=logging.INFO,
+                    datefmt="%Y-%m-%d %H:%M:%S")
+
 #INPUT: Address of binary file storing simplices
 #OUTPUT: A list if lists L where L[i] contains the vertex ids of the i'th simplex,
 #          note the simplices appear in no particular order
-def binary2simplex(address):
+def binary2simplex_MS(address):
     X = np.fromfile(address, dtype='uint64')                         #Load binary file
     S=[]                                                             #Initialise empty list for simplices
 
@@ -113,7 +122,49 @@ def binary2simplex(address):
         i+=1
     return S
 
-def simplex_matrix(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False) -> np.array:
+
+def binary2simplex(address, test=None):
+    """..."""
+    LOG.info("Load binary simplex info from %s", address)
+    simplex_info = pd.Series(np.fromfile(address, dtype=np.uint64))
+    LOG.info("Done loading binary simplex info.")
+
+    if test:
+        simplex_info = simplex_info.iloc[0:test]
+
+    mask64 = np.uint(1) << np.uint(63)
+    mask21 = np.uint64(1 << 21) - np.uint64(1)
+    mask42 = (np.uint64(1 << 42) - np.uint64(1)) ^ mask21
+    mask63 = ((np.uint64(1 << 63) - np.uint64(1)) ^ mask42) ^ mask21
+    end = np.uint64(2 ** 21 - 1)
+
+    def decode_vertices(integer):
+        integer = np.uint64(integer)
+        start = not((integer & mask64) >> np.uint64(63))
+        v0 = integer & mask21
+        v1 = (integer & mask42) >> np.uint64(21)
+        v2 = (integer & mask63) >> np.uint64(42)
+        vertices = [v for v in [v0, v1, v2] if v != end]
+        return pd.Series([start, vertices], index=["start", "vertices"])
+
+    LOG.info("Decode the simplices into simplex vertices")
+    vertices = simplex_info.apply(decode_vertices)
+    LOG.info("Done decoding to simplex vertices")
+
+    vertices = (vertices.assign(sid=np.cumsum(vertices.start))
+                .reset_index(drop=True))
+
+    simplices = (vertices.set_index("sid").vertices
+                 .groupby("sid").apply(np.hstack))
+
+    if not test:
+        return simplices
+
+    return (vertices.vertices, simplices)
+
+
+def simplex_matrix(adj: sp.csc_matrix, nodes: pd.DataFrame,
+                   temp_folder: Path, verbose: bool = False) -> np.array:
     """
     Returns the list of simplices in matrix form for storage. The matrix is
     a n_simplices x max_dim matrix, where n_simplices is the total number of simplices
@@ -149,7 +200,8 @@ def simplex_matrix(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False)
         vmessage("Parsing " + str(path))
         simplex_list = binary2simplex(path)
         if verbose:
-            simplex_list = tqdm(simplex_list, desc="Parsed simplices", total = simplex_matrix[0,-1])
+            simplex_list = tqdm(simplex_list, desc="Parsed simplices",
+                                total = simplex_matrix[0,-1])
         for simplex in simplex_list:
              simplex_matrix[simplex_matrix[0,len(simplex)-2] + 1, :len(simplex)] = simplex
              simplex_matrix[0, len(simplex)-2]+=1
@@ -159,7 +211,37 @@ def simplex_matrix(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False)
     return simplex_matrix
 
 
-def simplex_matrix_list(adj: sp.csc_matrix, temp_folder: Path, verbose: bool = False) -> List[np.array]:
+def simplices(adj, nodes=None, temp_folder=None, threads=None):
+    """All the simplices in an adjacency matrix.
+
+    temp_folder : A binary file will be generated here.
+    """
+
+    threads = threads or 1
+    LOG.warning("Compute simplices for a matrix of shape %s on %s threads",
+                adj.shape, threads)
+
+    tempfold = tempfile.TemporaryDirectory(dir=Path.cwd())
+    path_temp = Path(tempfold.name)
+    if list(path_temp.glob('*')):
+        raise RuntimeError("Was not expecting a temporary folder to contain any files")
+
+
+    counts = pfc.flagser_count(adj, binary=(path_temp / "temp-").as_posix(),
+                               min_dim_print=1, threads=threads)
+
+    sims  = pd.Series([s for p in path_tempath.glob('*') for s in binary2simplex(p)],
+                      name="simplex")
+    dims = sims.apply(len).apply(lambda l: l - 2).rename("dim")
+    sims_dims = pd.concat([sims, dims], axis=1).set_index("dim").simplex
+
+    tempfold.cleanup()
+
+    return sims_dims.groupby("dim").apply(np.vstack)
+
+
+def simplex_matrix_list(adj: sp.csc_matrix, nodes: pd.DataFrame,
+                        temp_folder: Path, verbose: bool = False) -> List[np.array]:
     """
     Returns the list of simplices in a list of matrices for storage. Each matrix is
     a n_simplices x dim matrix, where n_simplices is the total number of simplices

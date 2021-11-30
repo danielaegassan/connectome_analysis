@@ -1,3 +1,5 @@
+import sys
+import resource
 import tempfile
 import scipy.sparse as sp
 import numpy as np
@@ -123,7 +125,16 @@ def binary2simplex_MS(address):
     return S
 
 
-def binary2simplex(address, test=None):
+def _count_calls(method):
+    """..."""
+    method.ncalls = 0
+    def method_counted(*args, **kwargs):
+        """..."""
+        method.ncalls += 1
+        return method(*args, **kwargs)
+    return method_counted
+
+def binary2simplex(address, test=None, verbosity=1000000):
     """..."""
     LOG.info("Load binary simplex info from %s", address)
     simplex_info = pd.Series(np.fromfile(address, dtype=np.uint64))
@@ -139,6 +150,11 @@ def binary2simplex(address, test=None):
     end = np.uint64(2 ** 21 - 1)
 
     def decode_vertices(integer):
+        decode_vertices.ncalls += 1
+        if decode_vertices.ncalls % verbosity == 0:
+            mem_used = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            LOG.info("\t progress %s / %s memory %s",
+                     decode_vertices.ncalls , len(simplex_info), mem_used)
         integer = np.uint64(integer)
         start = not((integer & mask64) >> np.uint64(63))
         v0 = integer & mask21
@@ -146,6 +162,9 @@ def binary2simplex(address, test=None):
         v2 = (integer & mask63) >> np.uint64(42)
         vertices = [v for v in [v0, v1, v2] if v != end]
         return pd.Series([start, vertices], index=["start", "vertices"])
+        vertices = [start, v0, v1, v2]
+        return pd.Series(vertices, index=["start", 0, 1, 2])
+    decode_vertices.ncalls = 0
 
     LOG.info("Decode the simplices into simplex vertices")
     vertices = simplex_info.apply(decode_vertices)
@@ -211,12 +230,12 @@ def simplex_matrix(adj: sp.csc_matrix, nodes: pd.DataFrame,
     return simplex_matrix
 
 
-def simplices(adj, nodes=None, temp_folder=None, threads=None):
+def simplices(adj, nodes=None, temp_folder=None, threads=None, **kwargs):
     """All the simplices in an adjacency matrix.
 
     temp_folder : A binary file will be generated here.
     """
-
+    import tempfile
     threads = threads or 1
     LOG.warning("Compute simplices for a matrix of shape %s on %s threads",
                 adj.shape, threads)
@@ -230,7 +249,8 @@ def simplices(adj, nodes=None, temp_folder=None, threads=None):
     counts = pfc.flagser_count(adj, binary=(path_temp / "temp-").as_posix(),
                                min_dim_print=1, threads=threads)
 
-    sims  = pd.Series([s for p in path_tempath.glob('*') for s in binary2simplex(p)],
+    sims  = pd.Series([s for p in path_temp.glob('*')
+                       for s in binary2simplex(p, **kwargs)],
                       name="simplex")
     dims = sims.apply(len).apply(lambda l: l - 2).rename("dim")
     sims_dims = pd.concat([sims, dims], axis=1).set_index("dim").simplex

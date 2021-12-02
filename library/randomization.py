@@ -16,6 +16,7 @@
 ####### IMPORTS #######################
 import numpy as np
 import scipy.sparse as sp
+import generateModel as gm
 
 from .resources.randomization import (
     bidirectional_edges,
@@ -23,6 +24,46 @@ from .resources.randomization import (
     add_bidirectional_connections,
     half_matrix
 )
+
+######generateModel versions###########
+#Erdos-Renyi model:
+#Input: n, p, threads
+#    n = number of vertices (int)
+#    p = edge probability (double)
+#    threads = number of threads to use (int)
+def run_ER(n,p,threads):
+    return gm.ER(n,p,threads)
+
+#Stochastic Block Model:
+#Input: n, pathways, mtypes, threads
+#    n = number of vertices (int)
+#    M = M[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
+#    mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+#    threads = number of threads to use (int)
+def run_SBM(n, pathways, mtypes, threads):
+    return gm.SBM(n, pathways, mtypes, threads)
+
+#Distance Dependant 2nd Order:
+#Input: n, a, b, xyz, threads
+#    n = number of vertices (int)
+#    a = coefficient of probability function (double)
+#    b = coefficient of probability function (double)
+#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+#    threads = number of threads to use (int)
+def run_DD2(n,a,b,xyz,threads)
+    return gm.DD2(n,a,b,xyz,threads)
+
+#Distance Dependant 3rd Order:
+#Input: n, a, b, xyz, threads
+#    n = number of vertices (int)
+#    a1 and a2 = coefficients of probability function for dz<0 (double)
+#    a2 and b2 = coefficient of probability function for dz>0 (double)
+#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+#    depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
+#    threads = number of threads to use (int)
+def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
+    return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
+
 
 ####### SHUFFLE #######################
 def ER_shuffle(adj, neuron_properties=[]):
@@ -55,7 +96,7 @@ def adjusted_ER(sparse_matrix: sp.csc_matrix, generator_seed:int) -> sp.csc_matr
     target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
     ER_matrix = ER_shuffle(sparse_matrix).tocsc()
     return adjust_bidirectional_connections(ER_matrix, target_bedges, generator)
- 
+
 def underlying_model(sparse_matrix: sp.csc_matrix, generator_seed: int):
     """
     Function to generate the underlying control model, obtained by turning

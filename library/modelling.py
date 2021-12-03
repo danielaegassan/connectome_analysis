@@ -155,24 +155,51 @@ def extract_dependent_p_conn(adj_matrix, dep_matrices, dep_bins):
 #   2nd order (distance-dependent)
 ###################################################################################################
 
-def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, **_):
+def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, N_split=None, **_):
     """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
         coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
+    if N_split is None:
+        N_split = 1
+    assert N_split > 0, 'ERROR: Number of data splits must be larger than 0!'
 
     pos_table = nrn_table[coord_names].to_numpy()
 
-    # Compute distance matrix
-    dist_mat = compute_dist_matrix(pos_table, pos_table)
+    if N_split == 1: # Compute all at once
+        # Compute distance matrix
+        dist_mat = compute_dist_matrix(pos_table, pos_table)
 
-    # Extract distance-dependent connection probabilities
-    if max_range_um is None:
-        max_range_um = np.nanmax(dist_mat)
-    num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
-    dist_bins = np.arange(0, num_bins + 1) * bin_size_um
+        # Extract distance-dependent connection probabilities
+        if max_range_um is None:
+            max_range_um = np.nanmax(dist_mat)
+        num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+        dist_bins = np.arange(0, num_bins + 1) * bin_size_um
 
-    p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat], [dist_bins])
+        p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat], [dist_bins])
+
+    else: # Split computation into N_split data splits (to reduce memory consumption)
+        assert max_range_um is not None, 'ERROR: Max. range must be specified if N_split larger than 1!'
+        num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+        dist_bins = np.arange(0, num_bins + 1) * bin_size_um
+
+        split_indices = np.split(np.arange(nrn_table.shape[0]), np.cumsum([np.ceil(nrn_table.shape[0] / N_split).astype(int)] * (N_split - 1)))
+        count_conn = np.zeros(num_bins)
+        count_all = np.zeros(num_bins)
+        for sidx, split_sel in enumerate(split_indices):
+            print(f'<SPLIT {sidx + 1} of {N_split}>', end=' ')
+
+            # Compute distance matrix
+            dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
+            
+            # Extract distance-dependent connection counts
+            _, count_conn_split, count_all_split = extract_dependent_p_conn(adj_matrix[split_sel, :], [dist_mat_split], [dist_bins])
+            count_conn += count_conn_split
+            count_all += count_all_split
+
+        # Compute overall connection probabilities
+        p_conn_dist = np.array(count_conn / count_all)
+        p_conn_dist[np.isnan(p_conn_dist)] = 0.0
 
     return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 
@@ -270,31 +297,62 @@ def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, c
 #   3rd order (bipolar distance-dependent)
 ###################################################################################################
 
-def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, **_):    
+def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, N_split=None, **_):    
     """Extract distance-dependent connection probability (3rd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
         coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
     if depth_name is None:
         depth_name = 'depth' # Default name of depth column in nrn_table
+    if N_split is None:
+        N_split = 1
+    assert N_split > 0, 'ERROR: Number of data splits must be larger than 0!'
 
     pos_table = nrn_table[coord_names].to_numpy()
     depth_table = nrn_table[depth_name].to_numpy()
 
-    # Compute distance matrix
-    dist_mat = compute_dist_matrix(pos_table, pos_table)
+    if N_split == 1: # Compute all at once
+        # Compute distance matrix
+        dist_mat = compute_dist_matrix(pos_table, pos_table)
 
-    # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
-    bip_mat = compute_bip_matrix(depth_table, depth_table)
+        # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
+        bip_mat = compute_bip_matrix(depth_table, depth_table)
 
-    # Extract bipolar distance-dependent connection probabilities
-    if max_range_um is None:
-        max_range_um = np.nanmax(dist_mat)
-    num_dist_bins = np.ceil(max_range_um / bin_size_um).astype(int)
-    dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
-    bip_bins = [np.nanmin(bip_mat), 0, np.nanmax(bip_mat)]
+        # Extract bipolar distance-dependent connection probabilities
+        if max_range_um is None:
+            max_range_um = np.nanmax(dist_mat)
+        num_dist_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+        dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
+        bip_bins = [np.nanmin(bip_mat), 0, np.nanmax(bip_mat)]
 
-    p_conn_dist_bip, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat, bip_mat], [dist_bins, bip_bins])
+        p_conn_dist_bip, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat, bip_mat], [dist_bins, bip_bins])
+
+    else: # Split computation into N_split data splits (to reduce memory consumption)
+        assert max_range_um is not None, 'ERROR: Max. range must be specified if N_split larger than 1!'
+        num_dist_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+        dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
+        bip_bins = [-1, 0, 1]
+
+        split_indices = np.split(np.arange(nrn_table.shape[0]), np.cumsum([np.ceil(nrn_table.shape[0] / N_split).astype(int)] * (N_split - 1)))
+        count_conn = np.zeros([num_dist_bins, 2])
+        count_all = np.zeros([num_dist_bins, 2])
+        for sidx, split_sel in enumerate(split_indices):
+            print(f'<SPLIT {sidx + 1} of {N_split}>', end=' ')
+
+            # Compute distance matrix
+            dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
+
+            # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
+            bip_mat_split = compute_bip_matrix(depth_table[split_sel], depth_table)
+
+            # Extract distance-dependent connection counts
+            _, count_conn_split, count_all_split = extract_dependent_p_conn(adj_matrix[split_sel, :], [dist_mat_split, bip_mat_split], [dist_bins, bip_bins])
+            count_conn += count_conn_split
+            count_all += count_all_split
+
+        # Compute overall connection probabilities
+        p_conn_dist_bip = np.array(count_conn / count_all)
+        p_conn_dist_bip[np.isnan(p_conn_dist_bip)] = 0.0
 
     return {'p_conn_dist_bip': p_conn_dist_bip, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins, 'bip_bins': bip_bins}
 

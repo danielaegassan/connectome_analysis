@@ -50,7 +50,7 @@ def run_SBM(n, pathways, mtypes, threads):
 #    b = coefficient of probability function (double)
 #    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
 #    threads = number of threads to use (int)
-def run_DD2(n,a,b,xyz,threads)
+def run_DD2(n,a,b,xyz,threads):
     return gm.DD2(n,a,b,xyz,threads)
 
 #Distance Dependant 3rd Order:

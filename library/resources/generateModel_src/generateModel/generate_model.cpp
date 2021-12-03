@@ -355,7 +355,7 @@ coeff_t distance(int i, int j, std::vector<coord_t>& xyz){
 }
 
 coeff_t model_DD2(int i, int j, coeff_t a, coeff_t b, std::vector<coord_t>& xyz){
-    return a*exp(b*distance(i,j,xyz));
+    return a*exp(-b*distance(i,j,xyz));
 }
 
 void add_edges_DD2(int index, int n, int threads, coeff_t a, coeff_t b,
@@ -382,9 +382,9 @@ void add_edges_DD2(int index, int n, int threads, coeff_t a, coeff_t b,
 coeff_t model_DD3(int i, int j, coeff_t a1, coeff_t b1, coeff_t a2, coeff_t b2, std::vector<coord_t>& xyz, std::vector<coeff_t>& depth){
     coeff_t dz = depth[i]-depth[j];
     coeff_t x = distance(i,j,xyz);
-    if (dz < 0) { return a1*exp(b1*x); }
-    if (dz > 0) { return a2*exp(b2*x); }
-    return (a1*a2*exp(x*(b1+b2)))/2;
+    if (dz < 0) { return a1*exp(-b1*x); }
+    if (dz > 0) { return a2*exp(-b2*x); }
+    return (a1*a2*exp(x*-(b1+b2)))/2;
 }
 
 void add_edges_DD3(int index, int n, int threads, coeff_t a1, coeff_t b1, coeff_t a2, coeff_t b2,
@@ -412,7 +412,7 @@ void add_edges_DD3(int index, int n, int threads, coeff_t a1, coeff_t b1, coeff_
 void combine_threads(int threads, std::vector<std::vector<vertex_t>>& row, std::vector<std::vector<vertex_t>>& col){
     //Combine output from threads
     for (int i = 1; i < threads; i++){
-        row[0].insert( row[0].end(), row[i].begin(), row[i].end() );
-        col[0].insert( col[0].end(), col[i].begin(), col[i].end() );
+        std::move( row[i].begin(), row[i].end(), std::back_inserter(row[0]));
+        std::move( col[i].begin(), col[i].end(), std::back_inserter(col[0]));
     }
 }

@@ -10,7 +10,7 @@
 #include <math.h>
 // #include <mutex>
 
-typedef uint64_t vertex_t;
+typedef uint32_t vertex_t;
 typedef std::array<double,3> coord_t;
 typedef double prob_t;
 typedef double coeff_t;
@@ -413,6 +413,8 @@ void combine_threads(int threads, std::vector<std::vector<vertex_t>>& row, std::
     //Combine output from threads
     for (int i = 1; i < threads; i++){
         std::move( row[i].begin(), row[i].end(), std::back_inserter(row[0]));
+        row[i].clear()
         std::move( col[i].begin(), col[i].end(), std::back_inserter(col[0]));
+        col[i].clear()
     }
 }

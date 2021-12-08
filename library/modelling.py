@@ -5,6 +5,7 @@
 
 
 import numpy as np
+import pandas as pd
 import os
 import scipy.optimize as opt
 import scipy.spatial as spt
@@ -12,7 +13,12 @@ import matplotlib.pyplot as plt
 import itertools
 import progressbar
 import pickle
+import sys
+import logging
 
+stream_handler = logging.StreamHandler(sys.stdout)
+stream_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+logging.basicConfig(level=logging.INFO, handlers=[stream_handler])
 
 PROB_CMAP = plt.cm.get_cmap('hot')
 DATA_COLOR = 'tab:blue'
@@ -20,18 +26,92 @@ MODEL_COLOR = 'tab:red'
 MODEL_COLOR2 = 'tab:olive'
 
 
+###################################################################################################
+# Wrapper & helper functions for model building to be used within a processing pipeline
+#   w/o data/model saving, figure plotting, and data splitting
+#   _Inputs_: adj_matrix, nrn_table, kwargs (bin_size_um, max_range_um, sample_size, sample_seeds)
+#   _Output_: Pandas dataframe with model paramters (columns) for different seeds (rows)
+###################################################################################################
+
+def conn_prob_2nd_order_model(adj_matrix, nrn_table, **kwargs):
+    """2nd-order probability model building, optionally for multiple random subsets of neurons."""
+
+    assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
+    kwargs.update({'model_order': 2})
+
+    return conn_prob_model(adj_matrix, nrn_table, **kwargs)
+
+
+def conn_prob_3rd_order_model(adj_matrix, nrn_table, **kwargs):
+    """3rd-order probability model building, optionally for multiple random subsets of neurons."""
+
+    assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
+    kwargs.update({'model_order': 3})
+
+    return conn_prob_model(adj_matrix, nrn_table, **kwargs)
+
+
+def conn_prob_model(adj_matrix, nrn_table, **kwargs):
+    """General probability model building, optionally for multiple random subsets of neurons."""
+
+    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    for arg in invalid_args:
+        assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
+    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
+    model_name = None
+    model_order = kwargs.pop('model_order')
+
+    sample_size = kwargs.get('sample_size')
+    if sample_size is None or sample_size >= nrn_table.shape[0]:
+        sample_seeds = [None] # No randomization
+        if kwargs.pop('sample_seeds', None) is not None:
+            logging.warning('Using all neurons, ignoring sample seeds!')
+    else:
+        sample_seeds = kwargs.pop('sample_seeds', 1)
+
+        if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
+            sample_seeds = generate_seeds(sample_seeds)
+        else:
+            sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+
+    model_params = pd.DataFrame()
+    for seed in sample_seeds:
+        kwargs.update({'sample_seed': seed})
+        _, model_dict = run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs)
+        model_params = model_params.append(pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed')))
+
+    return model_params
+
+
+def generate_seeds(num_seeds, num_digits=6, meta_seed=0):
+    """Helper function to generate list of unique random seeds with given number of digits."""
+
+    assert isinstance(num_seeds, int) and num_seeds > 0, 'ERROR: Number of seeds must be a positive integer!'
+    assert isinstance(num_digits, int) and num_digits > 0, 'ERROR: Number of digits must be a positive integer!'
+
+    np.random.seed(meta_seed)
+    sample_seeds = list(sorted(np.random.choice(10**num_digits - 10**(num_digits - 1), num_seeds, replace=False) + 10**(num_digits - 1))) # Sorted, 6-digit seeds
+
+    return sample_seeds
+
+
+###################################################################################################
+# Main function for model building
+###################################################################################################
+
 def run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs):
     """
     Main function for running model building, consisting of three steps:
       Data extraction, model fitting, and (optionally) data/model visualization
     """
-    print(f'INFO: Running order-{model_order} model building {kwargs}...')
+    logging.info(f'Running order-{model_order} model building {kwargs}...')
 
     # Subsampling (optional)
     sample_size = kwargs.get('sample_size')
+    sample_seed = kwargs.get('sample_seed')
     if sample_size is not None and sample_size > 0 and sample_size < nrn_table.shape[0]:
-        print(f'INFO: Subsampling to {sample_size} of {nrn_table.shape[0]} neurons')
-        np.random.seed(kwargs.get('sample_seed'))
+        logging.info(f'Subsampling to {sample_size} of {nrn_table.shape[0]} neurons (seed={sample_seed})')
+        np.random.seed(sample_seed)
         sub_sel = np.random.permutation([True] * sample_size + [False] * (nrn_table.shape[0] - sample_size))
         adj_matrix = adj_matrix.tocsr()[sub_sel, :].tocsc()[:, sub_sel].tocsr()
         nrn_table = nrn_table.loc[sub_sel, :]
@@ -84,7 +164,7 @@ def save_data(save_dict, save_dir, model_name, save_spec=None):
     with open(save_file, 'wb') as f:
         pickle.dump(save_dict, f)
 
-    print(f'INFO: Pickled dict written to {save_file}')
+    logging.info(f'Pickled dict written to {save_file}')
 
 
 def get_model_function(model, model_inputs, model_params):
@@ -98,7 +178,7 @@ def get_model_function(model, model_inputs, model_params):
 
     model_fct = eval(full_model_str) # Build function
 
-    # print(f'INFO: Model function: {inner_model_str}')
+    # logging.info(f'Model function: {inner_model_str}')
 
     return model_fct
 
@@ -106,6 +186,16 @@ def get_model_function(model, model_inputs, model_params):
 def compute_dist_matrix(src_nrn_pos, tgt_nrn_pos):
     """Computes distance matrix between pairs of neurons."""
     dist_mat = spt.distance_matrix(src_nrn_pos, tgt_nrn_pos)
+    dist_mat[dist_mat == 0.0] = np.nan # Exclude autaptic connections
+
+    return dist_mat
+
+
+def compute_dist_matrix_symmetric(nrn_pos):
+    """Computes symmetric distance matrix between pairs of neurons.
+       Faster implementation to be used when source and target neurons
+       are the same."""
+    dist_mat = spt.distance.squareform(spt.distance.pdist(nrn_pos))
     dist_mat[dist_mat == 0.0] = np.nan # Exclude autaptic connections
 
     return dist_mat
@@ -133,7 +223,7 @@ def extract_dependent_p_conn(adj_matrix, dep_matrices, dep_bins):
     count_all = np.full(num_bins, -1) # Count of all pairs of neurons for each combination of dependencies
     count_conn = np.full(num_bins, -1) # Count of connected pairs of neurons for each combination of dependencies
 
-    print(f'Extracting {num_dep}-dimensional ({"x".join([str(n) for n in num_bins])}) connection probabilities...', flush=True)
+    logging.info(f'Extracting {num_dep}-dimensional ({"x".join([str(n) for n in num_bins])}) connection probabilities...')
     pbar = progressbar.ProgressBar(maxval=np.prod(num_bins) - 1)
     for idx in pbar(itertools.product(*bin_indices)):
         dep_sel = np.full(adj_matrix.shape, True)
@@ -168,7 +258,7 @@ def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
 
     if N_split == 1: # Compute all at once
         # Compute distance matrix
-        dist_mat = compute_dist_matrix(pos_table, pos_table)
+        dist_mat = compute_dist_matrix_symmetric(pos_table)
 
         # Extract distance-dependent connection probabilities
         if max_range_um is None:
@@ -187,7 +277,7 @@ def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
         count_conn = np.zeros(num_bins)
         count_all = np.zeros(num_bins)
         for sidx, split_sel in enumerate(split_indices):
-            print(f'<SPLIT {sidx + 1} of {N_split}>', end=' ')
+            logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
             dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
@@ -213,7 +303,7 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     y = p_conn_dist[np.isfinite(p_conn_dist)]
     (a_opt, b_opt), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
 
-    print(f'MODEL FIT: f(x) = {a_opt:.3f} * exp(-{b_opt:.3f} * x)')
+    logging.info(f'MODEL FIT: f(x) = {a_opt:.3f} * exp(-{b_opt:.3f} * x)')
 
     model = 'a_opt * np.exp(-b_opt * np.array(d))'
     model_inputs = ['d']
@@ -272,7 +362,7 @@ def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, c
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_vs_model.png'))
         plt.savefig(out_fn)
-        print(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'Figure saved to {out_fn}')
 
     # Data counts
     plt.figure(figsize=(12, 4), dpi=300)
@@ -289,7 +379,7 @@ def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, c
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
-        print(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'Figure saved to {out_fn}')
 
 
 ###################################################################################################
@@ -313,7 +403,7 @@ def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
 
     if N_split == 1: # Compute all at once
         # Compute distance matrix
-        dist_mat = compute_dist_matrix(pos_table, pos_table)
+        dist_mat = compute_dist_matrix_symmetric(pos_table)
 
         # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
         bip_mat = compute_bip_matrix(depth_table, depth_table)
@@ -337,7 +427,7 @@ def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
         count_conn = np.zeros([num_dist_bins, 2])
         count_all = np.zeros([num_dist_bins, 2])
         for sidx, split_sel in enumerate(split_indices):
-            print(f'<SPLIT {sidx + 1} of {N_split}>', end=' ')
+            logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
             dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
@@ -368,9 +458,9 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     (aN_opt, bN_opt), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
     (aP_opt, bP_opt), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
 
-    print(f'BIPOLAR MODEL FIT: f(x, dz) = {aN_opt:.3f} * exp(-{bN_opt:.3f} * x) if dz < 0')
-    print(f'                              {aP_opt:.3f} * exp(-{bP_opt:.3f} * x) if dz > 0')
-    print('                              AVERAGE OF BOTH MODELS  if dz == 0')
+    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {aN_opt:.3f} * exp(-{bN_opt:.3f} * x) if dz < 0')
+    logging.info(f'                              {aP_opt:.3f} * exp(-{bP_opt:.3f} * x) if dz > 0')
+    logging.info('                              AVERAGE OF BOTH MODELS  if dz == 0')
 
     model = 'np.select([np.array(dz) < 0, np.array(dz) > 0, np.array(dz) == 0], [aN_opt * np.exp(-bN_opt * np.array(d)), aP_opt * np.exp(-bP_opt * np.array(d)), 0.5 * (aN_opt * np.exp(-bN_opt * np.array(d)) + aP_opt * np.exp(-bP_opt * np.array(d)))])'
     model_inputs = ['d', 'dz']
@@ -436,7 +526,7 @@ def plot_3rd_order(adj_matrix, nrn_table, model_name, p_conn_dist_bip, count_con
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_vs_model.png'))
         plt.savefig(out_fn)
-        print(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'Figure saved to {out_fn}')
 
     # Data counts
     bip_count = np.concatenate((count_conn[::-1, 0], [np.nan], count_conn[:, 1]))
@@ -454,4 +544,4 @@ def plot_3rd_order(adj_matrix, nrn_table, model_name, p_conn_dist_bip, count_con
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
-        print(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'INFO: Figure saved to {out_fn}')

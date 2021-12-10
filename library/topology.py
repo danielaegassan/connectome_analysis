@@ -1,6 +1,11 @@
+import scipy.sparse as sp
+import numpy as np
+import pyflagsercount as pfc
+
+from functools import partial
+from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
 #TODO: rc_in_simplex, filtered_simplex_counts, persitence
-
 
 def simplex_counts(adj, neuron_properties=[]):
     #Compute simplex counts of adj
@@ -74,5 +79,54 @@ def node_participation(adj, neuron_properties):
     return par
 
 
+def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
+    """
+    Returns the list of simplices in a list of matrices for storage. Each matrix is
+    a n_simplices x dim matrix, where n_simplices is the total number of simplices
+    with dimension dim. No temporary file needed!
+    
+    :param adj: Sparse csc matrix to compute the simplex list of.
+    :type: sp.scs_matrix
+    :param verbose: Whether to have the function print steps.
+    :type: bool
+
+    :return mlist: List of matrices containing the simplices. 
+    :rtype: List[np.array]
+    """
+    result = pfc.flagser_count(adj, return_simplices=True, threads = 1)
+    coo_matrix = adj.tocoo()
+    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
+    for i in range(len(result['simplices']) -2):
+        result['simplices'][i+2] = np.array(result['simplices'][i+2])
+    return result['simplices'][1:]
 
 
+def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> List[np.ndarray]:
+    """
+    Function to count bidirectional edges in all positions for all simplices of a matrix.
+
+    :param adj: adjacency matrix of the whole graph.
+    :type: sp.csc_matrix
+    :param simplex_matrix_list: list of arrays containing the simplices. Each array is
+    a  n_simplices x simplex_dim array. Same output as simplex_matrix_list.
+    :type: List[np.ndarray]
+    
+    :return bedge_counts: list of 2d matrices with bidirectional edge counts per position.
+    :rtype: List[np.ndarray]
+    """
+    def extract_subm(simplex: np.ndarray, adj: np.ndarray)->np.ndarray:
+        return adj[simplex].T[simplex]
+
+    adj_dense = np.array(adj.toarray()) #Did not test sparse matrix performance
+    bedge_counts = []
+    for matrix in simplex_matrix_list:
+        bedge_counts.append(
+            np.sum(
+                np.apply_along_axis(
+                    partial(extract_subm, adj = adj_dense),
+                    1,
+                    matrix,
+                ), axis = 0
+            )
+        )
+    return bedge_counts

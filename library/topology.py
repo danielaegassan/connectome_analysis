@@ -1,11 +1,8 @@
 import scipy.sparse as sp
 import numpy as np
 import pyflagsercount as pfc
-import pickle
 
 from functools import partial
-from pathlib import Path
-from tqdm import tqdm
 from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
 #TODO: rc_in_simplex, filtered_simplex_counts, persitence

@@ -78,7 +78,6 @@ def node_participation(adj, neuron_properties):
     par=pyflagsercount.flagser_count(M,containment=True,threads=1)['contain_counts']
     par = {i: par[i] for i in np.arange(len(par))}
     par=pd.DataFrame.from_dict(par, orient="index").fillna(0).astype(int)
-    par=par.join(ninfo['gid'])
     return par
 
 

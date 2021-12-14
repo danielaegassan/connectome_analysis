@@ -11,10 +11,17 @@ from pathlib import Path
 from tqdm import tqdm
 from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
-#TODO: rc_in_simplex, filtered_simplex_counts, persitence
+#TODO: rc_in_simplex, filtered_simplex_counts, persistence
 
 import numpy as np
 import pandas as pd
+
+
+LOG = logging.getLogger("connectome-analysis-topology")
+LOG.setLevel("INFO")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
+                    level=logging.INFO,
+                    datefmt="%Y-%m-%d %H:%M:%S")
 
 
 def simplex_counts(adj, neuron_properties=[]):
@@ -26,6 +33,7 @@ def simplex_counts(adj, neuron_properties=[]):
     counts = np.array(flagser_count_unweighted(adj, directed=True))
     return pd.Series(counts, name="simplex_count",
                      index=pd.Index(range(len(counts)), name="dim"))
+
 
 def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[],
                  directed=True, coeff=2, approximation=None):
@@ -84,6 +92,7 @@ def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[],
     return pd.Series(bettis, name="betti_count",
                      index=pd.Index(range(len(bettis)), name="dim"))
 
+
 def node_participation(adj, neuron_properties):
     # Compute the number of simplices a vertex is part of
     # Input: adj adjancency matrix representing a graph with 0 in the diagonal, neuron_properties as data frame with index gid of nodes
@@ -97,13 +106,6 @@ def node_participation(adj, neuron_properties):
     par_frame.columns.name = "dim"
     return par_frame
 
-
-
-LOG = logging.getLogger("connectome-analysis-topology")
-LOG.setLevel("INFO")
-logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
-                    level=logging.INFO,
-                    datefmt="%Y-%m-%d %H:%M:%S")
 
 #INPUT: Address of binary file storing simplices
 #OUTPUT: A list if lists L where L[i] contains the vertex ids of the i'th simplex,
@@ -124,15 +126,6 @@ def binary2simplex_MS(address):
         i+=1
     return S
 
-
-def _count_calls(method):
-    """..."""
-    method.ncalls = 0
-    def method_counted(*args, **kwargs):
-        """..."""
-        method.ncalls += 1
-        return method(*args, **kwargs)
-    return method_counted
 
 def binary2simplex(address, test=None, verbosity=1000000):
     """..."""
@@ -162,8 +155,8 @@ def binary2simplex(address, test=None, verbosity=1000000):
         v2 = (integer & mask63) >> np.uint64(42)
         vertices = [v for v in [v0, v1, v2] if v != end]
         return pd.Series([start, vertices], index=["start", "vertices"])
-        vertices = [start, v0, v1, v2]
-        return pd.Series(vertices, index=["start", 0, 1, 2])
+    #    vertices = [start, v0, v1, v2]
+    #    return pd.Series(vertices, index=["start", 0, 1, 2])
     decode_vertices.ncalls = 0
 
     LOG.info("Decode the simplices into simplex vertices")
@@ -245,7 +238,6 @@ def simplices(adj, nodes=None, temp_folder=None, threads=None, **kwargs):
     if list(path_temp.glob('*')):
         raise RuntimeError("Was not expecting a temporary folder to contain any files")
 
-
     counts = pfc.flagser_count(adj, binary=(path_temp / "temp-").as_posix(),
                                min_dim_print=1, threads=threads)
 
@@ -284,8 +276,9 @@ def simplex_matrix_list(adj: sp.csc_matrix, nodes: pd.DataFrame,
     for path in temp_folder.glob("*"):
         raise FileExistsError("Found file in " + str(temp_folder.absolute()) + ". Aborting.")
     vmessage("Flagser count started execution")
-    counts = pfc.flagser_count(adj, binary=str(temp_folder / "temp"), min_dim_print=1, threads = 1)
-    pointers = np.zeros((len(counts['cell_counts'])-1,), dtype=int)
+    counts = pfc.flagser_count(adj, binary=str(temp_folder / "temp"),
+                               min_dim_print=1, threads = 1)
+    pointers = np.zeros(len(counts['cell_counts']) - 1, dtype=int)
     vmessage("Flagser count completed execution")
     mdim = len(counts['cell_counts'])
     simplex_matrix_list = []
@@ -296,7 +289,8 @@ def simplex_matrix_list(adj: sp.csc_matrix, nodes: pd.DataFrame,
         vmessage("Parsing " + str(path))
         simplex_list = binary2simplex(path)
         if verbose:
-            simplex_list = tqdm(simplex_list, desc="Parsed simplices", total = np.sum(counts['cell_counts'][1:]))
+            simplex_list = tqdm(simplex_list, desc="Parsed simplices",
+                                total = np.sum(counts['cell_counts'][1:]))
         for simplex in simplex_list:
              sdim = len(simplex)-2
              simplex_matrix_list[sdim][pointers[sdim], :] = simplex

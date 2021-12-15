@@ -1,0 +1,30 @@
+{
+    "analyses": {
+        "num_common_neighbors_eff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "efferent"},
+            "method": "overexpression_of_common_neighbors",
+            "decorators": [
+                {
+                    "name": "grouped_presyn_by_grouping_config",
+                    "args": [{"columns": ["mtype"], "method": "group_by_properties"}]
+                }
+            ],
+            "output": "Series"
+        },
+        "num_common_neighbors_aff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "afferent"},
+            "method": "overexpression_of_common_neighbors",
+            "decorators": [
+                {
+                    "name": "grouped_postsyn_by_grouping_config",
+                    "args": [{"columns": ["mtype"], "method": "group_by_properties"}]
+                }
+            ],
+            "output": "Series"
+        }
+    }
+}

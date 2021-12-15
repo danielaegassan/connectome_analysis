@@ -43,4 +43,4 @@ def overexpression_of_common_neighbors(adj, neuron_properties=None, direction="e
     data_mean = (data.index.values * data.values).sum() / data.values.sum()
     ctrl = __make_expected_distribution_model_first_order__(adj, direction=direction)
     ctrl_mean = ctrl.mean()
-    return (data_mean - ctrl_mean) / (data + ctrl_mean)
+    return (data_mean - ctrl_mean) / (data_mean + ctrl_mean)

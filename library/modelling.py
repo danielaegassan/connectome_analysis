@@ -19,7 +19,7 @@ import logging
 import json
 
 stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+stream_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 logging.basicConfig(level=logging.INFO, handlers=[stream_handler])
 
 PROB_CMAP = plt.cm.get_cmap('hot')

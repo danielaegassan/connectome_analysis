@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import os
 import scipy.optimize as opt
+import scipy.sparse as sps
 import scipy.spatial as spt
 import matplotlib.pyplot as plt
 import itertools
@@ -15,6 +16,7 @@ import progressbar
 import pickle
 import sys
 import logging
+import json
 
 stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
@@ -627,4 +629,44 @@ def plot_3rd_order(adj_matrix, nrn_table, model_name, p_conn_dist_bip, count_con
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
-        logging.info(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'Figure saved to {out_fn}')
+
+
+
+###################################################################################################
+# Main function for running as batch script (optionally, on different data splits)
+###################################################################################################
+
+def main(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
+    """ Main function for data extraction and model building
+        to be used in batch script on different data splits
+    """
+
+    # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
+    adj_matrix = sps.load_npz(adj_file)
+    if os.path.splitext(nrn_file)[-1] == '.h5':
+        nrn_table = pd.read_hdf(nrn_file)
+    elif os.path.splitext(nrn_file)[-1] == '.feather':
+        nrn_table = pd.read_feather(nrn_file)
+    else:
+        assert False, f'ERROR: Neuron table format "{os.path.splitext(nrn_file)[-1]}" not supported!'
+
+    assert adj_matrix.shape[0] == adj_matrix.shape[1] == nrn_table.shape[0], 'ERROR: Data size mismatch!'
+    logging.info(f'Loaded connectivity and properties of {nrn_table.shape[0]} neurons')
+
+    # Load config file (.json)
+    with open(cfg_file, 'r') as f:
+        config_dict = json.load(f)
+
+    # Set/Overwrite data split options
+    if N_split is not None:
+        config_dict.update({'N_split': int(N_split)})
+    if part_idx is not None:
+        config_dict.update({'part_idx': int(part_idx)})
+
+    # Run model building
+    run_model_building(adj_matrix, nrn_table, **config_dict)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

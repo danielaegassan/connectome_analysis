@@ -384,7 +384,7 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     y = p_conn_dist[np.isfinite(p_conn_dist)]
     (exp_model_scale, exp_model_exponent), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
 
-    logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.3f} * exp(-{exp_model_exponent:.3f} * x)')
+    logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.6f} * exp(-{exp_model_exponent:.6f} * x)')
 
     model = 'exp_model_scale * np.exp(-exp_model_exponent * np.array(d))'
     model_inputs = ['d']
@@ -543,8 +543,8 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     (bip_neg_exp_model_scale, bip_neg_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
     (bip_pos_exp_model_scale, bip_pos_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
 
-    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.3f} * exp(-{bip_neg_exp_model_exponent:.3f} * x) if dz < 0')
-    logging.info(f'                              {bip_pos_exp_model_scale:.3f} * exp(-{bip_pos_exp_model_exponent:.3f} * x) if dz > 0')
+    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.6f} * exp(-{bip_neg_exp_model_exponent:.6f} * x) if dz < 0')
+    logging.info(f'                              {bip_pos_exp_model_scale:.6f} * exp(-{bip_pos_exp_model_exponent:.6f} * x) if dz > 0')
     logging.info('                              AVERAGE OF BOTH MODELS  if dz == 0')
 
     model = 'np.select([np.array(dz) < 0, np.array(dz) > 0, np.array(dz) == 0], [bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)), bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)), 0.5 * (bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)) + bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)))])'

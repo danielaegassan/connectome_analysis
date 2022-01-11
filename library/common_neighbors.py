@@ -44,3 +44,49 @@ def overexpression_of_common_neighbors(adj, neuron_properties=None, direction="e
     ctrl = __make_expected_distribution_model_first_order__(adj, direction=direction)
     ctrl_mean = ctrl.mean()
     return (data_mean - ctrl_mean) / (data_mean + ctrl_mean)
+
+
+def common_neighbor_weight_bias(adj, neuron_properties=None, direction="efferent"):
+    adj_bin = (adj.tocsc() > 0).astype(int)
+    if direction == "efferent":
+        cn = adj_bin * adj_bin.transpose()
+    elif direction == "afferent":
+        cn = adj_bin.transpose() * adj_bin
+
+    return numpy.corrcoef(cn[adj > 0],
+                          adj[adj > 0])[0, 1]
+
+
+def common_neighbor_connectivity_bias(adj, neuron_properties=None, direction="efferent",
+                                      cols_location=None, fit_log=False):
+    import statsmodels.formula.api as smf
+    from patsy import ModelDesc
+    from scipy.spatial import distance
+
+    if adj.dtype == bool:
+        adj = adj.astype(int)
+
+    if direction == "efferent":
+        cn = adj * adj.transpose()
+    elif direction == "afferent":
+        cn = adj.transpose() * adj
+
+    input_dict = {"CN": cn.toarray().flatten(),
+                  "Connected": (adj > 0).toarray().flatten()}
+    
+    if fit_log:
+        input_dict["CN"] = numpy.log10(input_dict["CN"] + fit_log)
+    formula_str = "CN ~ Connected"
+    if cols_location is not None:
+        formula_str = formula_str + " + Distance"
+        dmat = distance.squareform(distance.pdist(neuron_properties[cols_location].values))
+        input_dict["Distance"] = dmat.flatten()
+    sm_model = ModelDesc.from_formula(formula_str)
+
+    sm_result = smf.ols(sm_model, input_dict).fit()
+
+    pval = sm_result.pvalues.get("Connected[T.True]", 1.0)
+    mdl_intercept = sm_result.params["Intercept"]
+    mdl_added = sm_result.params.get("Connected[T.True]", 0.0)
+    mdl_distance = sm_result.params.get("Distance", 0.0)
+    return pval, mdl_added / mdl_intercept, 100 * mdl_distance / mdl_intercept

@@ -15,6 +15,7 @@ def simplex_counts(adj, neuron_properties=[]):
     adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
     return flagser_count_unweighted(adj, directed=True)
 
+
 def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None):
     from pyflagser import flagser_unweighted
     import numpy as np
@@ -130,3 +131,44 @@ def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> L
             )
         )
     return bedge_counts
+
+def convex_hull(adj, neuron_properties): --> topology
+    """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
+    pass
+
+
+## Filtered objects
+def at_weight_edges(weighted_adj, threshold, method="strength"):
+    #TODO: Efficient implementation with sparse matrices.
+    #TODO: Filtration on vertices
+    """ Returns thresholded network on edges
+    :param method: distance returns edges with weight smaller or equal than thresh
+                   strength returns edges with weight larger or equal than tresh"""
+    adj=adj.toarray()
+    adj_thresh=np.zeros(adj.shape)
+    if method == "strength":
+        adj_tresh[adj_thresh>=threshold]=adj[adj_thresh>=threshold]
+    elif method == "distance":
+        adj_tresh[adj_thresh<=threshold]=adj[adj_thresh<=threshold]
+    else:
+        raise ValueError("Method has to be 'strength' or 'distance'")
+    return adj_thresh
+
+def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
+    #Todo: Should there be a warning when the return is an empty array because the matrix is zero?
+    """Returns the filtration weights of a given weighted matrix.
+    :param method:distance smaller weights enter the filtration first
+                  strength larger weights enter the filtration first"""
+    if method == "strength":
+        return np.unique(adj.data)[::-1]
+    elif method == "distance":
+        return np.unique(adj.data)
+    else:
+       raise ValueError("Method has to be 'strength' or 'distance'")
+
+def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"):
+    simplex_counts_filtered=[]
+    for weight in filtration_weights(weighted_adj,neuron_properties=[],method=method):
+        adj=at_weight_edges(weighted_adj,neuron_properties=[],threshold=weight,method=method)
+        simplex_counts_filtered.append(simplex_counts(adj))
+    return  simplex_counts

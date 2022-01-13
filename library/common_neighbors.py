@@ -72,7 +72,7 @@ def common_neighbor_connectivity_bias(adj, neuron_properties=None, direction="ef
         cn = adj.transpose() * adj
 
     input_dict = {"CN": cn.toarray().flatten(),
-                  "Connected": (adj > 0).toarray().flatten()}
+                  "Connected": adj.astype(bool).toarray().flatten()}
     
     if fit_log:
         input_dict["CN"] = numpy.log10(input_dict["CN"] + fit_log)

@@ -80,6 +80,28 @@ def node_participation(adj, neuron_properties):
     return par
 
 
+def maximal_simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
+    """
+    Returns the list of maximal simplices in a list of matrices for storage. Each matrix is
+    a n_simplices x dim matrix, where n_simplices is the total number of simplices
+    with dimension dim. No temporary file needed!
+
+    :param adj: Sparse csc matrix to compute the simplex list of.
+    :type: sp.scs_matrix
+    :param verbose: Whether to have the function print steps.
+    :type: bool
+
+    :return mlist: List of matrices containing the maximal simplices.
+    :rtype: List[np.array]
+    """
+    result = pfc.flagser_count(adj, return_simplices=True, max_simplices=True, threads=1)
+    coo_matrix = adj.tocoo()
+    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
+    for i in range(len(result['simplices']) - 2):
+        result['simplices'][i + 2] = np.array(result['simplices'][i + 2])
+    return result['simplices'][1:]
+
+
 def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
     """
     Returns the list of simplices in a list of matrices for storage. Each matrix is

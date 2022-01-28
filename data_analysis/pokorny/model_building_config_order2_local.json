@@ -1,0 +1,12 @@
+{
+  "model_name": "LocalConnProb2ndOrder",
+  "model_order": 2,
+  "bin_size_um": 100,
+  "max_range_um": 1000,
+  "sample_size": null,
+  "sample_seed": null,
+  "model_dir": "./modelling/models",
+  "data_dir": "./modelling/data",
+  "do_plot": true,
+  "plot_dir": "./modelling/figs"
+}

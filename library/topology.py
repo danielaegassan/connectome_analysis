@@ -26,6 +26,7 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 
+
 def simplex_counts(adj, neuron_properties=[]):
     #Compute simplex counts of adj
     #TODO: Change this to pyflagser_count and add options for max dim and threads,
@@ -253,6 +254,28 @@ def simplices(adj, nodes=None, temp_folder=None, threads=None, **kwargs):
 
     return sims_dims.groupby("dim").apply(np.vstack)
 
+def maximal_simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
+    """
+    Returns the list of maximal simplices in a list of matrices for storage. Each matrix is
+    a n_simplices x dim matrix, where n_simplices is the total number of simplices
+    with dimension dim. No temporary file needed!
+
+    :param adj: Sparse csc matrix to compute the simplex list of.
+    :type: sp.scs_matrix
+    :param verbose: Whether to have the function print steps.
+    :type: bool
+
+    :return mlist: List of matrices containing the maximal simplices.
+    :rtype: List[np.array]
+    """
+    result = pfc.flagser_count(adj, return_simplices=True, max_simplices=True, threads=1)
+    coo_matrix = adj.tocoo()
+    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
+    for i in range(len(result['simplices']) - 2):
+        result['simplices'][i + 2] = np.array(result['simplices'][i + 2])
+    return result['simplices'][1:]
+
+
 def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
     """
     Returns the list of simplices in a list of matrices for storage. Each matrix is
@@ -344,3 +367,47 @@ def simplex_bidirectionality(adj, nodes=None, simplices_by_dim=None, **kwargs):
     if simplices_by_dim  is None:
         simplices_by_dim = list_simplices_by_dimension(adj)
     return simplices_by_dim.apply(subset_adj).apply(collect_adjacencies)
+
+
+def convex_hull(adj, neuron_properties): --> topology
+    """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
+    pass
+
+
+## Filtered objects
+def at_weight_edges(weighted_adj, threshold, method="strength"):
+    #TODO: Efficient implementation with sparse matrices.
+    #TODO: Filtration on vertices
+    """ Returns thresholded network on edges
+    :param method: distance returns edges with weight smaller or equal than thresh
+                   strength returns edges with weight larger or equal than tresh"""
+    adj=adj.toarray()
+    adj_thresh=np.zeros(adj.shape)
+    if method == "strength":
+        adj_tresh[adj_thresh>=threshold]=adj[adj_thresh>=threshold]
+    elif method == "distance":
+        adj_tresh[adj_thresh<=threshold]=adj[adj_thresh<=threshold]
+    else:
+        raise ValueError("Method has to be 'strength' or 'distance'")
+    return adj_thresh
+
+
+def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
+    #Todo: Should there be a warning when the return is an empty array because the matrix is zero?
+    """Returns the filtration weights of a given weighted matrix.
+    :param method:distance smaller weights enter the filtration first
+                  strength larger weights enter the filtration first"""
+    if method == "strength":
+        return np.unique(adj.data)[::-1]
+    elif method == "distance":
+        return np.unique(adj.data)
+    else:
+       raise ValueError("Method has to be 'strength' or 'distance'")
+
+
+def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"):
+    simplex_counts_filtered=[]
+    for weight in filtration_weights(weighted_adj,neuron_properties=[],method=method):
+        adj=at_weight_edges(weighted_adj,neuron_properties=[],threshold=weight,method=method)
+        simplex_counts_filtered.append(simplex_counts(adj))
+    return  simplex_counts

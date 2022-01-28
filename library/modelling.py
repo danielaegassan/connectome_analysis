@@ -1,13 +1,14 @@
 # Generate models for connectomes.
 #
 # Author(s): C. Pokorny
-# Last modified: 11/2021
+# Last modified: 12/2021
 
 
 import numpy as np
 import pandas as pd
 import os
 import scipy.optimize as opt
+import scipy.sparse as sps
 import scipy.spatial as spt
 import matplotlib.pyplot as plt
 import itertools
@@ -15,9 +16,10 @@ import progressbar
 import pickle
 import sys
 import logging
+import json
 
 stream_handler = logging.StreamHandler(sys.stdout)
-stream_handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
+stream_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 logging.basicConfig(level=logging.INFO, handlers=[stream_handler])
 
 PROB_CMAP = plt.cm.get_cmap('hot')
@@ -128,9 +130,33 @@ def run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs)
     else:
         assert False, f'ERROR: Order-{model_order} model building not supported!'
 
+    # Data splits (optional)
+    N_split = kwargs.pop('N_split', None)
+    part_idx = kwargs.pop('part_idx', None)
+    if N_split is None:
+        split_indices = None
+    else:
+        assert N_split > 1, 'ERROR: Number of data splits must be larger than 1!'
+        split_indices = np.split(np.arange(nrn_table.shape[0]), np.cumsum([np.ceil(nrn_table.shape[0] / N_split).astype(int)] * (N_split - 1)))
+
+    if part_idx is None or part_idx == -1: # Run data extraction and model building for all splits
+        extract_only = False
+        data_fn = 'data'
+    else: # Run only data extraction of given part idx
+        assert N_split is not None and 0 <= part_idx < N_split, 'ERROR: Part index out of range!'
+        extract_only = True
+        data_fn = 'data' + get_data_part_name(N_split, part_idx)
+
     # Extract connection probability data
-    data_dict = fct_extract(adj_matrix, nrn_table, **kwargs)
-    save_data(data_dict, kwargs.get('data_dir'), model_name, 'data')
+    if part_idx == -1: # Special case: Load and merge results of existing parts
+        assert N_split is not None, 'ERROR: Number of data splits required!'
+        data_dict = merge_data(kwargs.get('data_dir'), model_name, data_fn, [get_data_part_name(N_split, p) for p in range(N_split)])
+    else:
+        data_dict = fct_extract(adj_matrix, nrn_table, split_indices=split_indices, part_idx=part_idx, **kwargs)
+    save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
+
+    if extract_only: # Stop here and return data dict
+        return data_dict, {}
 
     # Fit model
     model_dict = fct_fit(**data_dict, **kwargs)
@@ -146,6 +172,52 @@ def run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs)
 ###################################################################################################
 # Helper functions for model building
 ###################################################################################################
+
+def merge_data(part_dir, model_name, spec_name, part_list):
+    logging.info(f'Merging {len(part_list)} data parts...')
+    
+    count_conn_key = 'count_conn' # (fixed name; independent of model)
+    count_all_key = 'count_all' # (fixed name; independent of model)
+    p_key = None # Name of conn. prob. entry (model-dependent; starting with "p_")
+    for part in part_list:
+        part_file = os.path.join(part_dir, f'{model_name}__{spec_name}{part}.pickle')
+        assert os.path.exists(part_file), f'ERROR: Data part "{part_file}" not found!'
+        with open(part_file, 'rb') as f:
+            part_dict = pickle.load(f)
+
+        # Determine key names and initialize
+        if p_key is None:
+            part_keys = list(part_dict.keys())
+            p_idx = np.where(np.array([str.find(key, 'p_') for key in part_keys]) == 0)[0]
+            assert len(p_idx) == 1, 'ERROR: Conn. prob. entry could not be determined!'
+            p_key = part_keys[p_idx[0]]
+            other_keys = np.setdiff1d(part_keys, [p_key, count_conn_key, count_all_key]).tolist()
+            other_dict = {key: part_dict[key] for key in other_keys}
+            num_bins = len(part_dict[p_key])
+            count_conn = np.zeros_like(part_dict[count_conn_key])
+            count_all = np.zeros_like(part_dict[count_all_key])
+
+        # Check consistency
+        assert p_key in part_dict.keys(), f'ERROR: "{p_key}" not found in part "{part}"!'
+        assert count_conn_key in part_dict.keys(), f'ERROR: "{count_conn_key}" not found in part "{part}"!'
+        assert count_all_key in part_dict.keys(), f'ERROR: "{count_all_key}" not found in part "{part}"!'
+        for key in other_keys:
+            assert np.array_equal(other_dict[key], part_dict[key]), f'ERROR: "{key}" mismatch in part "{part}"!'
+        assert part_dict[count_conn_key].shape == part_dict[count_all_key].shape == count_conn.shape == count_all.shape, f'ERROR: Bin count mismatch in part "{part}"!'
+
+        # Add counts
+        count_conn += part_dict[count_conn_key]
+        count_all += part_dict[count_all_key]
+
+    # Compute overall (merged) connection probabilities
+    p_conn = np.array(count_conn / count_all)
+    p_conn[np.isnan(p_conn)] = 0.0
+
+    # Create (merged) data dict
+    data_dict = {p_key: p_conn, count_conn_key: count_conn, count_all_key: count_all, **other_dict}
+
+    return data_dict
+
 
 def save_data(save_dict, save_dir, model_name, save_spec=None):
     """Writes data/model dict to pickled data file"""
@@ -165,6 +237,11 @@ def save_data(save_dict, save_dir, model_name, save_spec=None):
         pickle.dump(save_dict, f)
 
     logging.info(f'Pickled dict written to {save_file}')
+
+
+def get_data_part_name(N_split, part_idx):
+    num_dig = len(str(N_split))
+    return f'__part-{N_split}-{part_idx:0{num_dig}}'
 
 
 def get_model_function(model, model_inputs, model_params):
@@ -245,18 +322,21 @@ def extract_dependent_p_conn(adj_matrix, dep_matrices, dep_bins):
 #   2nd order (distance-dependent)
 ###################################################################################################
 
-def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, N_split=None, **_):
+def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
     """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
         coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
-    if N_split is None:
-        N_split = 1
-    assert N_split > 0, 'ERROR: Number of data splits must be larger than 0!'
+    if isinstance(split_indices, list):
+        N_split = len(split_indices)
+    else:
+        N_split = 0 # Don't split
+    if part_idx is not None: # Run only data extraction of given part idx
+        assert 0 <= part_idx < N_split, 'ERROR: Part index out of range!'
 
     pos_table = nrn_table[coord_names].to_numpy()
 
-    if N_split == 1: # Compute all at once
+    if N_split == 0: # Compute all at once
         # Compute distance matrix
         dist_mat = compute_dist_matrix_symmetric(pos_table)
 
@@ -269,14 +349,15 @@ def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
         p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat], [dist_bins])
 
     else: # Split computation into N_split data splits (to reduce memory consumption)
-        assert max_range_um is not None, 'ERROR: Max. range must be specified if N_split larger than 1!'
+        assert max_range_um is not None, f'ERROR: Max. range must be specified if data extraction splitted into {N_split} parts!'
         num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
         dist_bins = np.arange(0, num_bins + 1) * bin_size_um
 
-        split_indices = np.split(np.arange(nrn_table.shape[0]), np.cumsum([np.ceil(nrn_table.shape[0] / N_split).astype(int)] * (N_split - 1)))
-        count_conn = np.zeros(num_bins)
-        count_all = np.zeros(num_bins)
+        count_conn = np.zeros(num_bins, dtype=int)
+        count_all = np.zeros(num_bins, dtype=int)
         for sidx, split_sel in enumerate(split_indices):
+            if part_idx is not None and part_idx != sidx:
+                continue
             logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
@@ -303,7 +384,7 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     y = p_conn_dist[np.isfinite(p_conn_dist)]
     (exp_model_scale, exp_model_exponent), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
 
-    logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.3f} * exp(-{exp_model_exponent:.3f} * x)')
+    logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.6f} * exp(-{exp_model_exponent:.6f} * x)')
 
     model = 'exp_model_scale * np.exp(-exp_model_exponent * np.array(d))'
     model_inputs = ['d']
@@ -387,21 +468,24 @@ def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, c
 #   3rd order (bipolar distance-dependent)
 ###################################################################################################
 
-def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, N_split=None, **_):    
+def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, split_indices=None, part_idx=None, **_):    
     """Extract distance-dependent connection probability (3rd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
         coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
     if depth_name is None:
         depth_name = 'depth' # Default name of depth column in nrn_table
-    if N_split is None:
-        N_split = 1
-    assert N_split > 0, 'ERROR: Number of data splits must be larger than 0!'
+    if isinstance(split_indices, list):
+        N_split = len(split_indices)
+    else:
+        N_split = 0 # Don't split
+    if part_idx is not None: # Run only data extraction of given part idx
+        assert 0 <= part_idx < N_split, 'ERROR: Part index out of range!'
 
     pos_table = nrn_table[coord_names].to_numpy()
     depth_table = nrn_table[depth_name].to_numpy()
 
-    if N_split == 1: # Compute all at once
+    if N_split == 0: # Compute all at once
         # Compute distance matrix
         dist_mat = compute_dist_matrix_symmetric(pos_table)
 
@@ -418,15 +502,16 @@ def extract_3rd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
         p_conn_dist_bip, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat, bip_mat], [dist_bins, bip_bins])
 
     else: # Split computation into N_split data splits (to reduce memory consumption)
-        assert max_range_um is not None, 'ERROR: Max. range must be specified if N_split larger than 1!'
+        assert max_range_um is not None, f'ERROR: Max. range must be specified if data extraction splitted into {N_split} parts!'
         num_dist_bins = np.ceil(max_range_um / bin_size_um).astype(int)
         dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
         bip_bins = [-1, 0, 1]
 
-        split_indices = np.split(np.arange(nrn_table.shape[0]), np.cumsum([np.ceil(nrn_table.shape[0] / N_split).astype(int)] * (N_split - 1)))
-        count_conn = np.zeros([num_dist_bins, 2])
-        count_all = np.zeros([num_dist_bins, 2])
+        count_conn = np.zeros([num_dist_bins, 2], dtype=int)
+        count_all = np.zeros([num_dist_bins, 2], dtype=int)
         for sidx, split_sel in enumerate(split_indices):
+            if part_idx is not None and part_idx != sidx:
+                continue
             logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
@@ -458,8 +543,8 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     (bip_neg_exp_model_scale, bip_neg_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
     (bip_pos_exp_model_scale, bip_pos_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
 
-    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.3f} * exp(-{bip_neg_exp_model_exponent:.3f} * x) if dz < 0')
-    logging.info(f'                              {bip_pos_exp_model_scale:.3f} * exp(-{bip_pos_exp_model_exponent:.3f} * x) if dz > 0')
+    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.6f} * exp(-{bip_neg_exp_model_exponent:.6f} * x) if dz < 0')
+    logging.info(f'                              {bip_pos_exp_model_scale:.6f} * exp(-{bip_pos_exp_model_exponent:.6f} * x) if dz > 0')
     logging.info('                              AVERAGE OF BOTH MODELS  if dz == 0')
 
     model = 'np.select([np.array(dz) < 0, np.array(dz) > 0, np.array(dz) == 0], [bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)), bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)), 0.5 * (bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)) + bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)))])'
@@ -544,4 +629,44 @@ def plot_3rd_order(adj_matrix, nrn_table, model_name, p_conn_dist_bip, count_con
     if plot_dir is not None:
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
-        logging.info(f'INFO: Figure saved to {out_fn}')
+        logging.info(f'Figure saved to {out_fn}')
+
+
+
+###################################################################################################
+# Main function for running as batch script (optionally, on different data splits)
+###################################################################################################
+
+def main(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
+    """ Main function for data extraction and model building
+        to be used in batch script on different data splits
+    """
+
+    # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
+    adj_matrix = sps.load_npz(adj_file)
+    if os.path.splitext(nrn_file)[-1] == '.h5':
+        nrn_table = pd.read_hdf(nrn_file)
+    elif os.path.splitext(nrn_file)[-1] == '.feather':
+        nrn_table = pd.read_feather(nrn_file)
+    else:
+        assert False, f'ERROR: Neuron table format "{os.path.splitext(nrn_file)[-1]}" not supported!'
+
+    assert adj_matrix.shape[0] == adj_matrix.shape[1] == nrn_table.shape[0], 'ERROR: Data size mismatch!'
+    logging.info(f'Loaded connectivity and properties of {nrn_table.shape[0]} neurons')
+
+    # Load config file (.json)
+    with open(cfg_file, 'r') as f:
+        config_dict = json.load(f)
+
+    # Set/Overwrite data split options
+    if N_split is not None:
+        config_dict.update({'N_split': int(N_split)})
+    if part_idx is not None:
+        config_dict.update({'part_idx': int(part_idx)})
+
+    # Run model building
+    run_model_building(adj_matrix, nrn_table, **config_dict)
+
+
+if __name__ == "__main__":
+    main(*sys.argv[1:])

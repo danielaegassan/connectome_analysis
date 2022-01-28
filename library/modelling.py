@@ -70,7 +70,7 @@ def conn_prob_model(adj_matrix, nrn_table, **kwargs):
         sample_seeds = kwargs.pop('sample_seeds', 1)
 
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
-            sample_seeds = generate_seeds(sample_seeds)
+            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
 
@@ -301,13 +301,13 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     exp_model = lambda x, a, b: a * np.exp(-b * np.array(x))
     X = dist_bins[:-1][np.isfinite(p_conn_dist)] + bin_offset
     y = p_conn_dist[np.isfinite(p_conn_dist)]
-    (a_opt, b_opt), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
+    (exp_model_scale, exp_model_exponent), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
 
-    logging.info(f'MODEL FIT: f(x) = {a_opt:.3f} * exp(-{b_opt:.3f} * x)')
+    logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.3f} * exp(-{exp_model_exponent:.3f} * x)')
 
-    model = 'a_opt * np.exp(-b_opt * np.array(d))'
+    model = 'exp_model_scale * np.exp(-exp_model_exponent * np.array(d))'
     model_inputs = ['d']
-    model_params = {'a_opt': a_opt, 'b_opt': b_opt}
+    model_params = {'exp_model_scale': exp_model_scale, 'exp_model_exponent': exp_model_exponent}
 
     return {'model': model, 'model_inputs': model_inputs, 'model_params': model_params}
 
@@ -321,7 +321,7 @@ def plot_2nd_order(adj_matrix, nrn_table, model_name, p_conn_dist, count_conn, c
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
     dist_model = np.linspace(dist_bins[0], dist_bins[-1], 100)
 
-    model_str = f'f(x) = {model_params["a_opt"]:.3f} * exp(-{model_params["b_opt"]:.3f} * x)'
+    model_str = f'f(x) = {model_params["exp_model_scale"]:.3f} * exp(-{model_params["exp_model_exponent"]:.3f} * x)'
     model_fct = get_model_function(model, model_inputs, model_params)
 
     plt.figure(figsize=(12, 4), dpi=300)
@@ -455,16 +455,16 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     y = p_conn_dist_bip[np.all(np.isfinite(p_conn_dist_bip), 1), :]
 
     exp_model = lambda x, a, b: a * np.exp(-b * np.array(x))
-    (aN_opt, bN_opt), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
-    (aP_opt, bP_opt), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
+    (bip_neg_exp_model_scale, bip_neg_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
+    (bip_pos_exp_model_scale, bip_pos_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
 
-    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {aN_opt:.3f} * exp(-{bN_opt:.3f} * x) if dz < 0')
-    logging.info(f'                              {aP_opt:.3f} * exp(-{bP_opt:.3f} * x) if dz > 0')
+    logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.3f} * exp(-{bip_neg_exp_model_exponent:.3f} * x) if dz < 0')
+    logging.info(f'                              {bip_pos_exp_model_scale:.3f} * exp(-{bip_pos_exp_model_exponent:.3f} * x) if dz > 0')
     logging.info('                              AVERAGE OF BOTH MODELS  if dz == 0')
 
-    model = 'np.select([np.array(dz) < 0, np.array(dz) > 0, np.array(dz) == 0], [aN_opt * np.exp(-bN_opt * np.array(d)), aP_opt * np.exp(-bP_opt * np.array(d)), 0.5 * (aN_opt * np.exp(-bN_opt * np.array(d)) + aP_opt * np.exp(-bP_opt * np.array(d)))])'
+    model = 'np.select([np.array(dz) < 0, np.array(dz) > 0, np.array(dz) == 0], [bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)), bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)), 0.5 * (bip_neg_exp_model_scale * np.exp(-bip_neg_exp_model_exponent * np.array(d)) + bip_pos_exp_model_scale * np.exp(-bip_pos_exp_model_exponent * np.array(d)))])'
     model_inputs = ['d', 'dz']
-    model_params = {'aN_opt': aN_opt, 'bN_opt': bN_opt, 'aP_opt': aP_opt, 'bP_opt': bP_opt}
+    model_params = {'bip_neg_exp_model_scale': bip_neg_exp_model_scale, 'bip_neg_exp_model_exponent': bip_neg_exp_model_exponent, 'bip_pos_exp_model_scale': bip_pos_exp_model_scale, 'bip_pos_exp_model_exponent': bip_pos_exp_model_exponent}
 
     return {'model': model, 'model_inputs': model_inputs, 'model_params': model_params}
 
@@ -478,8 +478,8 @@ def plot_3rd_order(adj_matrix, nrn_table, model_name, p_conn_dist_bip, count_con
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
     dist_model = np.linspace(dist_bins[0], dist_bins[-1], 100)
 
-    model_strN = f'{model_params["aN_opt"]:.3f} * exp(-{model_params["bN_opt"]:.3f} * x)'
-    model_strP = f'{model_params["aP_opt"]:.3f} * exp(-{model_params["bP_opt"]:.3f} * x)'
+    model_strN = f'{model_params["bip_neg_exp_model_scale"]:.3f} * exp(-{model_params["bip_neg_exp_model_exponent"]:.3f} * x)'
+    model_strP = f'{model_params["bip_pos_exp_model_scale"]:.3f} * exp(-{model_params["bip_pos_exp_model_exponent"]:.3f} * x)'
     model_fct = get_model_function(model, model_inputs, model_params)
 
     plt.figure(figsize=(12, 4), dpi=300)

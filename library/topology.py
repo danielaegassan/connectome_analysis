@@ -1,14 +1,17 @@
 import sys
 import resource
 import tempfile
-import scipy.sparse as sp
 import numpy as np
-import pyflagsercount as pfc
 import pickle
 import logging
+from functools import partial
 
 from pathlib import Path
 from tqdm import tqdm
+import scipy.sparse as sp
+import numpy as np
+import pyflagsercount as pfc
+
 from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
 #TODO: rc_in_simplex, filtered_simplex_counts, persistence
@@ -22,7 +25,6 @@ LOG.setLevel("INFO")
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
-
 
 def simplex_counts(adj, neuron_properties=[]):
     #Compute simplex counts of adj
@@ -251,51 +253,94 @@ def simplices(adj, nodes=None, temp_folder=None, threads=None, **kwargs):
 
     return sims_dims.groupby("dim").apply(np.vstack)
 
-
-def simplex_matrix_list(adj: sp.csc_matrix, nodes: pd.DataFrame,
-                        temp_folder: Path, verbose: bool = False) -> List[np.array]:
+def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
     """
     Returns the list of simplices in a list of matrices for storage. Each matrix is
     a n_simplices x dim matrix, where n_simplices is the total number of simplices
-    with dimension dim.
+    with dimension dim. No temporary file needed!
     
     :param adj: Sparse csc matrix to compute the simplex list of.
     :type: sp.scs_matrix
-    :param temp_folder: Relative path where to store the temporary flagser files to.
-    :type: Path
     :param verbose: Whether to have the function print steps.
     :type: bool
 
     :return mlist: List of matrices containing the simplices. 
     :rtype: List[np.array]
     """
-    def vmessage(message):
-        if verbose:
-            print(message)
-    temp_folder.mkdir(exist_ok = True, parents=True)
-    for path in temp_folder.glob("*"):
-        raise FileExistsError("Found file in " + str(temp_folder.absolute()) + ". Aborting.")
-    vmessage("Flagser count started execution")
-    counts = pfc.flagser_count(adj, binary=str(temp_folder / "temp"),
-                               min_dim_print=1, threads = 1)
-    pointers = np.zeros(len(counts['cell_counts']) - 1, dtype=int)
-    vmessage("Flagser count completed execution")
-    mdim = len(counts['cell_counts'])
-    simplex_matrix_list = []
-    for dim, dim_length in enumerate(counts['cell_counts'][1:]):
-        simplex_matrix_list.append(np.zeros((dim_length, dim+2), dtype=np.int32))
-    vmessage("Parsing flagser output")
-    for path in temp_folder.glob("*"):
-        vmessage("Parsing " + str(path))
-        simplex_list = binary2simplex(path)
-        if verbose:
-            simplex_list = tqdm(simplex_list, desc="Parsed simplices",
-                                total = np.sum(counts['cell_counts'][1:]))
-        for simplex in simplex_list:
-             sdim = len(simplex)-2
-             simplex_matrix_list[sdim][pointers[sdim], :] = simplex
-             pointers[sdim]+=1
-    vmessage("Generated simplex matrix list")
-    pickle.dump(simplex_matrix_list, (temp_folder / "ml.pkl").open('wb'))
-    vmessage("Saved simplex matrix list")
-    return simplex_matrix_list
+    result = pfc.flagser_count(adj, return_simplices=True, threads = 1)
+    coo_matrix = adj.tocoo()
+    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
+    for i in range(len(result['simplices']) -2):
+        result['simplices'][i+2] = np.array(result['simplices'][i+2])
+    return result['simplices'][1:]
+
+
+def list_simplices_by_dimension(adj, nodes=None, verbose=False, **kwargs):
+    """List all the simplices (upto a max dimension) in an adjacency matrix.
+    """
+    N, M = adj.shape
+    assert N == M, f"{N} != {M}"
+
+    n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
+    fcounts = pfc.flagser_count(adj, return_simplices=True, threads=n_threads)
+    original = fcounts["simplices"]
+    coom = adj.tocoo()
+
+    max_dim = len(original)
+    dims = pd.Index(np.arange(max_dim), name="dim")
+    simplices = pd.Series(original, name="simplices", index=dims)
+    simplices[0] = np.reshape(np.arange(0, N), (N, 1))
+    simplices[1] = np.stack([coom.row, coom.col]).T
+    return simplices
+
+
+def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> List[np.ndarray]:
+    """
+    Function to count bidirectional edges in all positions for all simplices of a matrix.
+
+    :param adj: adjacency matrix of the whole graph.
+    :type: sp.csc_matrix
+    :param simplex_matrix_list: list of arrays containing the simplices. Each array is
+    a  n_simplices x simplex_dim array. Same output as simplex_matrix_list.
+    :type: List[np.ndarray]
+    
+    :return bedge_counts: list of 2d matrices with bidirectional edge counts per position.
+    :rtype: List[np.ndarray]
+    """
+    def extract_subm(simplex: np.ndarray, adj: np.ndarray)->np.ndarray:
+        return adj[simplex].T[simplex]
+
+    adj_dense = np.array(adj.toarray()) #Did not test sparse matrix performance
+    bedge_counts = []
+    for matrix in simplex_matrix_list:
+        bedge_counts.append(
+            np.sum(
+                np.apply_along_axis(
+                    partial(extract_subm, adj = adj_dense),
+                    1,
+                    matrix,
+                ), axis = 0
+            )
+        )
+    return bedge_counts
+
+
+def simplex_bidirectionality(adj, nodes=None, simplices_by_dim=None, **kwargs):
+    """
+    Adapted from `bedge_counts` implementation by MS.
+
+    adj : Adjacency matrix N * N
+    simplices : sequence of 2D arrays that contain simplices of a given dimension
+    ~           of dimension S X D where D: simplex dimension,
+    """
+    dense = np.array(adj.toarray())
+    def subset_adj(simplices):
+        return np.apply_along_axis(lambda simplex: dense[simplex].T[simplex].astype(int),
+                                   1, simplices)
+
+    def collect_adjacencies(of_simplices_given_dimension):
+        return of_simplices_given_dimension.sum(axis=0)
+
+    if simplices_by_dim  is None:
+        simplices_by_dim = list_simplices_by_dimension(adj)
+    return simplices_by_dim.apply(subset_adj).apply(collect_adjacencies)

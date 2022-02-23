@@ -317,7 +317,29 @@ def list_simplices_by_dimension(adj, nodes=None, verbose=False, **kwargs):
     return simplices
 
 
-def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> List[np.ndarray]:
+def fetch_analysis(a, among, for_key, adjacency, nodes=None, **kwargs):
+    """Either get results analysis `for_key` from the pipeline, or compute it!
+
+    Arguments
+    among :: the analyses to fetch from.
+    """
+    a, computation = a
+
+    try:
+        toc = among[a]
+    except TypeError as terror:
+        raise TypeError(f"Expecting a dict mapping name --> TOC for annalysis, NOT {among}\n"
+                        "{terror}")
+    except KeyError:
+        LOG.warning("Analysis %s seems not to have been computed already.")
+        pass
+    else:
+        return toc.loc[for_key]
+
+    return computation(adj, nodes, **kwargs)
+
+
+def bedge_counts_0(adjacency, nodes=None, key=None, simplices=None, **kwargs):
     """
     Function to count bidirectional edges in all positions for all simplices of a matrix.
 
@@ -326,16 +348,17 @@ def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> L
     :param simplex_matrix_list: list of arrays containing the simplices. Each array is
     a  n_simplices x simplex_dim array. Same output as simplex_matrix_list.
     :type: List[np.ndarray]
-    
+
     :return bedge_counts: list of 2d matrices with bidirectional edge counts per position.
     :rtype: List[np.ndarray]
     """
+
     def extract_subm(simplex: np.ndarray, adj: np.ndarray)->np.ndarray:
         return adj[simplex].T[simplex]
 
     adj_dense = np.array(adj.toarray()) #Did not test sparse matrix performance
     bedge_counts = []
-    for matrix in simplex_matrix_list:
+    for matrix in simplices:
         bedge_counts.append(
             np.sum(
                 np.apply_along_axis(
@@ -348,28 +371,35 @@ def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> L
     return bedge_counts
 
 
-def simplex_bidirectionality(adj, nodes=None, simplices_by_dim=None, **kwargs):
+def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
     """
     Adapted from `bedge_counts` implementation by MS.
 
     adj : Adjacency matrix N * N
-    simplices : sequence of 2D arrays that contain simplices of a given dimension
-    ~           of dimension S X D where D: simplex dimension,
+    simplices : sequence of 2D arrays that contain simplices by dimension.
+    ~           The Dth array will be of shape N * D
+    ~           where D is the dimension of the simplices
+    ~           and N the number of such matrices in the graph.
     """
-    dense = np.array(adj.toarray())
-    def subset_adj(simplices):
-        return np.apply_along_axis(lambda simplex: dense[simplex].T[simplex].astype(int),
-                                   1, simplices)
+    dense = np.array(adjacency.toarray(), dtype=int)
+
+    def subset_adj(simplex):
+        """Adjacency matrix subset to the nodes in a simplex.
+        """
+        return dense[simplex].T[simplex].astype(int)
 
     def collect_adjacencies(of_simplices_given_dimension):
         return of_simplices_given_dimension.sum(axis=0)
 
-    if simplices_by_dim  is None:
-        simplices_by_dim = list_simplices_by_dimension(adj)
-    return simplices_by_dim.apply(subset_adj).apply(collect_adjacencies)
+    if simplices  is None:
+        simplices = list_simplices_by_dimension(adjacency)
+
+    return (simplices
+            .apply(lambda simps_d: np.apply_along_axis(subset_adj, 1, simps_d))
+            .apply(collect_adjacencies))
 
 
-def convex_hull(adj, neuron_properties): --> topology
+def convex_hull(adj, neuron_properties):
     """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
     pass
 

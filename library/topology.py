@@ -163,19 +163,21 @@ def convex_hull(adj, neuron_properties):# --> topology
 
 ## Filtered objects
 def at_weight_edges(weighted_adj, threshold, method="strength"):
-    #TODO: Efficient implementation with sparse matrices.
-    #TODO: Filtration on vertices
     """ Returns thresholded network on edges
     :param method: distance returns edges with weight smaller or equal than thresh
-                   strength returns edges with weight larger or equal than tresh"""
-    adj=weighted_adj.toarray()
-    adj_thresh=np.zeros(adj.shape)
+                   strength returns edges with weight larger or equal than thresh
+                   assumes csr format for weighted_adj"""
+    data=weighted_adj.data
+    data_thresh=np.zeros(data.shape)
     if method == "strength":
-        adj_thresh[adj>=threshold]=adj[adj>=threshold]
+        data_thresh[data>=threshold]=data[data>=threshold]
     elif method == "distance":
-        adj_thresh[adj<=threshold]=adj[adj<=threshold]
+        data_thresh[data<=threshold]=data[data<=threshold]
     else:
         raise ValueError("Method has to be 'strength' or 'distance'")
+    adj_thresh=weighted_adj.copy()
+    adj_thresh.data=data_thresh
+    adj_thresh.eliminate_zeros()
     return adj_thresh
 
 def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):

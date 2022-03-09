@@ -193,9 +193,10 @@ def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
 def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"):
     '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight
     method strength higher weights enter first, method distance smaller weights enter first'''
+    from tqdm import tqdm
     weights=filtration_weights(weighted_adj,neuron_properties=[],method=method)
     simplex_counts_filtered=dict.fromkeys(weights)
-    for weight in weights:
+    for weight in tqdm(weights,total=len(weights)):
         adj=at_weight_edges(weighted_adj,threshold=weight,method=method)
         simplex_counts_filtered[weight]=simplex_counts(adj)
     simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)

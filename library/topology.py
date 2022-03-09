@@ -1,6 +1,7 @@
 import scipy.sparse as sp
 import numpy as np
 import pyflagsercount as pfc
+import pandas as pd
 
 from functools import partial
 from typing import List
@@ -154,7 +155,7 @@ def bedge_counts(adj: sp.csc_matrix, simplex_matrix_list: List[np.ndarray]) -> L
         )
     return bedge_counts
 
-def convex_hull(adj, neuron_properties): --> topology
+def convex_hull(adj, neuron_properties):# --> topology
     """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
     pass
 
@@ -166,12 +167,12 @@ def at_weight_edges(weighted_adj, threshold, method="strength"):
     """ Returns thresholded network on edges
     :param method: distance returns edges with weight smaller or equal than thresh
                    strength returns edges with weight larger or equal than tresh"""
-    adj=adj.toarray()
+    adj=weighted_adj.toarray()
     adj_thresh=np.zeros(adj.shape)
     if method == "strength":
-        adj_tresh[adj_thresh>=threshold]=adj[adj_thresh>=threshold]
+        adj_thresh[adj>=threshold]=adj[adj>=threshold]
     elif method == "distance":
-        adj_tresh[adj_thresh<=threshold]=adj[adj_thresh<=threshold]
+        adj_thresh[adj<=threshold]=adj[adj<=threshold]
     else:
         raise ValueError("Method has to be 'strength' or 'distance'")
     return adj_thresh
@@ -182,15 +183,19 @@ def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
     :param method:distance smaller weights enter the filtration first
                   strength larger weights enter the filtration first"""
     if method == "strength":
-        return np.unique(adj.data)[::-1]
+        return np.unique(weighted_adj.data)[::-1]
     elif method == "distance":
-        return np.unique(adj.data)
+        return np.unique(weighted_adj.data)
     else:
        raise ValueError("Method has to be 'strength' or 'distance'")
 
 def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"):
-    simplex_counts_filtered=[]
-    for weight in filtration_weights(weighted_adj,neuron_properties=[],method=method):
-        adj=at_weight_edges(weighted_adj,neuron_properties=[],threshold=weight,method=method)
-        simplex_counts_filtered.append(simplex_counts(adj))
-    return  simplex_counts
+    '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight
+    method strength higher weights enter first, method distance smaller weights enter first'''
+    weights=filtration_weights(weighted_adj,neuron_properties=[],method=method)
+    simplex_counts_filtered=dict.fromkeys(weights)
+    for weight in weights:
+        adj=at_weight_edges(weighted_adj,threshold=weight,method=method)
+        simplex_counts_filtered[weight]=simplex_counts(adj)
+    simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)
+    return  simplex_counts_filtered

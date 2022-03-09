@@ -1,6 +1,5 @@
 import scipy.sparse as sp
 import numpy as np
-import pyflagsercount as pfc
 import pandas as pd
 
 from functools import partial
@@ -95,6 +94,7 @@ def maximal_simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.
     :return mlist: List of matrices containing the maximal simplices.
     :rtype: List[np.array]
     """
+    import pyflagsercount as pfc
     result = pfc.flagser_count(adj, return_simplices=True, max_simplices=True, threads=1)
     coo_matrix = adj.tocoo()
     result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
@@ -117,6 +117,7 @@ def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
     :return mlist: List of matrices containing the simplices. 
     :rtype: List[np.array]
     """
+    import pyflagsercount as pfc
     result = pfc.flagser_count(adj, return_simplices=True, threads = 1)
     coo_matrix = adj.tocoo()
     result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T

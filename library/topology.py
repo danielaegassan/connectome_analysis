@@ -7,13 +7,18 @@ from typing import List
 # Functions that take as input a (weighted) network and give as output a topological feature.
 #TODO: rc_in_simplex, filtered_simplex_counts, persitence
 
-def simplex_counts(adj, neuron_properties=[]):
+def simplex_counts(adj, neuron_properties=[], max_simplices=False,threads=1):
+
     #Compute simplex counts of adj
     #TODO: Change this to pyflagser_count and add options for max dim and threads,
     #Delete neuron properties from input?
-    from pyflagser import flagser_count_unweighted
+    import pyflagsercount
     adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
-    return flagser_count_unweighted(adj, directed=True)
+    if max_simplices==False:
+        return pyflagsercount.flagser_count(adj, max_simplices=max_simplices,threads=threads)["cell_counts"]
+    if max_simplices==True:
+        return pyflagsercount.flagser_count(adj, max_simplices=max_simplices,threads=threads)
+
 
 
 def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None):

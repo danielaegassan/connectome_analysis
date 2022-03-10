@@ -197,14 +197,32 @@ def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
     else:
        raise ValueError("Method has to be 'strength' or 'distance'")
 
-def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength",threads=1):
+def bin_weigths(weights,n_bins=10,return_bins=False):
+    '''Bins the np.array weights
+    Input: np.array of floats, no of bins
+    returns: bins, and binned data i.e. a np.array of the same shape as weights with entries the center value of its corresponding bin'''
+    min_weight=weights.min()
+    max_weight=weights.max()
+    step=(max_weight-min_weight)/n_bins
+    bins=np.arange(min_weight,max_weight+step,step)
+    digits=np.digitize(weights,bins)
+    if return_bins==True:
+        return (min_weight+step/2)+(digits-1)*step, bins
+    else:
+        return (min_weight+step/2)+(digits-1)*step
+
+
+def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength",threads=1,binned=False,n_bins=10):
     '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight
     method strength higher weights enter first, method distance smaller weights enter first'''
     from tqdm import tqdm
-    weights=filtration_weights(weighted_adj,neuron_properties=[],method=method)
+    adj=weighted_adj.copy()
+    if binned==True:
+        adj.data=bin_weigths(weighted_adj.data,n_bins=n_bins)
+    weights=filtration_weights(adj,neuron_properties=[],method=method)
     simplex_counts_filtered=dict.fromkeys(weights)
     for weight in tqdm(weights,total=len(weights)):
-        adj=at_weight_edges(weighted_adj,threshold=weight,method=method)
+        adj=at_weight_edges(adj,threshold=weight,method=method)
         simplex_counts_filtered[weight]=simplex_counts(adj,threads=threads)
     simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)
     return  simplex_counts_filtered

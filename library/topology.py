@@ -201,8 +201,9 @@ def bin_weigths(weights,n_bins=10,return_bins=False):
     '''Bins the np.array weights
     Input: np.array of floats, no of bins
     returns: bins, and binned data i.e. a np.array of the same shape as weights with entries the center value of its corresponding bin'''
+    tol=1e-8 #to include the max value in the last bin
     min_weight=weights.min()
-    max_weight=weights.max()
+    max_weight=weights.max()+tol
     step=(max_weight-min_weight)/n_bins
     bins=np.arange(min_weight,max_weight+step,step)
     digits=np.digitize(weights,bins)
@@ -210,7 +211,6 @@ def bin_weigths(weights,n_bins=10,return_bins=False):
         return (min_weight+step/2)+(digits-1)*step, bins
     else:
         return (min_weight+step/2)+(digits-1)*step
-
 
 def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength",threads=1,binned=False,n_bins=10):
     '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight

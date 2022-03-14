@@ -219,10 +219,12 @@ def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"
     adj=weighted_adj.copy()
     if binned==True:
         adj.data=bin_weigths(weighted_adj.data,n_bins=n_bins)
+        print(adj.count_nonzero())
     weights=filtration_weights(adj,neuron_properties=[],method=method)
     simplex_counts_filtered=dict.fromkeys(weights)
-    for weight in tqdm(weights,total=len(weights)):
+    for weight in tqdm(weights[::-1],total=len(weights)):
         adj=at_weight_edges(adj,threshold=weight,method=method)
+        print(adj.count_nonzero())
         simplex_counts_filtered[weight]=simplex_counts(adj,threads=threads)
     simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)
-    return  simplex_counts_filtered
+    return simplex_counts_filtered

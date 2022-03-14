@@ -22,6 +22,7 @@ def simplex_counts(adj, neuron_properties=[], max_simplices=False,threads=1):
 
 
 def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None):
+    #TODO CHANGE TO CHUNK FUNCTION!!! 
     from pyflagser import flagser_unweighted
     import numpy as np
     adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
@@ -226,3 +227,79 @@ def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength"
         simplex_counts_filtered[weight]=simplex_counts(adj,threads=threads)
     simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)
     return simplex_counts_filtered
+
+
+def chunk_approx_and_dims(min_dim=0, max_dim=[], approximation=None):
+    # Check approximation list is not too long and it's a list of integers
+    assert (all([isinstance(item, int) for item in approximation])), 'approximation must be a list of integers'
+    approximation = np.array(approximation)
+    if max_dim == []:
+        max_dim = np.inf
+    assert (approximation.size - 1 <= max_dim - min_dim), "approximation list too long for the dimension range"
+
+    # Split approximation into sub-vectors of same value to speed up computation
+    diff = approximation[1:] - approximation[:-1]
+    slice_indx = np.array(np.where(diff != 0)[0]) + 1
+    dim_chunks = np.split(np.arange(approximation.size) + min_dim, slice_indx)
+    if approximation[-1] == -1:
+        dim_chunks[-1][-1] = -1
+    else:
+        if dim_chunks[-1][-1] < max_dim:
+            dim_chunks.append([dim_chunks[-1][-1] + 1, max_dim])
+
+    # Returned chuncked lists
+    approx_chunks = []
+    for j in range(len(dim_chunks)):
+        if (approximation.size < max_dim - min_dim + 1) and approximation[-1] != -1 and j == len(dim_chunks) - 1:
+            a = -1
+        else:
+            a = approximation[int(dim_chunks[j][0]) - min_dim]
+        approx_chunks.append(a)
+    return dim_chunks, approx_chunks
+
+
+def persistence(weighted_adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
+                invert_weights=False, binned=False, n_bins=10, return_bettis=False):
+    from pyflagser import flagser_weighted
+    import numpy as np
+    # Normalizing and binning data
+    adj = weighted_adj.copy()
+    if invert_weights == True:
+        # Normalizing data between 0-1 and inverting order of the entries
+        adj.data = (np.max(adj.data) - adj.data) / (np.max(adj.data) - np.min(adj.data))
+    if binned == True:
+        adj.data = bin_weigths(adj.data, n_bins=n_bins)
+
+    # Sending computation to flagser
+    # For single approximate value
+    if approximation == None or isinstance(approximation, int):
+        if min_dim != 0:
+            print("Careful of pyflagser bug with range in dimension")
+        out = flagser_weighted(adj, min_dimension=min_dim, max_dimension=max_dim, directed=True, coeff=2,
+                               approximation=approximation)
+        dgms = out['dgms']
+        bettis = out['betti']
+    # For approximate list
+    else:
+        # Chunk values to speed computations
+        dim_chunks, approx_chunks = chunk_approx_and_dims(min_dim=min_dim, max_dim=max_dim, approximation=approximation)
+        bettis = []
+        dgms = []
+        for dims_range, a in zip(dim_chunks, approx_chunks):
+            n = dims_range[0]  # min dim for computation
+            N = dims_range[-1]  # max dim for computation
+            if N == -1:
+                N = np.inf
+            if a == -1:
+                a = None
+            print("Run betti for dim range {0}-{1} with approximation {2}".format(n, N, a))
+            if n != 0:
+                print("Warning, possible bug in pyflagser when not running dimension range starting at dim 0")
+            out = flagser_weighted(adj, min_dimension=n, max_dimension=N, directed=True, coeff=2, approximation=a)
+            bettis = bettis + out['betti']
+            dgms = dgms + out['dgms']
+            print([out['dgms'][i].shape for i in range(len(out['dgms']))])
+    if return_bettis == True:
+        return dgms, bettis
+    else:
+        return dgms

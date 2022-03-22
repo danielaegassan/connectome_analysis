@@ -22,7 +22,7 @@ def simplex_counts(adj, neuron_properties=[], max_simplices=False,threads=1):
 
 
 def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None):
-    #TODO CHANGE TO CHUNK FUNCTION!!! 
+    #TODO CHANGE TO CHUNK FUNCTION!!!
     from pyflagser import flagser_unweighted
     import numpy as np
     adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
@@ -303,3 +303,22 @@ def persistence(weighted_adj, neuron_properties=[], min_dim=0, max_dim=[], direc
         return dgms, bettis
     else:
         return dgms
+
+#Tools for persistence
+def num_cycles(B,D,thresh):
+    #Given a persistence diagram (B,D) compute the number of cycles alive at tresh
+    #Infinite bars have death values np.inf
+    born=np.count_nonzero(B<=thresh)
+    dead=np.count_nonzero(D<=thresh)
+    return born-dead
+
+def betti_curve(B,D):
+    #Given a persistence diagram (B,D) compute its corresponding betti curve
+    #Infinite bars have death values np.inf
+    filt_values=np.concatenate([B,D])
+    filt_values=np.unique(filt_values)
+    filt_values=filt_values[filt_values!=np.inf]
+    bettis=[]
+    for thresh in filt_values:
+        bettis.append(num_cycles(B,D,thresh))
+    return filt_values,np.array(bettis)

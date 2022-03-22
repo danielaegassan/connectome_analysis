@@ -301,6 +301,8 @@ def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
 def list_simplices_by_dimension(adj, nodes=None, verbose=False, **kwargs):
     """List all the simplices (upto a max dimension) in an adjacency matrix.
     """
+    LOG.info("COMPUTE list of simplices by dimension")
+
     N, M = adj.shape
     assert N == M, f"{N} != {M}"
 
@@ -371,9 +373,11 @@ def bedge_counts_0(adjacency, nodes=None, key=None, simplices=None, **kwargs):
     return bedge_counts
 
 
-def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
+def bedge_counts_sum_axis_0(adjacency, nodes=None, simplices=None, **kwargs):
     """
     Adapted from `bedge_counts` implementation by MS.
+    Sums each simplex subgraph by column
+    NOTE: This is not the bedge counts we want
 
     adj : Adjacency matrix N * N
     simplices : sequence of 2D arrays that contain simplices by dimension.
@@ -383,20 +387,65 @@ def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
     """
     dense = np.array(adjacency.toarray(), dtype=int)
 
-    def subset_adj(simplex):
-        """Adjacency matrix subset to the nodes in a simplex.
-        """
-        return dense[simplex].T[simplex].astype(int)
-
-    def collect_adjacencies(of_simplices_given_dimension):
-        return of_simplices_given_dimension.sum(axis=0)
-
     if simplices  is None:
         simplices = list_simplices_by_dimension(adjacency)
 
-    return (simplices
-            .apply(lambda simps_d: np.apply_along_axis(subset_adj, 1, simps_d))
-            .apply(collect_adjacencies))
+    def count_bedges_subgraph(s):
+        """Count edges in the subgraph of simplex s"""
+        subset_adj = dense[s].T[s]
+        return np.sum(subset_adj, axis=0)
+
+    def count_bedges(simplices_given_dim):
+        """Count bidirectional edges in simplices of a given dimension.
+        """
+        try:
+            d_simplices = simplices_given_dim.get_value()
+        except AttributeError:
+            d_simplices = simplices_given_dim
+
+        if d_simplices is None or d_simplices.shape[1] == 1:
+            return None
+
+        return np.apply_along_axis(count_bedges_subgraph, 1,  d_simplices)
+
+    return simplices.apply(count_bedges).rename("bedges")
+
+
+def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
+    """...
+    adj : Adjacency matrix N * N
+    simplices : sequence of 2D arrays that contain simplices by dimension.
+    ~           The Dth array will be of shape N * D
+    ~           where D is the dimension of the simplices
+    """
+    adj = adjacency
+
+    if simplices is None:
+        LOG.info("COMPUTE `bedge_counts(...)`: No argued simplices.")
+        return bedge_counts(adj, nodes, list_simplices_by_dimension(adj), **kwargs)
+    else:
+        LOG.info("COMPUTE `bedge_counts(...): for simplices: %s ", simplices.shape)
+
+    dense = np.array(adjacency.toarray(), dtype=int)
+
+    def subset_adj(simplex):
+        return dense[simplex].T[simplex]
+
+    def count_bedges(simplices_given_dim):
+        """..."""
+        try:
+            d_simplices = simplices_given_dim.get_value()
+        except AttributeError:
+            d_simplices = simplices_given_dim
+
+        if d_simplices is None or d_simplices.shape[1] == 1:
+            return np.nan
+
+        return (pd.DataFrame(d_simplices, columns=range(d_simplices.shape[1]))
+                .apply(subset_adj, axis=1)
+                .agg("sum"))
+
+    return simplices.apply(count_bedges)
 
 
 def convex_hull(adj, neuron_properties):

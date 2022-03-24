@@ -413,8 +413,8 @@ void combine_threads(int threads, std::vector<std::vector<vertex_t>>& row, std::
     //Combine output from threads
     for (int i = 1; i < threads; i++){
         std::move( row[i].begin(), row[i].end(), std::back_inserter(row[0]));
-        row[i].clear()
+        row[i].clear();
         std::move( col[i].begin(), col[i].end(), std::back_inserter(col[0]));
-        col[i].clear()
+        col[i].clear();
     }
 }

@@ -18,13 +18,6 @@ import numpy as np
 import scipy.sparse as sp
 import generateModel as gm
 
-from .resources.randomization import (
-    bidirectional_edges,
-    adjust_bidirectional_connections,
-    add_bidirectional_connections,
-    half_matrix
-)
-
 ######generateModel versions###########
 #Erdos-Renyi model:
 #Input: n, p, threads
@@ -73,11 +66,13 @@ def ER_shuffle(adj, neuron_properties=[]):
     """
     n = adj.get_shape()[0]
     adj = adj.toarray()
-    not_diag = np.concatenate([adj[np.triu_indices(n, k=1)],
-                               adj[np.tril_indices(n, k=-1)]])#Entries off the diagonal
-    np.random.shuffle(not_diag)
-    adj[np.triu_indices(n,k=1)]=not_diag[0:n*(n-1)//2]
-    adj[np.tril_indices(n,k=-1)]=not_diag[n*(n-1)//2:]
+    above_diagonal = adj[np.triu_indices(n, k=1)]
+    below_diagonal = adj[np.tril_indices(n, k=-1)]
+    off_diagonal = np.concatenate([above_diagonal, below_diagonal])
+
+    np.random.shuffle(off_diagonal)
+    adj[np.triu_indices(n,k=1)] = off_diagonal[0:n*(n-1)//2]
+    adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
     return sp.csr_matrix(adj)
 
 ####### PROBABILITY ##################
@@ -95,6 +90,7 @@ def adjusted_ER(sparse_matrix: sp.csc_matrix, generator_seed:int) -> sp.csc_matr
     :return adjER_matrix: Adjusted ER model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, adjust_bidirectional_connections
     generator = np.random.default_rng(generator_seed)
     target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
     ER_matrix = ER_shuffle(sparse_matrix).tocsc()
@@ -114,6 +110,7 @@ def underlying_model(sparse_matrix: sp.csc_matrix, generator_seed: int):
     :return und_matrix: Underlying model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, add_bidirectional_connections
     generator = np.random.default_rng(generator_seed)
     target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
     ut_matrix = sp.triu(sparse_matrix + sparse_matrix.T)
@@ -136,6 +133,7 @@ def bishuffled_model(sparse_matrix: sp.csc_matrix, generator_seed: int) -> sp.cs
     :return und_matrix: Bishuffled model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, add_bidirectional_connections, half_matrix
     generator = np.random.default_rng(generator_seed)
     ut_bedges = sp.triu(bidirectional_edges(sparse_matrix))
     target_bedges = ut_bedges.count_nonzero()

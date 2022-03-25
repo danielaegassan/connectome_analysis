@@ -27,19 +27,79 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 
 
-def simplex_counts(adj, neuron_properties=[], max_simplices=False,threads=1):
+def _series_by_dim(from_array, name):
+    """A series of counts, like simplex counts:
+    one count for a given value of simplex dimension.
+    """
+    if from_array is None:
+        return None
+
+    dim = pd.Index(range(len(from_array)), name="dim")
+    return pd.Series(from_array, name=name, index=dim)
+
+
+def _frame_by_dim(from_array, name, index):
+    """A dataframe of counts, like node participation:
+    one count for a node and simplex dimension.
+    """
+    if from_array is None:
+        return None
+
+    columns = pd.Index(range(from_array.shape[1]), name=index)
+    return pd.DataFrame(from_array, columns=columns).fillna(0).astype(int)
+
+
+QUANTITIES = {"simplices",
+              "node-participation",
+              "bettis",
+              "bidrectional-edges"}
+
+
+def _flagser_counts(adjacency,
+                    max_simplices=False,
+                    count_node_participation=False,
+                    list_simplices=False,
+                    threads=1):
+    """Call package `pyflagsercount's flagser_count` method that can be used to compute
+    some analyses, getting counts of quantities such as simplices,
+    or node-participation (a.k.a. `containment`)
+    """
+    import pyflagsercount
+    adjacency = adjacency.astype(bool).astype(int)
+
+    flagser_counts = pyflagsercount.flagser_count(adjacency,
+                                                  max_simplices=max_simplices,
+                                                  containment=count_node_participation,
+                                                  return_simplices=list_simplices,
+                                                  threads=threads)
+
+    counts =  {"euler": flagser_counts.pop("euler"),
+               "simplex_counts": _series_by_dim(flagser_counts.pop("cell_counts"),
+                                                name="simplex_count"),
+               "max_simplex_counts": _series_by_dim(flagser_counts.pop("max_cell_counts", None),
+                                                    name="max_simplex_count"),
+               "node-participation": _frame_by_dim(flagser_counts.pop("contain_counts", None),
+                                                   name="node_participation", index="node"),
+               "simplices": flagser_counts.pop("simplices", None)}
+    counts.update(flagser_counts)
+    return counts
+
+
+def simplex_counts(adj, node_properties=[],
+                   max_simplices=False, threads=1,
+                   **kwargs):
 
     #Compute simplex counts of adj
     #TODO: Change this to pyflagser_count and add options for max dim and threads,
     #Delete neuron properties from input?
-    import pyflagsercount
-    adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
-    counts = np.array(flagser_count_unweighted(adj, directed=True))
-    return pd.Series(counts, name="simplex_count",
-                     index=pd.Index(range(len(counts)), name="dim"))
+
+    flagser_counts = _flagser_counts(adj, threads)
+    return flagser_counts["simplex_counts"]
 
 
-def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None):
+def betti_counts(adj, node_properties=[],
+                 min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
+                 **kwargs):
     """..."""
     from pyflagser import flagser_unweighted
     import numpy as np
@@ -97,42 +157,24 @@ def betti_counts(adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True
                      index=pd.Index(range(len(bettis)), name="dim"))
 
 
-def node_participation(adj, neuron_properties):
+def node_participation(adj, node_properties=None):
     # Compute the number of simplices a vertex is part of
     # Input: adj adjancency matrix representing a graph with 0 in the diagonal, neuron_properties as data frame with index gid of nodes
     # Out: List L of lenght adj.shape[0] where L[i] is a list of the participation of vertex i in simplices of a given dimensio
     # TODO:  Should we merge this with simplex counts so that we don't do the computation twice?
-    import pyflagsercount
-    import pandas as pd
-    adj = adj.astype('bool').astype('int')  # Needed in case adj is not a 0,1 matrix
-    par=pyflagsercount.flagser_count(adj,containment=True,threads=1)['contain_counts']
-    par_frame = pd.DataFrame(par).fillna(0).astype(int)
-    par_frame.columns.name = "dim"
-    return par_frame
+
+    flagser_counts = _flagser_counts(adj, count_node_participation=True)
+    return flagser_counts["node_participation"]
 
 
 #INPUT: Address of binary file storing simplices
 #OUTPUT: A list if lists L where L[i] contains the vertex ids of the i'th simplex,
 #          note the simplices appear in no particular order
-def binary2simplex_MS(address):
-    X = np.fromfile(address, dtype='uint64')                         #Load binary file
-    S=[]                                                             #Initialise empty list for simplices
-
-    i=0
-    while i < len(X):
-        b = format(X[i], '064b')                                     #Load the 64bit integer as a binary string
-        if b[0] == '0':                                              #If the first bit is 0 this is the start of a new simplex
-            S.append([])
-        t=[int(b[-21:],2), int(b[-42:-21],2), int(b[-63:-42],2)]     #Compute the 21bit ints stored in this 64bit int:
-        for j in t:
-            if j != 2097151:                                         #If an int is 2^21 this means we have reached the end of the simplex, so don't add it
-                S[-1].append(j)
-        i+=1
-    return S
-
 
 def binary2simplex(address, test=None, verbosity=1000000):
-    """..."""
+    """...Not used --- keeping it here as it is of interest to understanmd
+    how simplices are represented on the disc by Flagser.
+    """
     LOG.info("Load binary simplex info from %s", address)
     simplex_info = pd.Series(np.fromfile(address, dtype=np.uint64))
     LOG.info("Done loading binary simplex info.")
@@ -179,138 +221,18 @@ def binary2simplex(address, test=None, verbosity=1000000):
     return (vertices.vertices, simplices)
 
 
-def simplex_matrix(adj: sp.csc_matrix, nodes: pd.DataFrame,
-                   temp_folder: Path, verbose: bool = False) -> np.array:
-    """
-    Returns the list of simplices in matrix form for storage. The matrix is
-    a n_simplices x max_dim matrix, where n_simplices is the total number of simplices
-    and max_dim is the maximum encountered simplex dimension.
-    
-    :param adj: Sparse csc matrix to compute the simplex list of.
-    :type: sp.scs_matrix
-    :param temp_folder: Relative path where to store the temporary flagser files to.
-    :type: Path
-    :param verbose: Whether to have the function print steps.
-    :type: bool
-
-    :return m: Matrix containing the simplices. The first row will be the indices at which each
-    dimension ends. Successive rows will store simplices from each dimension.
-    :rtype: np.array
-    """
-    def vmessage(message):
-        if verbose:
-            print(message)
-    temp_folder.mkdir(exist_ok = True, parents=True)
-    for path in temp_folder.glob("*"):
-        raise FileExistsError("Found file in " + str(temp_folder.absolute()) + ". Aborting.")
-    vmessage("Flagser count started execution")
-    counts = pfc.flagser_count(adj, binary=str(temp_folder / "temp"), min_dim_print=1, threads = 1)
-    vmessage("Flagser count completed execution")
-    mdim = len(counts['cell_counts'])
-    simplex_matrix = np.zeros((np.sum(counts['cell_counts'][1:]) + 1, mdim), dtype=np.int32)
-    simplex_matrix[0,:] = counts['cell_counts'] #Use this both for future reference and for positioning simplices
-    simplex_matrix[0,0] = 0
-    simplex_matrix[0] = np.cumsum(simplex_matrix[0])
-    vmessage("Parsing flagser output")
-    for path in temp_folder.glob("*"):
-        vmessage("Parsing " + str(path))
-        simplex_list = binary2simplex(path)
-        if verbose:
-            simplex_list = tqdm(simplex_list, desc="Parsed simplices",
-                                total = simplex_matrix[0,-1])
-        for simplex in simplex_list:
-             simplex_matrix[simplex_matrix[0,len(simplex)-2] + 1, :len(simplex)] = simplex
-             simplex_matrix[0, len(simplex)-2]+=1
-    vmessage("Generated simplex matrix")
-    np.save(temp_folder/"matrix.npy", simplex_matrix)
-    vmessage("Saved simplex matrix")
-    return simplex_matrix
-
-
-def simplices(adj, nodes=None, temp_folder=None, threads=None, **kwargs):
-    """All the simplices in an adjacency matrix.
-
-    temp_folder : A binary file will be generated here.
-    """
-    import tempfile
-    threads = threads or 1
-    LOG.warning("Compute simplices for a matrix of shape %s on %s threads",
-                adj.shape, threads)
-
-    tempfold = tempfile.TemporaryDirectory(dir=Path.cwd())
-    path_temp = Path(tempfold.name)
-    if list(path_temp.glob('*')):
-        raise RuntimeError("Was not expecting a temporary folder to contain any files")
-
-    counts = pfc.flagser_count(adj, binary=(path_temp / "temp-").as_posix(),
-                               min_dim_print=1, threads=threads)
-
-    sims  = pd.Series([s for p in path_temp.glob('*')
-                       for s in binary2simplex(p, **kwargs)],
-                      name="simplex")
-    dims = sims.apply(len).apply(lambda l: l - 2).rename("dim")
-    sims_dims = pd.concat([sims, dims], axis=1).set_index("dim").simplex
-
-    tempfold.cleanup()
-
-    return sims_dims.groupby("dim").apply(np.vstack)
-
-def maximal_simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
-    """
-    Returns the list of maximal simplices in a list of matrices for storage. Each matrix is
-    a n_simplices x dim matrix, where n_simplices is the total number of simplices
-    with dimension dim. No temporary file needed!
-
-    :param adj: Sparse csc matrix to compute the simplex list of.
-    :type: sp.scs_matrix
-    :param verbose: Whether to have the function print steps.
-    :type: bool
-
-    :return mlist: List of matrices containing the maximal simplices.
-    :rtype: List[np.array]
-    """
-    import pyflagsercount as pfc
-    result = pfc.flagser_count(adj, return_simplices=True, max_simplices=True, threads=1)
-    coo_matrix = adj.tocoo()
-    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
-    for i in range(len(result['simplices']) - 2):
-        result['simplices'][i + 2] = np.array(result['simplices'][i + 2])
-    return result['simplices'][1:]
-
-
-def simplex_lists(adj: sp.csc_matrix, verbose: bool = False) -> List[np.array]:
-    """
-    Returns the list of simplices in a list of matrices for storage. Each matrix is
-    a n_simplices x dim matrix, where n_simplices is the total number of simplices
-    with dimension dim. No temporary file needed!
-    
-    :param adj: Sparse csc matrix to compute the simplex list of.
-    :type: sp.scs_matrix
-    :param verbose: Whether to have the function print steps.
-    :type: bool
-
-    :return mlist: List of matrices containing the simplices. 
-    :rtype: List[np.array]
-    """
-    import pyflagsercount as pfc
-    result = pfc.flagser_count(adj, return_simplices=True, threads = 1)
-    coo_matrix = adj.tocoo()
-    result['simplices'][1] = np.stack([coo_matrix.row, coo_matrix.col]).T
-    for i in range(len(result['simplices']) -2):
-        result['simplices'][i+2] = np.array(result['simplices'][i+2])
-    return result['simplices'][1:]
-
-
-def list_simplices_by_dimension(adj, nodes=None, verbose=False, **kwargs):
+def list_simplices_by_dimension(adj, nodes=None, max_simplices=False,
+                                verbose=False, **kwargs):
     """List all the simplices (upto a max dimension) in an adjacency matrix.
     """
-    LOG.info("COMPUTE list of simplices by dimension")
+    LOG.info("COMPUTE list of %s simplices by dimension", "max-" if max_simplices else "")
 
     N, M = adj.shape
     assert N == M, f"{N} != {M}"
 
     n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
-    fcounts = pfc.flagser_count(adj, return_simplices=True, threads=n_threads)
+    fcounts = _flagser_counts(adj, list_simplices=True, max_simplices=max_simplices,
+                              threads=n_threads)
     original = fcounts["simplices"]
     coom = adj.tocoo()
 
@@ -320,28 +242,6 @@ def list_simplices_by_dimension(adj, nodes=None, verbose=False, **kwargs):
     simplices[0] = np.reshape(np.arange(0, N), (N, 1))
     simplices[1] = np.stack([coom.row, coom.col]).T
     return simplices
-
-
-def fetch_analysis(a, among, for_key, adjacency, nodes=None, **kwargs):
-    """Either get results analysis `for_key` from the pipeline, or compute it!
-
-    Arguments
-    among :: the analyses to fetch from.
-    """
-    a, computation = a
-
-    try:
-        toc = among[a]
-    except TypeError as terror:
-        raise TypeError(f"Expecting a dict mapping name --> TOC for annalysis, NOT {among}\n"
-                        "{terror}")
-    except KeyError:
-        LOG.warning("Analysis %s seems not to have been computed already.")
-        pass
-    else:
-        return toc.loc[for_key]
-
-    return computation(adj, nodes, **kwargs)
 
 
 def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
@@ -381,7 +281,7 @@ def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
     return simplices.apply(count_bedges)
 
 
-def convex_hull(adj, neuron_properties):# --> topology
+def convex_hull(adj, node_properties):# --> topology
     """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
     pass
 
@@ -406,47 +306,66 @@ def at_weight_edges(weighted_adj, threshold, method="strength"):
     return adj_thresh
 
 
-def filtration_weights(weighted_adj, neuron_properties=[],method="strength"):
-    #Todo: Should there be a warning when the return is an empty array because the matrix is zero?
-    """Returns the filtration weights of a given weighted matrix.
-    :param method:distance smaller weights enter the filtration first
-                  strength larger weights enter the filtration first"""
-    if method == "strength":
-        return np.unique(weighted_adj.data)[::-1]
-    elif method == "distance":
-        return np.unique(weighted_adj.data)
-    else:
-       raise ValueError("Method has to be 'strength' or 'distance'")
+def filtration_weights(adj, node_properties=None, method="strength"):
+    """
+    Returns the filtration weights of a given weighted adjacency matrix.
+    :param method: distance smaller weights enter the filtration first
+                   strength larger weights enter the filtration first
 
-def bin_weigths(weights,n_bins=10,return_bins=False):
+    TODO: Should there be a warning when the return is an empty array because the matrix is zero?
+    """
+    if method == "strength":
+        return np.unique(adj.data)[::-1]
+
+    if method == "distance":
+        return np.unique(adj.data)
+
+    raise ValueError("Method has to be 'strength' or 'distance'")
+
+
+def bin_weigths(weights, n_bins=10, return_bins=False):
     '''Bins the np.array weights
     Input: np.array of floats, no of bins
-    returns: bins, and binned data i.e. a np.array of the same shape as weights with entries the center value of its corresponding bin'''
-    tol=1e-8 #to include the max value in the last bin
-    min_weight=weights.min()
-    max_weight=weights.max()+tol
-    step=(max_weight-min_weight)/n_bins
-    bins=np.arange(min_weight,max_weight+step,step)
-    digits=np.digitize(weights,bins)
-    if return_bins==True:
-        return (min_weight+step/2)+(digits-1)*step, bins
-    else:
-        return (min_weight+step/2)+(digits-1)*step
+    returns: bins, and binned data i.e. a np.array of the same shape as weights with entries the center value of its corresponding bin
+    '''
+    tol = 1e-8 #to include the max value in the last bin
+    min_weight = weights.min()
+    max_weight = weights.max() + tol
+    step = (max_weight - min_weight) / n_bins
+    bins = np.arange(min_weight, max_weight + step, step)
+    digits = np.digitize(weights, bins)
 
-def filtered_simplex_counts(weighted_adj, neuron_properties=[],method="strength",threads=1,binned=False,n_bins=10):
+    weights = (min_weight + step / 2) + (digits - 1) * step
+    return (weights, bins) if return_bins else weights
+
+
+def filtered_simplex_counts(adj, node_properties=None, method="strength",
+                            binned=False, n_bins=10, threads=1,
+                            **kwargs):
     '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight
     method strength higher weights enter first, method distance smaller weights enter first'''
     from tqdm import tqdm
-    adj=weighted_adj.copy()
+    adj = adj.copy()
     if binned==True:
-        adj.data=bin_weigths(weighted_adj.data,n_bins=n_bins)
-    weights=filtration_weights(adj,neuron_properties=[],method=method)
-    simplex_counts_filtered=dict.fromkeys(weights)
-    for weight in tqdm(weights[::-1],total=len(weights)):
-        adj=at_weight_edges(adj,threshold=weight,method=method)
-        simplex_counts_filtered[weight]=simplex_counts(adj,threads=threads)
-    simplex_counts_filtered=pd.DataFrame.from_dict(simplex_counts_filtered,orient="index").fillna(0).astype(int)
-    return simplex_counts_filtered
+        adj.data = bin_weigths(adj.data, n_bins=n_bins)
+
+    weights = filtration_weights(adj, node_properties, method)
+
+#    TODO: 1. Prove that the following is executed in the implementation that follows.
+#    TODO: 2. If any difference, update the implementation
+#    TODO: 3. Remove the reference code.
+#    n_simplices = dict.fromkeys(weights)
+#    for weight in tqdm(weights[::-1],total=len(weights)):
+#        adj = at_weight_edges(adj, threshold=weight, method=method)
+#        n_simplices[weight] = simplex_counts(adj, threads=threads)
+
+    m = method
+    def filter_weight(w):
+        adj_w = at_weight_edges(adj, threshold=w, method=m)
+        return simplex_counts(adj_w, threads=threads)
+
+    n_simplices = {w: filter_weight(w) for w in weights[::-1]}
+    return pd.DataFrame.from_dict(n_simplices, orient="index").fillna(0).astype(int)
 
 
 def chunk_approx_and_dims(min_dim=0, max_dim=[], approximation=None):
@@ -478,8 +397,10 @@ def chunk_approx_and_dims(min_dim=0, max_dim=[], approximation=None):
     return dim_chunks, approx_chunks
 
 
-def persistence(weighted_adj, neuron_properties=[], min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
-                invert_weights=False, binned=False, n_bins=10, return_bettis=False):
+def persistence(weighted_adj, node_properties=None,
+                min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
+                invert_weights=False, binned=False, n_bins=10, return_bettis=False,
+                **kwargs):
     from pyflagser import flagser_weighted
     import numpy as np
     # Normalizing and binning data

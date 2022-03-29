@@ -310,7 +310,14 @@ def extract_dependent_p_conn(adj_matrix, dep_matrices, dep_bins):
             dep_sel = np.logical_and(dep_sel, np.logical_and(dep_matrices[dim] >= lower, (dep_matrices[dim] < upper) if idx[dim] < num_bins[dim] - 1 else (dep_matrices[dim] <= upper))) # Including last edge
         sidx, tidx = np.nonzero(dep_sel)
         count_all[idx] = np.sum(dep_sel)
-        count_conn[idx] = np.sum(adj_matrix[sidx, tidx])
+        ### count_conn[idx] = np.sum(adj_matrix[sidx, tidx]) # ERROR in scipy/sparse/compressed.py if len(sidx) >= 2**31: "ValueError: could not convert integer scalar"
+        # [WORKAROUND]: Split indices into parts of 2**31-1 length and sum them separately
+        sidx_split = np.split(sidx, np.arange(0, len(sidx), 2**31-1)[1:])
+        tidx_split = np.split(tidx, np.arange(0, len(tidx), 2**31-1)[1:])
+        count_split = 0
+        for s, t in zip(sidx_split, tidx_split):
+            count_split = count_split + np.sum(adj_matrix[s, t])
+        count_conn[idx] = count_split
     p_conn = np.array(count_conn / count_all)
     p_conn[np.isnan(p_conn)] = 0.0
 

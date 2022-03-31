@@ -26,43 +26,97 @@ from .resources.randomization import (
 )
 
 ######generateModel versions###########
-#Erdos-Renyi model:
-#Input: n, p, threads
-#    n = number of vertices (int)
-#    p = edge probability (double)
-#    threads = number of threads to use (int)
 def run_ER(n,p,threads):
+    """
+    Erdos-Renyi model
+
+    Input: n, p, threads
+       n = number of vertices (int)
+       p = edge probability (double)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.ER(n,p,threads)
 
-#Stochastic Block Model:
-#Input: n, pathways, mtypes, threads
-#    n = number of vertices (int)
-#    M = M[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
-#    mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
-#    threads = number of threads to use (int)
+
 def run_SBM(n, pathways, mtypes, threads):
+    """
+    Stochastic Block Model
+
+    Input: n, pathways, mtypes, threads
+       n = number of vertices (int)
+       pathways = pathways[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.SBM(n, pathways, mtypes, threads)
 
-#Distance Dependant 2nd Order:
-#Input: n, a, b, xyz, threads
-#    n = number of vertices (int)
-#    a = coefficient of probability function (double)
-#    b = coefficient of probability function (double)
-#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-#    threads = number of threads to use (int)
+
 def run_DD2(n,a,b,xyz,threads):
+    """
+    Distance Dependant 2nd Order
+
+    Input: n, a, b, xyz, threads
+       n = number of vertices (int)
+       a = coefficient of probability function (double)
+       b = coefficient of probability function (double)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.DD2(n,a,b,xyz,threads)
 
-#Distance Dependant 3rd Order:
-#Input: n, a, b, xyz, threads
-#    n = number of vertices (int)
-#    a1 and a2 = coefficients of probability function for dz<0 (double)
-#    a2 and b2 = coefficient of probability function for dz>0 (double)
-#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-#    depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
-#    threads = number of threads to use (int)
+
 def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
+    """
+    Distance Dependant 3rd Order
+
+    Input: n, a, b, xyz, threads
+       n = number of vertices (int)
+       a1 and a2 = coefficients of probability function for dz<0 (double)
+       a2 and b2 = coefficient of probability function for dz>0 (double)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
+
+
+def run_DDSBM1(n,pathways,mtypes,xyz,threads):
+    """
+    Distance Dependant Stochastic Block Model (pre synaptic only)
+
+    Input: n, pathways, mtypes, xyz, threads
+       n = number of vertices (int)
+       pathways = pathways[i] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,2), dtype=double), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
+    return gm.DDSBM1(n,pathways,mtypes,xyz,threads)
+
+def run_DDSBM2(n,pathways,mtypes,xyz,threads):
+    """
+    Distance Dependant Stochastic Block Model
+
+    Input: n, pathways, mtypes, xyz, threads
+       n = number of vertices (int)
+       pathways = pathways[i][j] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,m,2), dtype=double), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
+    return gm.DDSBM2(n,pathways,mtypes,xyz,threads)
 
 
 ####### SHUFFLE #######################
@@ -138,3 +192,27 @@ def bishuffled_model(sparse_matrix: sp.csc_matrix, generator_seed: int) -> sp.cs
     target_bedges = ut_bedges.count_nonzero()
     bedges1, bedges2 = half_matrix(ut_bedges, generator)
     return add_bidirectional_connections(sparse_matrix - bedges1 - bedges2.T, target_bedges, generator)
+
+def configuration_model(sparse_matrix: sp.coo_matrix, generator_seed: int):
+    """
+    Function to generate the configuration control model, obtained by
+    shuffling the row and column of coo format independently, to create
+    new coo matrix, then removing any multiple edges and loops.
+
+    :param sparse_matrix: Sparse input matrix.
+    :type: sp.coo_matrix
+    :param generator_seed: Numpy generator seed.
+    :type: int
+
+    :return CM_matrix: Configuration model.
+    :rtype: sp.csr_matrix
+    """
+    generator = np.random.default_rng(generator_seed)
+    R = sparse_matrix.row
+    C = sparse_matrix.col
+    generator.shuffle(R)
+    generator.shuffle(C)
+    CM_matrix = sp.coo_matrix(([1]*len(R),(R,C)),shape=sparse_matrix.shape).tocsr()
+    CM_matrix.setdiag(0)
+    CM_matrix.eliminate_zeros()
+    return CM_matrix

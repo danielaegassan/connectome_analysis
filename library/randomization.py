@@ -88,7 +88,7 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
     return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
 
 
-def run_DDSBM1(n,pathways,mtypes,xyz,threads):
+def run_DD2_block_pre(n,pathways,mtypes,xyz,threads):
     """
     Distance Dependant Stochastic Block Model (pre synaptic only)
 
@@ -101,9 +101,9 @@ def run_DDSBM1(n,pathways,mtypes,xyz,threads):
 
     Output: coo matrix
     """
-    return gm.DDSBM1(n,pathways,mtypes,xyz,threads)
+    return gm.DD2_block_pre(n,pathways,mtypes,xyz,threads)
 
-def run_DDSBM2(n,pathways,mtypes,xyz,threads):
+def run_DD2_block(n,pathways,mtypes,xyz,threads):
     """
     Distance Dependant Stochastic Block Model
 
@@ -116,7 +116,7 @@ def run_DDSBM2(n,pathways,mtypes,xyz,threads):
 
     Output: coo matrix
     """
-    return gm.DDSBM2(n,pathways,mtypes,xyz,threads)
+    return gm.DD2_block(n,pathways,mtypes,xyz,threads)
 
 
 ####### SHUFFLE #######################

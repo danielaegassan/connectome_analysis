@@ -407,22 +407,22 @@ void add_edges_DD3(int index, int n, int threads, coeff_t a1, coeff_t b1, coeff_
 }
 //************************Distance Dependent Stochastic Block Model 1************************//
 
-coeff_t model_DDSBM1(int i, int j, std::vector<std::pair<coeff_t,coeff_t>>& pathways, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
+coeff_t model_DD2_block_pre(int i, int j, std::vector<std::pair<coeff_t,coeff_t>>& pathways, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
     return pathways[neuron_info[i]].first*exp(-pathways[neuron_info[i]].second*distance(i,j,xyz));
 }
 
-void add_edges_DDSBM1(int index, int n, int threads, std::vector<std::pair<coeff_t,coeff_t>>& pathways,
+void add_edges_DD2_block_pre(int index, int n, int threads, std::vector<std::pair<coeff_t,coeff_t>>& pathways,
                std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
     pcg32 rng;
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
-			if (rng.next_float() < model_DDSBM1(i,j,pathways,xyz,neuron_info)) {
+			if (rng.next_float() < model_DD2_block_pre(i,j,pathways,xyz,neuron_info)) {
 				this_row.push_back(i);
                 this_col.push_back(j);
 			}
         }
         for (int j = i+1; j < n; j++) {
-			if (rng.next_float() < model_DDSBM1(i,j,pathways,xyz,neuron_info)) {
+			if (rng.next_float() < model_DD2_block_pre(i,j,pathways,xyz,neuron_info)) {
 				this_row.push_back(i);
                 this_col.push_back(j);
 			}
@@ -432,23 +432,23 @@ void add_edges_DDSBM1(int index, int n, int threads, std::vector<std::pair<coeff
 
 //************************Distance Dependent Stochastic Block Model 2************************//
 
-coeff_t model_DDSBM2(int i, int j, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways,
+coeff_t model_DD2_block(int i, int j, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways,
                                    std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
     return pathways[neuron_info[i]][neuron_info[j]].first*exp(-pathways[neuron_info[i]][neuron_info[j]].second*distance(i,j,xyz));
 }
 
-void add_edges_DDSBM2(int index, int n, int threads, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways,
+void add_edges_DD2_block(int index, int n, int threads, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways,
                std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
     pcg32 rng;
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
-			if (rng.next_float() < model_DDSBM2(i,j,pathways,xyz,neuron_info)) {
+			if (rng.next_float() < model_DD2_block(i,j,pathways,xyz,neuron_info)) {
 				this_row.push_back(i);
                 this_col.push_back(j);
 			}
         }
         for (int j = i+1; j < n; j++) {
-			if (rng.next_float() < model_DDSBM2(i,j,pathways,xyz,neuron_info)) {
+			if (rng.next_float() < model_DD2_block(i,j,pathways,xyz,neuron_info)) {
 				this_row.push_back(i);
                 this_col.push_back(j);
 			}

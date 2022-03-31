@@ -70,6 +70,19 @@ def run_DD2(n,a,b,xyz,threads):
     """
     return gm.DD2(n,a,b,xyz,threads)
 
+def run_DD2_model(adj, nrn, threads=8, **configdict):
+    "Wrapper of distance dependence modelling together with graph generation"
+    model_params = modelling.conn_prob_2nd_order_model(adj_matrix, nrn_table, **config_dict)
+    n = adj.shape[0]
+    a = model_params.mean(axis=0)['exp_model_scale']
+    b = -model_params.mean(axis=0)['exp_model_exponent']
+    xyz = nrn_table.loc[:,['x', 'y', 'z']].to_numpy() #Make and assert that checks these columns exist!
+    C=gm.DD2(n,a,b,xyz,threads)
+    i=C['row']
+    j=C['col']
+    data=np.ones(len(i))
+    return sp.coo_matrix((data, (i, j)), [n,n])
+
 
 def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
     """

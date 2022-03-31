@@ -103,7 +103,7 @@ PYBIND11_MODULE(genModels, m) {
         return output;
     });
 
-    m.def("DD2_block_pree", [](int n, std::vector<std::pair<coeff_t,coeff_t>>& pathways, std::vector<mtype_t>& mtypes, std::vector<coord_t>& xyz, int threads) {
+    m.def("DD2_block_pre", [](int n, std::vector<std::pair<coeff_t,coeff_t>>& pathways, std::vector<mtype_t>& mtypes, std::vector<coord_t>& xyz, int threads) {
         //intialise vectors
         std::vector<std::thread> t(threads - 1);
         std::vector<std::vector<vertex_t>> row(threads);

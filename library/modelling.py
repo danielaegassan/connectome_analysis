@@ -44,6 +44,16 @@ def conn_prob_2nd_order_model(adj_matrix, nrn_table, **kwargs):
     return conn_prob_model(adj_matrix, nrn_table, **kwargs)
 
 
+def conn_prob_2nd_order_pathway_model(adj_matrix, nrn_table_src, nrn_table_tgt, **kwargs):
+    """2nd-order probability model building for separate pathways (i.e., non-symmetric adj_matrix),
+       optionally for multiple random subsets of neurons."""
+
+    assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
+    kwargs.update({'model_order': 2})
+
+    return conn_prob_pathway_model(adj_matrix, nrn_table_src, nrn_table_tgt, **kwargs)
+
+
 def conn_prob_3rd_order_model(adj_matrix, nrn_table, **kwargs):
     """3rd-order probability model building, optionally for multiple random subsets of neurons."""
 
@@ -80,6 +90,39 @@ def conn_prob_model(adj_matrix, nrn_table, **kwargs):
     for seed in sample_seeds:
         kwargs.update({'sample_seed': seed})
         _, model_dict = run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs)
+        model_params = model_params.append(pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed')))
+
+    return model_params
+
+
+def conn_prob_pathway_model(adj_matrix, nrn_table_src, nrn_table_tgt, **kwargs):
+    """General probability model building for separate pathways (i.e., non-symmetric adj_matrix),
+       optionally for multiple random subsets of neurons."""
+
+    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    for arg in invalid_args:
+        assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
+    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
+    model_name = None
+    model_order = kwargs.pop('model_order')
+
+    sample_size = kwargs.get('sample_size')
+    if sample_size is None or sample_size >= np.maximum(nrn_table_src.shape[0], nrn_table_tgt.shape[0]):
+        sample_seeds = [None] # No randomization
+        if kwargs.pop('sample_seeds', None) is not None:
+            logging.warning('Using all neurons, ignoring sample seeds!')
+    else:
+        sample_seeds = kwargs.pop('sample_seeds', 1)
+
+        if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
+            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
+        else:
+            sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+
+    model_params = pd.DataFrame()
+    for seed in sample_seeds:
+        kwargs.update({'sample_seed': seed})
+        _, model_dict = run_pathway_model_building(adj_matrix, nrn_table_src, nrn_table_tgt, model_name, model_order, **kwargs)
         model_params = model_params.append(pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed')))
 
     return model_params
@@ -165,6 +208,63 @@ def run_model_building(adj_matrix, nrn_table, model_name, model_order, **kwargs)
     # Visualize data/model (optional)
     if kwargs.get('do_plot'):
         fct_plot(adj_matrix, nrn_table, model_name, **data_dict, **model_dict, **kwargs)
+
+    return data_dict, model_dict
+
+
+def run_pathway_model_building(adj_matrix, nrn_table_src, nrn_table_tgt, model_name, model_order, **kwargs):
+    """
+    Main function for running model building for separate pathways (i.e., non-symmetric adj_matrix),
+      consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization
+    """
+    logging.info(f'Running order-{model_order} model building {kwargs}...')
+
+    # Subsampling (optional)
+    sample_size = kwargs.get('sample_size')
+    sample_seed = kwargs.get('sample_seed')
+    if sample_size is not None and sample_size > 0 and sample_size < np.maximum(nrn_table_src.shape[0], nrn_table_tgt.shape[0]):
+        logging.info(f'Subsampling to {sample_size} of {nrn_table_src.shape[0]}x{nrn_table_tgt.shape[0]} neurons (seed={sample_seed})')
+        np.random.seed(sample_seed)
+        if sample_size < nrn_table_src.shape[0]:
+            sub_sel_src = np.random.permutation([True] * sample_size + [False] * (nrn_table_src.shape[0] - sample_size))
+        else:
+            sub_sel_src = np.full(nrn_table_src.shape[0], True)
+
+        if sample_size < nrn_table_tgt.shape[0]:
+            sub_sel_tgt = np.random.permutation([True] * sample_size + [False] * (nrn_table_tgt.shape[0] - sample_size))
+        else:
+            sub_sel_tgt = np.full(nrn_table_tgt.shape[0], True)
+
+        adj_matrix = adj_matrix.tocsr()[sub_sel_src, :].tocsc()[:, sub_sel_tgt].tocsr()
+        # adj_matrix = adj_matrix[sub_sel_src, :][:, sub_sel_tgt]
+        nrn_table_src = nrn_table_src.loc[sub_sel_src, :]
+        nrn_table_tgt = nrn_table_tgt.loc[sub_sel_tgt, :]
+
+    # Set modelling functions
+    if model_order == 2: # Distance-dependent
+        fct_extract = extract_2nd_order_pathway
+        fct_fit = build_2nd_order
+        fct_plot = plot_2nd_order
+    else:
+        assert False, f'ERROR: Order-{model_order} model building not supported!'
+
+    # Data splits (optional)
+    N_split = kwargs.pop('N_split', None)
+    part_idx = kwargs.pop('part_idx', None)
+    assert N_split is None and part_idx is None, 'ERROR: Data splitting not supported!'
+    data_fn = 'data'
+
+    # Extract connection probability data
+    data_dict = fct_extract(adj_matrix, nrn_table_src, nrn_table_tgt, split_indices=None, part_idx=None, **kwargs)
+    save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
+
+    # Fit model
+    model_dict = fct_fit(**data_dict, **kwargs)
+    save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
+
+    # Visualize data/model (optional)
+    if kwargs.get('do_plot'):
+        assert False, 'ERROR: Plotting not supported!'
 
     return data_dict, model_dict
 
@@ -378,6 +478,32 @@ def extract_2nd_order(adj_matrix, nrn_table, bin_size_um=100, max_range_um=None,
         # Compute overall connection probabilities
         p_conn_dist = np.array(count_conn / count_all)
         p_conn_dist[np.isnan(p_conn_dist)] = 0.0
+
+    return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
+
+
+def extract_2nd_order_pathway(adj_matrix, nrn_table_src, nrn_table_tgt, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
+    """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons
+       for separate pathways (i.e., non-symmetric adj_matrix)."""
+
+    if coord_names is None:
+        coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in nrn_table
+
+    assert split_indices is None and part_idx is None, 'ERROR: Data splitting not supported!'
+
+    pos_table_src = nrn_table_src[coord_names].to_numpy()
+    pos_table_tgt = nrn_table_tgt[coord_names].to_numpy()
+
+    # Compute distance matrix
+    dist_mat = compute_dist_matrix(pos_table_src, pos_table_tgt)
+
+    # Extract distance-dependent connection probabilities
+    if max_range_um is None:
+        max_range_um = np.nanmax(dist_mat)
+    num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+    dist_bins = np.arange(0, num_bins + 1) * bin_size_um
+
+    p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj_matrix, [dist_mat], [dist_bins])
 
     return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 

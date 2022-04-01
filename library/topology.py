@@ -464,3 +464,22 @@ def persistence(weighted_adj, node_properties=None,
         return dgms, bettis
     else:
         return dgms
+
+#Tools for persistence
+def num_cycles(B,D,thresh):
+    #Given a persistence diagram (B,D) compute the number of cycles alive at tresh
+    #Infinite bars have death values np.inf
+    born=np.count_nonzero(B<=thresh)
+    dead=np.count_nonzero(D<=thresh)
+    return born-dead
+
+def betti_curve(B,D):
+    #Given a persistence diagram (B,D) compute its corresponding betti curve
+    #Infinite bars have death values np.inf
+    filt_values=np.concatenate([B,D])
+    filt_values=np.unique(filt_values)
+    filt_values=filt_values[filt_values!=np.inf]
+    bettis=[]
+    for thresh in filt_values:
+        bettis.append(num_cycles(B,D,thresh))
+    return filt_values,np.array(bettis)

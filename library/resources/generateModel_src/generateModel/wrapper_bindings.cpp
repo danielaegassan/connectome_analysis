@@ -102,4 +102,52 @@ PYBIND11_MODULE(genModels, m) {
         output["col"] = col[0];
         return output;
     });
+
+    m.def("DD2_block_pre", [](int n, std::vector<std::pair<coeff_t,coeff_t>>& pathways, std::vector<mtype_t>& mtypes, std::vector<coord_t>& xyz, int threads) {
+        //intialise vectors
+        std::vector<std::thread> t(threads - 1);
+        std::vector<std::vector<vertex_t>> row(threads);
+        std::vector<std::vector<vertex_t>> col(threads);
+
+        //Start each thread
+    	for (size_t index = 0; index < threads - 1; ++index){
+    		t[index] = std::thread(&add_edges_DD2_block_pre, index, n, threads, std::ref(pathways), std::ref(row[index]),std::ref(col[index]),
+                                    std::ref(xyz),std::ref(mtypes));
+    	}
+    	add_edges_DD2_block_pre(threads-1, n, threads, std::ref(pathways), std::ref(row[threads-1]),std::ref(col[threads-1]),
+                        std::ref(xyz),std::ref(mtypes));
+
+		for (size_t i = 0; i < threads - 1; ++i) t[i].join(); // Wait until all threads stopped
+
+        combine_threads(threads,row,col);
+
+        py::dict output;
+        output["row"] = row[0];
+        output["col"] = col[0];
+        return output;
+    });
+
+    m.def("DD2_block", [](int n, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways, std::vector<mtype_t>& mtypes, std::vector<coord_t>& xyz, int threads) {
+        //intialise vectors
+        std::vector<std::thread> t(threads - 1);
+        std::vector<std::vector<vertex_t>> row(threads);
+        std::vector<std::vector<vertex_t>> col(threads);
+
+        //Start each thread
+    	for (size_t index = 0; index < threads - 1; ++index){
+    		t[index] = std::thread(&add_edges_DD2_block, index, n, threads, std::ref(pathways), std::ref(row[index]),std::ref(col[index]),
+                                    std::ref(xyz),std::ref(mtypes));
+    	}
+    	add_edges_DD2_block(threads-1, n, threads, std::ref(pathways), std::ref(row[threads-1]),std::ref(col[threads-1]),
+                        std::ref(xyz),std::ref(mtypes));
+
+		for (size_t i = 0; i < threads - 1; ++i) t[i].join(); // Wait until all threads stopped
+
+        combine_threads(threads,row,col);
+
+        py::dict output;
+        output["row"] = row[0];
+        output["col"] = col[0];
+        return output;
+    });
 }

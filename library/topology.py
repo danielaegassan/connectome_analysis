@@ -85,6 +85,26 @@ def _flagser_counts(adjacency,
     return counts
 
 
+def node_degree(adj, node_properties=[], direction=None, **kwargs):
+    """Count the degree of each node in the adjacency matrix.
+
+    TODO: CHECK THE DIRECTION OF AXII BELOW, expect adj is CSR
+    """
+    assert not direction or direction in ("IN", "OUT"), f"Invalid `direction`: {direction}"
+
+    matrix = adj.toarray()
+    index = pd.Series(range(matrix.shape[0]), name="node")
+    series = lambda array: pd.Series(array, index)
+    in_degree = lambda: series(matrix.sum(axis=0))
+    out_degree = lambda: series(matrix.sum(axis=1))
+
+    if not direction:
+        return in_degree() + out_degree()
+
+    return in_degree() if direction == "IN" else out_degree()
+
+
+
 def simplex_counts(adj, node_properties=[],
                    max_simplices=False, threads=1,
                    **kwargs):

@@ -14,10 +14,18 @@
 #- Distance dependent with depth dependence
 
 ####### IMPORTS #######################
+import logging
+
 import numpy as np
 import scipy.sparse as sp
+
 import generateModel as gm
 
+LOG = logging.getLogger("connectome-analysis-randomization")
+LOG.setLevel("INFO")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
+                    level=logging.INFO,
+                    datefmt="%Y-%m-%d %H:%M:%S")
 ######generateModel versions###########
 #Erdos-Renyi model:
 #Input: n, p, threads
@@ -58,7 +66,28 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
     return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
 
 
-####### SHUFFLE #######################
+#######_ SHUFFLE #######################
+
+def seed_random_state(shuffler, seeder=np.random.seed):
+    """Decorate a connectivity shuffler to seed it's random-state before execution.
+
+    It is expected that the generator can be seeded calling `seeder(seed)`.
+    """
+    def seed_and_run_method(adj, neuron_properties=[], seed=None, **kwargs):
+        """Reinitialize numpy random state using the value of seed among `kwargs`.
+        doing nothing if no `seed` provided --- expecting an external initialization.
+        """
+        if seed is None:
+            LOG.warning("No seed among keyword arguments")
+        else:
+            seeder(seed)
+
+        return shuffler(adj, neuron_properties, **kwargs)
+
+    return seed_and_run_method
+
+
+@seed_random_state
 def ER_shuffle(adj, neuron_properties=[]):
     """
     #Creates an ER control by shuffling entries away from the diagonal in adj
@@ -66,6 +95,7 @@ def ER_shuffle(adj, neuron_properties=[]):
     """
     n = adj.get_shape()[0]
     adj = adj.toarray()
+    LOG.info("Shuffle %s edges following Erdos-Renyi", adj.sum())
     above_diagonal = adj[np.triu_indices(n, k=1)]
     below_diagonal = adj[np.tril_indices(n, k=-1)]
     off_diagonal = np.concatenate([above_diagonal, below_diagonal])

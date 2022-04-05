@@ -515,7 +515,11 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     exp_model = lambda x, a, b: a * np.exp(-b * np.array(x))
     X = dist_bins[:-1][np.isfinite(p_conn_dist)] + bin_offset
     y = p_conn_dist[np.isfinite(p_conn_dist)]
-    (exp_model_scale, exp_model_exponent), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
+    try:
+        (exp_model_scale, exp_model_exponent), _ = opt.curve_fit(exp_model, X, y, p0=[0.0, 0.0])
+    except:
+        logging.error(f'Exception while fitting model ("{sys.exc_info()[1]}")')
+        exp_model_scale = exp_model_exponent = np.nan
 
     logging.info(f'MODEL FIT: f(x) = {exp_model_scale:.6f} * exp(-{exp_model_exponent:.6f} * x)')
 
@@ -673,8 +677,13 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     y = p_conn_dist_bip[np.all(np.isfinite(p_conn_dist_bip), 1), :]
 
     exp_model = lambda x, a, b: a * np.exp(-b * np.array(x))
-    (bip_neg_exp_model_scale, bip_neg_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
-    (bip_pos_exp_model_scale, bip_pos_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
+    try:
+        (bip_neg_exp_model_scale, bip_neg_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 0], p0=[0.0, 0.0])
+        (bip_pos_exp_model_scale, bip_pos_exp_model_exponent), _ = opt.curve_fit(exp_model, X, y[:, 1], p0=[0.0, 0.0])
+    except:
+        logging.error(f'Exception while fitting model ("{sys.exc_info()[1]}")')
+        bip_neg_exp_model_scale = bip_neg_exp_model_exponent = np.nan
+        bip_pos_exp_model_scale = bip_pos_exp_model_exponent = np.nan
 
     logging.info(f'BIPOLAR MODEL FIT: f(x, dz) = {bip_neg_exp_model_scale:.6f} * exp(-{bip_neg_exp_model_exponent:.6f} * x) if dz < 0')
     logging.info(f'                              {bip_pos_exp_model_scale:.6f} * exp(-{bip_pos_exp_model_exponent:.6f} * x) if dz > 0')

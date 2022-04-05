@@ -70,18 +70,39 @@ def run_DD2(n,a,b,xyz,threads):
     """
     return gm.DD2(n,a,b,xyz,threads)
 
-def run_DD2_model(adj, nrn, threads=8, **configdict):
-    "Wrapper of distance dependence modelling together with graph generation"
-    model_params = modelling.conn_prob_2nd_order_model(adj_matrix, nrn_table, **config_dict)
+def run_DD2_model(adj, nrn_table, model_params=None,coord_names= ['x', 'y', 'z'],
+                  threads=8,return_params=False,**config_dict):
+    """
+    Wrapper generating a random control graph based on 2nd order distance dependence model
+    Input:
+    adj: original adjacency matrix, if model_params have already been computed can pass empty matrix of the right size
+    nrn_table: DataFrame with information on the vertices of adj, it must have columns corresponding to the names
+    the coordinates to be used for distance computation.  Default ['x', 'y', 'z']
+    configdict: Add me --> to generate parameters of 2nd order distance model
+    model_params: optional input of pre-computed model parameters, data frame with rows corresponding to seeds of model estimation
+    (single row if subsampling is not used) and columns:
+    exp_model_scale and exp_model_exponent for the model parameters.  See modelling.conn_prob_2nd_order_model for details.
+
+    Output: scipy coo matrix, optional model_parameters
+    """
+    if isinstance(model_params,type(None)):
+        #TODO:  What to do if coord_names are also given in configdict and do not match coord_names?
+        config_dict["coord_names"]=coord_names
+        model_params = modelling.conn_prob_2nd_order_model(adj, nrn_table,**config_dict)
     n = adj.shape[0]
     a = model_params.mean(axis=0)['exp_model_scale']
     b = -model_params.mean(axis=0)['exp_model_exponent']
-    xyz = nrn_table.loc[:,['x', 'y', 'z']].to_numpy() #Make and assert that checks these columns exist!
+    xyz = nrn_table.loc[:,coord_names].to_numpy() #Make and assert that checks these columns exist!
+    if len(coord_names)<3: #Extend by zeros if lower dimensional data was used to compute distance
+        xyz=np.hstack([xyz,np.zeros((xyz.shape[0],3-xyz.shape[1]))])
     C=gm.DD2(n,a,b,xyz,threads)
     i=C['row']
     j=C['col']
     data=np.ones(len(i))
-    return sp.coo_matrix((data, (i, j)), [n,n])
+    if return_params==True:
+        return sp.coo_matrix((data, (i, j)), [n,n]), model_params
+    else:
+        return sp.coo_matrix((data, (i, j)), [n,n])
 
 
 def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):

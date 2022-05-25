@@ -90,7 +90,8 @@ def node_degree(adj, node_properties=[], direction=None, **kwargs):
 
     TODO: CHECK THE DIRECTION OF AXII BELOW, expect adj is CSR
     """
-    assert not direction or direction in ("IN", "OUT"), f"Invalid `direction`: {direction}"
+    assert not direction or direction in ("IN", "OUT") or tuple(direction) == ("IN", "OUT"),\
+        f"Invalid `direction`: {direction}"
 
     matrix = adj.toarray()
     index = pd.Series(range(matrix.shape[0]), name="node")
@@ -101,8 +102,13 @@ def node_degree(adj, node_properties=[], direction=None, **kwargs):
     if not direction:
         return in_degree() + out_degree()
 
-    return in_degree() if direction == "IN" else out_degree()
+    if tuple(direction) == ("IN", "OUT"):
+        return pd.DataFrame({"IN": in_degree(), "OUT": out_degree()})
 
+    if tuple(direction) == ("OUT", "IN"):
+        return pd.DataFrame({"OUT": out_degree(), "IN": in_degree()})
+
+    return in_degree() if direction == "IN" else out_degree()
 
 
 def simplex_counts(adj, node_properties=[],

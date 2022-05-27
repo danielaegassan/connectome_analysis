@@ -308,7 +308,7 @@ def merge_data(part_dir, model_name, spec_name, part_list):
 
     # Compute overall (merged) connection probabilities
     p_conn = np.array(count_conn / count_all)
-    p_conn[np.isnan(p_conn)] = 0.0
+#     p_conn[np.isnan(p_conn)] = 0.0
 
     # Create (merged) data dict
     data_dict = {p_key: p_conn, count_conn_key: count_conn, count_all_key: count_all, **other_dict}
@@ -416,7 +416,7 @@ def extract_dependent_p_conn(adj, dep_matrices, dep_bins):
             count_split = count_split + np.sum(adj[s, t])
         count_conn[idx] = count_split
     p_conn = np.array(count_conn / count_all)
-    p_conn[np.isnan(p_conn)] = 0.0
+#     p_conn[np.isnan(p_conn)] = 0.0
 
     return p_conn, count_conn, count_all
 
@@ -474,7 +474,7 @@ def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
 
         # Compute overall connection probabilities
         p_conn_dist = np.array(count_conn / count_all)
-        p_conn_dist[np.isnan(p_conn_dist)] = 0.0
+#         p_conn_dist[np.isnan(p_conn_dist)] = 0.0
 
     return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 
@@ -661,7 +661,7 @@ def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
 
         # Compute overall connection probabilities
         p_conn_dist_bip = np.array(count_conn / count_all)
-        p_conn_dist_bip[np.isnan(p_conn_dist_bip)] = 0.0
+#         p_conn_dist_bip[np.isnan(p_conn_dist_bip)] = 0.0
 
     return {'p_conn_dist_bip': p_conn_dist_bip, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins, 'bip_bins': bip_bins}
 

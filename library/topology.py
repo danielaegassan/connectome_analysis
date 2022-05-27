@@ -127,6 +127,9 @@ def betti_counts(adj, node_properties=[],
                  min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
                  **kwargs):
     """..."""
+    LOG.info("Compute betti counts for %s-type adjacency matrix and %s-type node properties",
+             type(adj), type(node_properties))
+
     from pyflagser import flagser_unweighted
     import numpy as np
     adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
@@ -134,7 +137,7 @@ def betti_counts(adj, node_properties=[],
         max_dim=np.inf
 
     if approximation==None:
-        print("Run without approximation")
+        LOG.info("Run without approximation")
         bettis = flagser_unweighted(adj, min_dimension=min_dim, max_dimension=max_dim,
                                     directed=True, coeff=2,
                                     approximation=None)['betti']
@@ -152,7 +155,7 @@ def betti_counts(adj, node_properties=[],
             if approximation.size-1>max_dim:#Vector too long, select relevant slice
                 approximation=approximation[0:max_dim+1]
             #Sanity check
-            print("Correct dimensions for approximation:", approximation.size==max_dim+1)
+            LOG.info("Correct dimensions for approximation: %s", approximation.size==max_dim+1)
 
         #Split approximation into sub-vectors of same value to speed up computation
         diff=approximation[1:]-approximation[:-1]
@@ -165,7 +168,7 @@ def betti_counts(adj, node_properties=[],
             a=approximation[n]
             if a==-1:
                 a=None
-            print("Run betti for dim range {0}-{1} with approximation {2}".format(n,N,a))
+            LOG.info("Run betti for dim range %s-%s with approximation %s", n,N,a)
             bettis=bettis+flagser_unweighted(adj, min_dimension=n, max_dimension=N,
                                              directed=True, coeff=2,
                                              approximation=a)['betti']
@@ -174,7 +177,7 @@ def betti_counts(adj, node_properties=[],
             n=approximation.size #min dim for computation
             N=np.inf #max dim for computation
             a=None
-            print("Run betti for dim range {0}-{1} with approximation {2}".format(n,N,a))
+            LOG.info("Run betti for dim range %s-%s with approximation %s",n,N,a)
             bettis=bettis+flagser_unweighted(adj, min_dimension=n, max_dimension=N,
                                              directed=True, coeff=2,
                                              approximation=a)['betti']
@@ -441,7 +444,7 @@ def persistence(weighted_adj, node_properties=None,
     # For single approximate value
     if approximation == None or isinstance(approximation, int):
         if min_dim != 0:
-            print("Careful of pyflagser bug with range in dimension")
+            LOG.info("Careful of pyflagser bug with range in dimension")
         out = flagser_weighted(adj, min_dimension=min_dim, max_dimension=max_dim, directed=True, coeff=2,
                                approximation=approximation)
         dgms = out['dgms']
@@ -459,13 +462,13 @@ def persistence(weighted_adj, node_properties=None,
                 N = np.inf
             if a == -1:
                 a = None
-            print("Run betti for dim range {0}-{1} with approximation {2}".format(n, N, a))
+            LOG.info("Run betti for dim range %s-%s with approximation %s",n, N, a)
             if n != 0:
-                print("Warning, possible bug in pyflagser when not running dimension range starting at dim 0")
+                LOG.info("Warning, possible bug in pyflagser when not running dimension range starting at dim 0")
             out = flagser_weighted(adj, min_dimension=n, max_dimension=N, directed=True, coeff=2, approximation=a)
             bettis = bettis + out['betti']
             dgms = dgms + out['dgms']
-            print([out['dgms'][i].shape for i in range(len(out['dgms']))])
+            LOG.info("out: %s",[out['dgms'][i].shape for i in range(len(out['dgms']))])
     if return_bettis == True:
         return dgms, bettis
     else:

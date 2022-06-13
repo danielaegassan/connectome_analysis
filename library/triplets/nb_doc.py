@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+# %% [markdown]
 """This is a document in code explaining the usage of common-neighbors and other tools
 for analyzing triplets in a graph.
 """
@@ -20,7 +21,7 @@ that we obtain in the next section from the NMC portal data we have cached.
 This data can be replaced by any adjacency matrix and node-properties for rest of the notebook.
 """
 
-# %%[markdown]
+# %% [markdown]
 """
 ## NMC-portal central-columns
 
@@ -57,7 +58,7 @@ circuit = Circuit(lab.config["measurements"]["CircuitConfig"])
 circuit.connections = helper.load_connections(circuit, lab.config["measurements"]["analyses"])
 
 
-# %%[markdown]
+# %% [markdown]
 """
 The connections loaded above will contain a `pandas.DataFrame` for each of the 8 regional central-columns
 in SSCx.
@@ -72,7 +73,7 @@ conns = lab.helper.get_connections(circuit, "central_columns", target_region)
 edges, nodes = lab.helper.anonymize_gids(conns, cells)
 adjacency = lab.get_adjacency(edges, nodes)
 
-# %%[markdown]
+# %% [markdown]
 """
 ## Redine node `mtype`
 Since we are working with a brain circuit, let us adapt the target-region data we have for
@@ -88,14 +89,14 @@ def tag_morphology(lmtype):
 
 node_properties = nodes.assign(lmtype=nodes.mtype, mtype=nodes.mtype.apply(tag_morphology))
 
-# %%[markdown]
+# %% [markdown]
 """
 If the above seems obscure, we wouldn't be surprized. These are excerpts from a pipeline workflow
 we are developing to produce the backend data for the BBP-Portals.
 With the adjacency and node-properties loaded, we can move on to obtaining the common-neighbor biases.
 """
 
-# %%[markdown]
+# %% [markdown]
 """
 ## Counting the number of common neighbors.
 
@@ -139,7 +140,7 @@ cn_analysis = common_neighbors.CommonNeighborAnalysis({})
 
 graph = cn_analysis.Graph(adjacency, node_properties)
 
-# %%[markdown]
+# %% [markdown]
 """
 We compute common-neighbors by specifying a sub-population of sources, and targets.
 These sub-populations are represented as edge-types:
@@ -150,7 +151,7 @@ edge_types = graph.read_edge_types(described=(["layer", "mtype"], ["layer", "mty
 
 display(edge_types)
 
-# %%[markdown]
+# %% [markdown]
 """
 For each of the edge-types, we can obtain sources and targets, and count the number of
 common neighbor sources / targets,
@@ -172,7 +173,7 @@ the subpopulation sources and targets,
 # %%
 subadj = graph.subset_adjacency_of(subpopulation=(of_sources, and_targets))
 
-# %%[markdown]
+# %% [markdown]
 """
 which can be combined with the count of common-sources to obtain the bias of
 connected source-target pairs over those not-connected in the number of their common neighbor sources.
@@ -180,7 +181,7 @@ connected source-target pairs over those not-connected in the number of their co
 cn_sources_bias = cn_analysis.model_bias(common_neighbors=count_sources, given_connectivity=subadj)
 display(cn_sources_bias)
 
-# %%[markdown]
+# %% [markdown]
 """
 While this was a demonstration of the bias for a single edge-type population in the graph,
 we can compute biases for all the edge-types,

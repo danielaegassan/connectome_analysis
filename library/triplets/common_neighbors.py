@@ -241,8 +241,8 @@ class CommonNeighborAnalysis:
 
             return masked if as_mask else (ids(masked) if only_ids else nodes(masked))
 
-        def describe_pair(self, subpopulation):
-            """We describe the subpopulation as either
+        def describe_pair(self, subpopulations):
+            """We describe the (source, target) subpopulations as either
             1) a singleton of
             ~  a) 1D-array of node ids or
             ~  b) A description of node-types,
@@ -253,16 +253,16 @@ class CommonNeighborAnalysis:
             ~  c) description of sources, 1D-array of target ids
             ~  d) description of sources, description of targets
             """
-            if isinstance(subpopulation, tuple):
-                return subpopulation
+            if isinstance(subpopulations, tuple):
+                return subpopulations
 
-            subpopulation = pd.Series(subpopulation)
+            subpopulation = pd.Series(subpopulations)
             try:
-                subsources = subpopulation.source
+                subsources = subpopulations.source
             except AttributeError:
-                subsources = subtargets = subpopulation
+                subsources = subtargets = subpopulations
             else:
-                subtargets = subpopulation.target
+                subtargets = subpopulations.target
             return (subsources, subtargets)
 
         def pair_nodes(self, as_described, mask=False):
@@ -273,42 +273,61 @@ class CommonNeighborAnalysis:
                     if not mask else
                     (self.find_nodes(sources, as_mask=True), self.find_nodes(targets, as_mask=True)))
 
-        def count_common_sources_to(self, subpopulation):
+        def count_common_sources_to(self, subpopulations):
             """Count the number of nodes in graph that are sources of edges to each of the nodes among
             pairs in a subpopulation described by a tuple of sources and targets.
 
             All pairs of sources and targets will be represented as a matrix...
             """
-            subsources, subtargets = subpopulation
+            subsources, subtargets = subpopulations
             edges_to_subsources = self.transpose.adjacency[subsources, :].astype(int)
             edges_to_subtargets = self.adjacency[:, subtargets].astype(int)
             return edges_to_subsources * edges_to_subtargets
 
-        def count_common_targets_of(self, subpopulation):
+        def count_common_targets_of(self, subpopulations):
             """Count the number of nodes in graph that are targets of edges from each of the nodes among
             pairs in a subpopulation described by a tuple of sources and targets.
 
             All pairs of sources and targets will be represented as a matrix...
             """
-            subsources, subtargets = subpopulation
+            subsources, subtargets = subpopulations
             edges_from_subsources = self.adjacency[subsources, :].astype(int)
             edges_from_subtargets = self.transpose.adjacency[:, subtargets].astype(int)
             return edges_from_subsources * edges_from_subtargets
 
-        def subset_adjacency_of(self, subpopulation):
+        def subset_adjacency_of(self, subpopulations):
             """Subadjacency matrix of a subpopulation of nodes.
             """
-            of_sources, and_targets = subpopulation
+            of_sources, and_targets = subpopulations
             return self.adjacency[of_sources, :][:, and_targets]
 
+    def EdgeType(self, from_source_type, to_target_type):
+        """..."""
+        source_type = pd.Series(from_source_type)
+        target_type = pd.Series(to_target_type)
+        return pd.concat([source_type, target_type])
 
-    def subgraph_adjacency(self, in_graph, of_subpopulation):
+    def specify_subpopulations(self, described):
+        """Get the edge-type described as a pathway.
+        """
+        if isinstance(described, (Mapping, pd.Series)):
+            return self.EdgeType(from_source_type=described, to_target_type=described)
+
+        if isinstance(described, tuple):
+            assert len(tuple) == 2,\
+                f"The tuple description {described} should describe (sources, targets)."
+
+            return self.EdgeType(from_source_type=described[0], to_target_type=described[1])
+
+        raise NotImplementedError(f"Specification of edge type for {type(described)}")
+
+    def subgraph_adjacency(self, in_graph, of_subpopulations):
         """Extract the sub-matrix adjacency of a subpopulation of nodes in a graph.
         """
-        of_sources, and_targets = in_graph.pair_nodes(of_subpopulation, mask=True)
-        return in_graph.subset_adjacency_of(subpopulation=(of_sources, and_targets))
+        of_sources, and_targets = in_graph.pair_nodes(of_subpopulations, mask=True)
+        return in_graph.subset_adjacency_of(subpopulations=(of_sources, and_targets))
 
-    def count(self, common_neighbor, in_graph, of_subpopulation):
+    def count(self, common_neighbor, in_graph, of_subpopulations):
         """...Count the number of common neighbors of a population of nodes
         among connections in a connectivity matrix provided in a `Graph` instance
 
@@ -316,13 +335,13 @@ class CommonNeighborAnalysis:
         in_graph: Whole population adjacency and node-properties in a `CommonNeighborAnalysis.Graph`.
         of_subpulation: of the nodes in the connectivity matrix to compute neighbors of
         """
-        of_sources, and_targets = in_graph.pair_nodes(of_subpopulation, mask=True)
+        of_sources, and_targets = in_graph.pair_nodes(of_subpopulations, mask=True)
 
         if common_neighbor == "sources":
-            return in_graph.count_common_sources_to(subpopulation=(of_sources, and_targets))
+            return in_graph.count_common_sources_to(subpopulations=(of_sources, and_targets))
 
         if common_neighbor == "targets":
-            return in_graph.count_common_targets_of(subpopulation=(of_sources, and_targets))
+            return in_graph.count_common_targets_of(subpopulations=(of_sources, and_targets))
 
         raise ValueError(f"Unknown or unimplemented common-neighbor type %s", common_neighbor)
 
@@ -369,30 +388,151 @@ class CommonNeighborAnalysis:
         bias = added / intercept
         return output(bias, pvalue, intercept, added)
 
-    def evaluate_bias(self, common_neighbor, in_graph, by_subpopulation):
-        """..."""
-        def evaluate(edge_type):
-            """..."""
-            LOG.debug("Evaluate common neighbor bias for edge type \n%s", edge_type)
-            counts = self.count(common_neighbor, in_graph, of_subpopulation=edge_type)
-            matrix = self.subgraph_adjacency(in_graph, of_subpopulation=edge_type)
-            return self.model_bias(common_neighbors=counts, given_connectivity=matrix)
 
-        edge_types = in_graph.read_edge_types(described=by_subpopulation)
+    def extract_adj_and_counts(self, of_common_neighbor, in_graph, for_edge_type):
+        """Obtain the submatrices representing the adjacency and the number of common neighbors,
+        of sources to target pairs in given edge type.
+
+        Arguments
+        ------------------------------------------------------------------------------------------
+        of_common_neighbor :: String #Either "sources", or "targets"
+
+        in_graph :: Graph
+
+        for_edge_type :: Either(Mapping or Tuple(Mapping, Mapping) #that specifies the edge type,
+        ~                where `Mapping` is that of cell properties to their cell properties that
+        ~                define the source and target subpopulations.
+        ~ examples: ```
+                for_edge_type={"layer": 1, "mtype": "DAC"}
+                for_edge_type=tuple({"layer": 1, "mtype": "DAC"}, {"layer": 3, "mtype": "TPC:A"})
+        ```
+        ------------------------------------------------------------------------------------------
+        NOTE: The populations of sources and targets in the argued edge type may not be identical,
+        of the same number.
+        TODO: Refactor `Graph` to allow for different populations along the rows, and columns.
+        This will required that there be two node properties, one for sources, i.e. rows, and
+        another for columns, i.e targets.
+        """
+        by_edge_type = self.specify_subpopulations(for_edge_type)
+        counts = self.count(of_common_neighbor, in_graph, of_subpopulations=by_edge_type)
+        matrix = self.subgraph_adjacency(in_graph, of_subpopulations=by_edge_type)
+
+        return (counts, matrix)
+
+    def evaluate_bias(self, of_common_neighbor, in_graph, for_edge_type):
+        """Evaluate bias for connectivity in the number of common neighbors of
+        sources and targets of a given edge-type.
+
+        Arguments
+        ------------------------------------------------------------------------------------------
+        of_common_neighbor :: String #Either "sources", or "targets"
+
+        in_graph :: Graph
+
+        for_edge_type :: Either(Mapping or Tuple(Mapping, Mapping) #that specifies the edge type,
+        ~                where `Mapping` is that of cell properties to their cell properties that
+        ~                define the source and target subpopulations.
+        ~ examples: ```
+                for_edge_type={"layer": 1, "mtype": "DAC"}
+                for_edge_type=tuple({"layer": 1, "mtype": "DAC"}, {"layer": 3, "mtype": "TPC:A"})
+        ```
+        ------------------------------------------------------------------------------------------
+        """
+        LOG.debug("Evaluate common neighbor bias for edge type \n%s", for_edge_type)
+        counts, matrix = self.extract_adj_and_counts(of_common_neighbor, in_graph, for_edge_type)
+        return self.model_bias(common_neighbors=counts, given_connectivity=matrix)
+
+    def evaluate_sources_bias(self, in_graph, for_edge_type):
+        """Evaluate the connectivity bias of common sources in a graph for a given edge type.
+        """
+        G = in_graph
+        E = for_edge_type
+        return self.evaluate_bias(of_common_neighbor="sources", in_graph=G, for_edge_type=E)
+
+    def evaluate_targets_bias(self, in_graph, for_edge_type):
+        """Evaluate the connectivity bias of common sources in a graph for a given edge type.
+        """
+        G = in_graph
+        E = for_edge_type
+        return self.evaluate_bias(of_common_neighbor="targets", in_graph=G, for_edge_type=E)
+
+    def evaluate_bias_by_pathways(self, groupedby, of_common_neighbor, in_graph):
+        """Evaluate connectivity bias in the number of common neighbors between sources and targets
+        for each of such subpopulations in pathways that are grouped by specifying node-properties
+        of the sources and targets.
+        """
+        edge_types = in_graph.read_edge_types(groupedby)
         by_edges = pd.MultiIndex.from_frame(edge_types, names=['_'.join(c) for c in edge_types])
 
+        evaluate = lambda E: self.evaluate_bias(of_common_neighbor, in_graph, for_edge_type=E)
         return edge_types.apply(evaluate, axis=1).set_index(by_edges)
 
+    def evaluate_sources_bias_by_pathways(self, groupedby, in_graph):
+        """Evaluate connectivity bias in the number of common neighbor sources between
+        sources and targets among grouped by either one or a list of node-properties.
+        Node-properties to group sources and targets may be specified seprately in a two-tuple.
 
-def get_common_neighbor_biases(adjacency, node_properties, by_subpopulation, **parameters):
+        Arguments
+        --------------------------------------------------------------------------------------
+        groupedby : Either[List[NodeProperty], Tuple[List[NodeProperty]]]
+        --------------------------------------------------------------------------------------
+        """
+        G = in_graph
+        return self.evaluate_bias_by_pathways(groupedby, of_common_neighbor="sources", in_graph=G)
+
+    def evaluate_targets_bias_by_pathways(self, groupedby, in_graph):
+        """Evaluate connectivity bias in the number of common neighbor targets between
+        sources and targets among grouped by either one or a list of node-properties.
+        Node-properties to group sources and targets may be specified seprately in a two-tuple.
+
+        Arguments
+        --------------------------------------------------------------------------------------
+        groupedby : Either[List[NodeProperty], Tuple[List[NodeProperty]]]
+        --------------------------------------------------------------------------------------
+        """
+        G = in_graph
+        return self.evaluate_bias_by_pathways(groupedby, of_common_neighbor="targets", in_graph=G)
+
+
+
+# The classes defined above will be used by the methods below that can be exposed as the library
+# of common-neighbor methods
+def get_common_neighbor_biases(adjacency, node_properties, *,
+                               by_node_properties=None, for_edge_type=None, **parameters):
     """Compute all the possible cn-biases.
+
+    Arguments
+    ------------------------------------------------------------------------------------------------
+    by_node_properties :: Either[List, Tuple(List, List)] #that provides node properties to group
+    ~ sources, and targets to compute biases for.
+    ~ examples
+    ~  (["layer", "mtype"], ["layer", "mtype"])
+
+    for_edge_type :: Either[Mapping, Tuple(Mapping, Mapping)] #that provides mappings of node-properties
+    ~ to values to filter the sources and targets to copmute biases for.
+    ~ examples
+    ~  ({"layer": 1}, {"layer": 3, "mtype": "TPC:A"})
+
+    TODO:
+    parameters :: Mapping[CommonNeighborAnalysis.Parameters --> values] #that parameterizes the kind of
+    ~ common-neighbor biases to compute
+
+    ------------------------------------------------------------------------------------------------
     """
+    assert not (by_node_properties is not None and for_edge_type is not None),\
+        "Get common neighbor biases by either listing node properties or by mapping edge types, not both."
+
     cn_analysis = CommonNeighborAnalysis(parameters)
-    G = CommonNeighborAnalysis.Graph(adjacency, node_properties)
-    P = by_subpopulation
+    of_adjacency = cn_analysis.Graph(adjacency, node_properties)
+    layers_and_mtypes = (["layer", "mtype"], ["layer", "mtype"])
 
-    evaluate_bias = cn_analysis.evaluate_bias
-    cn_sources_bias = evaluate_bias(common_neighbor="sources", in_graph=G, by_subpopulation=P)
-    cn_targets_bias = evaluate_bias(common_neighbor="targets", in_graph=G, by_subpopulation=P)
+    def evaluate_bias_of_common(sources_or_targets):
+        return cn_analysis.evaluate_bias_by_pathways(grouped_by=layers_and_mtypes,
+                                                     of_common_neighbor=sources_or_targets,
+                                                     in_graph=of_adjacency)
 
-    return pd.concat([cn_sources_bias, cn_targets_bias], axis=1, keys=["cn_sources", "cn_targets"])
+    cn_sources_bias = evaluate_bias_of_common("sources")
+    cn_targets_bias = evaluate_bias_of_common("targets")
+
+    return pd.concat([cn_sources_bias, cn_targets_bias], axis=1, keys=["cn_sources", "cn_targets"],
+                     names=["cn_types"])

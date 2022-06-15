@@ -14,67 +14,192 @@
 #- Distance dependent with depth dependence
 
 ####### IMPORTS #######################
+import logging
+
 import numpy as np
 import scipy.sparse as sp
+
 import generateModel as gm
 
-from .resources.randomization import (
-    bidirectional_edges,
-    adjust_bidirectional_connections,
-    add_bidirectional_connections,
-    half_matrix
-)
-
+LOG = logging.getLogger("connectome-analysis-randomization")
+LOG.setLevel("INFO")
+logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
+                    level=logging.INFO,
+                    datefmt="%Y-%m-%d %H:%M:%S")
 ######generateModel versions###########
-#Erdos-Renyi model:
-#Input: n, p, threads
-#    n = number of vertices (int)
-#    p = edge probability (double)
-#    threads = number of threads to use (int)
 def run_ER(n,p,threads):
+    """
+    Erdos-Renyi model
+
+    Input: n, p, threads
+       n = number of vertices (int)
+       p = edge probability (double)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.ER(n,p,threads)
 
-#Stochastic Block Model:
-#Input: n, pathways, mtypes, threads
-#    n = number of vertices (int)
-#    M = M[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
-#    mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
-#    threads = number of threads to use (int)
+
 def run_SBM(n, pathways, mtypes, threads):
+    """
+    Stochastic Block Model
+
+    Input: n, pathways, mtypes, threads
+       n = number of vertices (int)
+       pathways = pathways[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.SBM(n, pathways, mtypes, threads)
 
-#Distance Dependant 2nd Order:
-#Input: n, a, b, xyz, threads
-#    n = number of vertices (int)
-#    a = coefficient of probability function (double)
-#    b = coefficient of probability function (double)
-#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-#    threads = number of threads to use (int)
+
 def run_DD2(n,a,b,xyz,threads):
+    """
+    Distance Dependant 2nd Order
+
+    Input: n, a, b, xyz, threads
+       n = number of vertices (int)
+       a = coefficient of probability function (double)
+       b = coefficient of probability function (double)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.DD2(n,a,b,xyz,threads)
 
-#Distance Dependant 3rd Order:
-#Input: n, a, b, xyz, threads
-#    n = number of vertices (int)
-#    a1 and a2 = coefficients of probability function for dz<0 (double)
-#    a2 and b2 = coefficient of probability function for dz>0 (double)
-#    xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-#    depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
-#    threads = number of threads to use (int)
+def run_DD2_model(adj, node_properties,
+                  model_params_dd2=None, #an analysis that could be loaded from the pipeline
+                  coord_names= ['x', 'y', 'z'],
+                  threads=8, return_params=False, **config_dict):
+    """
+    Wrapper generating a random control graph based on 2nd order distance dependence model
+    Input:
+    adj: original adjacency matrix, if model_params have already been computed can pass empty matrix of the right size
+    node_properties: DataFrame with information on the vertices of adj, it must have columns corresponding to the names
+    the coordinates to be used for distance computation.  Default ['x', 'y', 'z']
+    configdict: Add me --> to generate parameters of 2nd order distance model
+    model_params: optional input of pre-computed model parameters, data frame with rows corresponding to seeds of model estimation
+    (single row if subsampling is not used) and columns:
+    exp_model_scale and exp_model_exponent for the model parameters.  See modelling.conn_prob_2nd_order_model for details.
+
+    Output: scipy coo matrix, optional model_parameters
+    """
+
+    if model_params_dd2 is None:
+        from .import modelling
+        #TODO:  What to do if coord_names are also given in configdict and do not match coord_names?
+        config_dict["coord_names"]=coord_names
+        model_params_dd2 = modelling.conn_prob_2nd_order_model(adj, node_properties,**config_dict)
+
+    LOG.info("Run DD2 model with parameters: \n%s", model_params_dd2)
+
+    n = adj.shape[0]
+    a = model_params_dd2.mean(axis=0)['exp_model_scale']
+    b = model_params_dd2.mean(axis=0)['exp_model_exponent']
+    xyz = node_properties.loc[:,coord_names].to_numpy() #Make and assert that checks these columns exist!
+    if len(coord_names)<3: #Extend by zeros if lower dimensional data was used to compute distance
+        xyz=np.hstack([xyz,np.zeros((xyz.shape[0],3-xyz.shape[1]))])
+    C=gm.DD2(n,a,b,xyz,threads)
+    i=C['row']
+    j=C['col']
+    data=np.ones(len(i))
+    if return_params==True:
+        return sp.coo_matrix((data, (i, j)), [n,n]), model_params_dd2
+    else:
+        return sp.coo_matrix((data, (i, j)), [n,n])
+
+
 def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
+    """
+    Distance Dependant 3rd Order
+
+    Input: n, a, b, xyz, threads
+       n = number of vertices (int)
+       a1 and a2 = coefficients of probability function for dz<0 (double)
+       a2 and b2 = coefficient of probability function for dz>0 (double)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
     return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
 
 
+#######_ SHUFFLE #######################
+
+def seed_random_state(shuffler, seeder=np.random.seed):
+    """Decorate a connectivity shuffler to seed it's random-state before execution.
+
+    It is expected that the generator can be seeded calling `seeder(seed)`.
+    """
+    def seed_and_run_method(adj, neuron_properties=[], seed=None, **kwargs):
+        """Reinitialize numpy random state using the value of seed among `kwargs`.
+        doing nothing if no `seed` provided --- expecting an external initialization.
+        """
+        if seed is None:
+            LOG.warning("No seed among keyword arguments")
+        else:
+            seeder(seed)
+
+        return shuffler(adj, neuron_properties, **kwargs)
+
+    return seed_and_run_method
+
+
+def run_DD2_block_pre(n,pathways,mtypes,xyz,threads):
+    """
+    Distance Dependant Stochastic Block Model (pre synaptic only)
+
+    Input: n, pathways, mtypes, xyz, threads
+       n = number of vertices (int)
+       pathways = pathways[i] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,2), dtype=double), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
+    return gm.DD2_block_pre(n,pathways,mtypes,xyz,threads)
+
+
+def run_DD2_block(n,pathways,mtypes,xyz,threads):
+    """
+    Distance Dependant Stochastic Block Model
+
+    Input: n, pathways, mtypes, xyz, threads
+       n = number of vertices (int)
+       pathways = pathways[i][j] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,m,2), dtype=double), where m is number of mtypes
+       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
+       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
+       threads = number of threads to use (int)
+
+    Output: coo matrix
+    """
+    return gm.DD2_block(n,pathways,mtypes,xyz,threads)
+
+
 ####### SHUFFLE #######################
+@seed_random_state
 def ER_shuffle(adj, neuron_properties=[]):
+    """
     #Creates an ER control by shuffling entries away from the diagonal in adj
-    #TODO: Re-implement this using only sparse matrices
-    n=adj.get_shape()[0]
-    adj=adj.toarray()
-    not_diag=np.concatenate([adj[np.triu_indices(n,k=1)],adj[np.tril_indices(n,k=-1)]])#Entries off the diagonal
-    np.random.shuffle(not_diag)
-    adj[np.triu_indices(n,k=1)]=not_diag[0:n*(n-1)//2]
-    adj[np.tril_indices(n,k=-1)]=not_diag[n*(n-1)//2:]
+    TODO: Re-implement this using only sparse matrices
+    """
+    n = adj.get_shape()[0]
+    adj = adj.toarray()
+    LOG.info("Shuffle %s edges following Erdos-Renyi", adj.sum())
+    above_diagonal = adj[np.triu_indices(n, k=1)]
+    below_diagonal = adj[np.tril_indices(n, k=-1)]
+    off_diagonal = np.concatenate([above_diagonal, below_diagonal])
+
+    np.random.shuffle(off_diagonal)
+    adj[np.triu_indices(n,k=1)] = off_diagonal[0:n*(n-1)//2]
+    adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
     return sp.csr_matrix(adj)
 
 ####### PROBABILITY ##################
@@ -92,6 +217,7 @@ def adjusted_ER(sparse_matrix: sp.csc_matrix, generator_seed:int) -> sp.csc_matr
     :return adjER_matrix: Adjusted ER model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, adjust_bidirectional_connections
     generator = np.random.default_rng(generator_seed)
     target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
     ER_matrix = ER_shuffle(sparse_matrix).tocsc()
@@ -111,6 +237,7 @@ def underlying_model(sparse_matrix: sp.csc_matrix, generator_seed: int):
     :return und_matrix: Underlying model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, add_bidirectional_connections
     generator = np.random.default_rng(generator_seed)
     target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
     ut_matrix = sp.triu(sparse_matrix + sparse_matrix.T)
@@ -133,8 +260,34 @@ def bishuffled_model(sparse_matrix: sp.csc_matrix, generator_seed: int) -> sp.cs
     :return und_matrix: Bishuffled model.
     :rtype: sp.csc_matrix
     """
+    from .resources.randomization import bidrectional_edges, add_bidirectional_connections, half_matrix
     generator = np.random.default_rng(generator_seed)
     ut_bedges = sp.triu(bidirectional_edges(sparse_matrix))
     target_bedges = ut_bedges.count_nonzero()
     bedges1, bedges2 = half_matrix(ut_bedges, generator)
     return add_bidirectional_connections(sparse_matrix - bedges1 - bedges2.T, target_bedges, generator)
+
+
+def configuration_model(sparse_matrix: sp.coo_matrix, generator_seed: int):
+    """
+    Function to generate the configuration control model, obtained by
+    shuffling the row and column of coo format independently, to create
+    new coo matrix, then removing any multiple edges and loops.
+
+    :param sparse_matrix: Sparse input matrix.
+    :type: sp.coo_matrix
+    :param generator_seed: Numpy generator seed.
+    :type: int
+
+    :return CM_matrix: Configuration model.
+    :rtype: sp.csr_matrix
+    """
+    generator = np.random.default_rng(generator_seed)
+    R = sparse_matrix.row
+    C = sparse_matrix.col
+    generator.shuffle(R)
+    generator.shuffle(C)
+    CM_matrix = sp.coo_matrix(([1]*len(R),(R,C)),shape=sparse_matrix.shape).tocsr()
+    CM_matrix.setdiag(0)
+    CM_matrix.eliminate_zeros()
+    return CM_matrix

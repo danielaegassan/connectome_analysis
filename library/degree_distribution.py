@@ -18,7 +18,7 @@ def gini_curve(m, nrn, direction='efferent'):
 
 
 def gini_coefficient(m, nrn, direction='efferent'):
-    gc = gini_curve(m, direction=direction)
+    gc = gini_curve(m, nrn, direction=direction)
     A = gc.index.values
     B = gc.values
     return numpy.sum(numpy.diff(A) * (B[:-1] + B[1:]) / 2.0)
@@ -73,17 +73,48 @@ def rich_club_curve(m, nrn, direction='efferent'):
     else:
         ret_x, udegrees, degrees = _bin_degrees(degrees)
 
-    edge_counter = lambda i: (degrees >= i).sum() * ((degrees >= i).sum() - 1)
-    mat_counter = lambda i: m[numpy.ix_(degrees >= i, degrees >= i)].sum()
+    edge_counter = lambda i: (degrees >= i).sum() * ((degrees >= i).sum() - 1)  # number of pot. edges
+    mat_counter = lambda i: m[numpy.ix_(degrees >= i, degrees >= i)].sum()  # number of actual edges
     ret = (numpy.array([mat_counter(i) for i in udegrees]).astype(float)
             / numpy.array([edge_counter(i) for i in udegrees]))
     return pandas.Series(ret, index=ret_x)
 
 
+def efficient_rich_club_curve(M, direction="efferent"):
+    M = M.tocoo()
+    shape = M.shape
+    M = pandas.DataFrame.from_dict({"row": M.row, "col": M.col})
+    if direction == "efferent":
+        deg = M["row"].value_counts()
+    elif direction == "afferent":
+        deg = M["col"].value_counts()
+    else:
+        raise ValueError()
+
+    degree_bins = numpy.arange(deg.max() + 2)
+    degree_bins_rv = degree_bins[-2::-1]
+    nrn_degree_distribution = numpy.histogram(deg.values, bins=degree_bins)[0]
+    nrn_cum_degrees = numpy.cumsum(nrn_degree_distribution[-1::-1])
+    nrn_cum_pairs = nrn_cum_degrees * (nrn_cum_degrees - 1)
+
+    deg_arr = numpy.zeros(shape[0], dtype=int)
+    deg_arr[deg.index.values] = deg.values
+
+    deg = None
+
+    con_degree = numpy.minimum(deg_arr[M["row"].values], deg_arr[M["col"].values])
+    M = None
+    con_degree = numpy.histogram(con_degree, bins=degree_bins)[0]
+
+    cum_degrees = numpy.cumsum(con_degree[-1::-1])
+
+    return pandas.DataFrame(cum_degrees / nrn_cum_pairs, degree_bins_rv)
+
+
 def _analytical_expected_rich_club_curve(m, direction='efferent'):
     assert m.dtype == bool, "This function only works for binary matrices at the moment"
-    indegree = m.sum(axis=0)
-    outdegree = m.sum(axis=1)
+    indegree = numpy.array(m.sum(axis=0))[0]
+    outdegree = numpy.array(m.sum(axis=1))[:, 0]
 
     if direction == 'afferent':
         degrees = indegree
@@ -106,17 +137,66 @@ def _analytical_expected_rich_club_curve(m, direction='efferent'):
                          for _ia, _is, o in zip(i_sum_all, i_sum_s, o_v)])
         res_mn.append(numpy.sum(S[:, 0]) / edge_counter(deg))
         res_sd.append(numpy.sqrt(S[:, 1].sum()) / edge_counter(deg)) #Sum the variances, but divide the std
-    return pandas.DataFrame.from_dict({"mean": numpy.array(res_mn),
-                                       "std": numpy.array(res_sd)},
-                                       index=udegrees)
+    df = pandas.DataFrame.from_dict({"mean": numpy.array(res_mn),
+                                       "std": numpy.array(res_sd)})
+    df.index = udegrees
+    return df
 
 
-def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std', **kwargs):
+def generate_degree_based_control(M, direction="efferent"):
+    """
+    A shuffled version of a connectivity matrix that aims to preserve degree distributions.
+    If direction = "efferent", then the out-degree is exactly preserved, while the in-degree is 
+    approximately preseved. Otherwise it's the other way around.
+    """
+    if direction == "efferent":
+        M = M.tocsr()
+        idxx = numpy.arange(M.shape[1])
+        p_out = numpy.array(M.mean(axis=0))[0]
+    elif direction == "afferent":
+        M = M.tocsc()
+        idxx = numpy.arange(M.shape[0])
+        p_out = numpy.array(M.mean(axis=1))[:, 0]
+    else:
+        raise ValueError()
+    
+    for col in range(M.shape[1]):
+        p = p_out.copy()
+        p[col] = 0.0
+        p = p / p.sum()
+        a = M.indptr[col]
+        b = M.indptr[col + 1]
+        M.indices[a:b] = numpy.random.choice(idxx, b - a, p=p, replace=False)
+    return M
+
+
+def _randomized_control_rich_club_curve(m, direction='efferent', n=10):
+    res = []
+    for _ in range(n):
+        m_shuf = generate_degree_based_control(m, direction=direction)
+        res.append(efficient_rich_club_curve(m_shuf))
+    res = pandas.concat(res, axis=1)
+    
+    df = pandas.DataFrame.from_dict(
+        {
+            "mean": numpy.nanmean(rr, axis=1),
+            "std": numpy.nanstd(rr, axis=1)
+        }    
+    )
+    df.index = res.index
+    return df
+
+
+def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std',
+                               normalize_with="shuffled", **kwargs):
     assert m.dtype == bool, "This function only works for binary matrices at the moment"
-    data = rich_club_curve(m, direction=direction)
+    data = rich_club_curve(m, nrn, direction=direction)
     A = data.index.values
     B = data.values
-    ctrl = _analytical_expected_rich_club_curve(m, direction=direction)
+    if normalize_with == "analytical":
+        ctrl = _analytical_expected_rich_club_curve(m, direction=direction)
+    elif normalize_with == "shuffled":
+        ctrl = _randomized_control_rich_club_curve(m, direction=direction)
     Ar = ctrl.index.values
     mn_r = ctrl["mean"].values
     sd_r = ctrl["std"].values

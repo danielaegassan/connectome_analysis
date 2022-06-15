@@ -143,20 +143,60 @@ def _analytical_expected_rich_club_curve(m, direction='efferent'):
     return df
 
 
-def _randomized_control_rich_club_curve(m, direction='efferent'):
-    m = m.tocsc()
-    newind = []
-    for col in range(m.shape[1]):
-        pass
-    raise NotImplementedError()
+def generate_degree_based_control(M, direction="efferent"):
+    """
+    A shuffled version of a connectivity matrix that aims to preserve degree distributions.
+    If direction = "efferent", then the out-degree is exactly preserved, while the in-degree is 
+    approximately preseved. Otherwise it's the other way around.
+    """
+    if direction == "efferent":
+        M = M.tocsr()
+        idxx = numpy.arange(M.shape[1])
+        p_out = numpy.array(M.mean(axis=0))[0]
+    elif direction == "afferent":
+        M = M.tocsc()
+        idxx = numpy.arange(M.shape[0])
+        p_out = numpy.array(M.mean(axis=1))[:, 0]
+    else:
+        raise ValueError()
+    
+    for col in range(M.shape[1]):
+        p = p_out.copy()
+        p[col] = 0.0
+        p = p / p.sum()
+        a = M.indptr[col]
+        b = M.indptr[col + 1]
+        M.indices[a:b] = numpy.random.choice(idxx, b - a, p=p, replace=False)
+    return M
 
 
-def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std', **kwargs):
+def _randomized_control_rich_club_curve(m, direction='efferent', n=10):
+    res = []
+    for _ in range(n):
+        m_shuf = generate_degree_based_control(m, direction=direction)
+        res.append(efficient_rich_club_curve(m_shuf))
+    res = pandas.concat(res, axis=1)
+    
+    df = pandas.DataFrame.from_dict(
+        {
+            "mean": numpy.nanmean(rr, axis=1),
+            "std": numpy.nanstd(rr, axis=1)
+        }    
+    )
+    df.index = res.index
+    return df
+
+
+def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std',
+                               normalize_with="shuffled", **kwargs):
     assert m.dtype == bool, "This function only works for binary matrices at the moment"
     data = rich_club_curve(m, nrn, direction=direction)
     A = data.index.values
     B = data.values
-    ctrl = _analytical_expected_rich_club_curve(m, direction=direction)
+    if normalize_with == "analytical":
+        ctrl = _analytical_expected_rich_club_curve(m, direction=direction)
+    elif normalize_with == "shuffled":
+        ctrl = _randomized_control_rich_club_curve(m, direction=direction)
     Ar = ctrl.index.values
     mn_r = ctrl["mean"].values
     sd_r = ctrl["std"].values

@@ -80,11 +80,13 @@ def rich_club_curve(m, nrn, direction='efferent'):
     return pandas.Series(ret, index=ret_x)
 
 
-def efficient_rich_club_curve(M, direction="efferent"):
+def efficient_rich_club_curve(M, direction="efferent", pre_calculated_degree=None):
     M = M.tocoo()
     shape = M.shape
     M = pandas.DataFrame.from_dict({"row": M.row, "col": M.col})
-    if direction == "efferent":
+    if pre_calculated_degree is not None:
+        deg = pre_calculated_degree
+    elif direction == "efferent":
         deg = M["row"].value_counts()
     elif direction == "afferent":
         deg = M["col"].value_counts()

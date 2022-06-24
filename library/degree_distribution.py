@@ -88,6 +88,8 @@ def efficient_rich_club_curve(M, direction="efferent"):
         deg = M["row"].value_counts()
     elif direction == "afferent":
         deg = M["col"].value_counts()
+    elif direction == "both":
+        deg = M["row"].value_counts() + M["col"].value_counts()
     else:
         raise ValueError()
 

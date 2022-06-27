@@ -80,7 +80,7 @@ def rich_club_curve(m, nrn, direction='efferent'):
     return pandas.Series(ret, index=ret_x)
 
 
-def efficient_rich_club_curve(M, direction="efferent", pre_calculated_degree=None):
+def efficient_rich_club_curve(M, direction="efferent", pre_calculated_degree=None, sparse_bin_set=False):
     M = M.tocoo()
     shape = M.shape
     M = pandas.DataFrame.from_dict({"row": M.row, "col": M.col})
@@ -95,7 +95,10 @@ def efficient_rich_club_curve(M, direction="efferent", pre_calculated_degree=Non
     else:
         raise ValueError()
 
-    degree_bins = numpy.arange(deg.max() + 2)
+    if sparse_bin_set==False:
+        degree_bins = numpy.arange(deg.max() + 2)
+    elif sparse_bin_set==True:
+        degree_bins = np.unique(np.append(deg, [0, deg.max() + 1]))
     degree_bins_rv = degree_bins[-2::-1]
     nrn_degree_distribution = numpy.histogram(deg.values, bins=degree_bins)[0]
     nrn_cum_degrees = numpy.cumsum(nrn_degree_distribution[-1::-1])

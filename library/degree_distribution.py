@@ -84,7 +84,7 @@ def efficient_rich_club_curve(M, direction="efferent", pre_calculated_richness=N
     M = M.tocoo()
     shape = M.shape
     M = pandas.DataFrame.from_dict({"row": M.row, "col": M.col})
-    if pre_calculated_degree is not None:
+    if pre_calculated_richness is not None:
         deg = pre_calculated_richness
     elif direction == "efferent":
         deg = M["row"].value_counts()

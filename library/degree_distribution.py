@@ -91,7 +91,12 @@ def efficient_rich_club_curve(M, direction="efferent", pre_calculated_richness=N
     elif direction == "afferent":
         deg = M["col"].value_counts()
     elif direction == "both":
-        deg = M["row"].value_counts() + M["col"].value_counts()
+        D = pandas.DataFrame({'row':numpy.zeros(shape[0]),'col':numpy.zeros(shape[0])},numpy.arange(shape[0])[-1::-1])
+        D['row'] = D['row']+M["row"].value_counts()
+        D['col'] = D['col']+M["col"].value_counts()
+        D = D.fillna(0)
+        D = D.astype(int)
+        deg = D['row']+D['col']
     else:
         raise ValueError()
 

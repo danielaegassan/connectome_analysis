@@ -62,7 +62,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name='generateModel',
-    version='0.0.1',
+    version='0.0.2',
     author='Jason P. Smith',
     description='A pybind11 wrapper for generating random graph models',
     ext_modules=[CMakeExtension('generateModel')],

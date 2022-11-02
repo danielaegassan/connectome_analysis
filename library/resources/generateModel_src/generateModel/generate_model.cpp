@@ -8,6 +8,7 @@
 #include <cassert>
 #include <regex>
 #include <math.h>
+#include <limits>
 // #include <mutex>
 
 typedef uint32_t vertex_t;
@@ -19,17 +20,14 @@ typedef uint8_t mtype_t;
 // std::mutex mu;
 
 //************************************pcg*************************************//
-//Fast random number generator taken from pcg.h
+//Fast random number generator taken from https://github.com/wjakob/pcg32/pcg.h
 
 
 class pcg32 {
 	uint64_t state;
 	uint64_t inc;
 public:
-	void seed(
-		uint64_t initstate,
-		uint64_t initseq)
-	{
+	void seed(uint64_t initstate, uint64_t initseq) {
 		this->state = 0U;
 		this->inc = (initseq << 1U) | 1U;
 		next();
@@ -37,25 +35,16 @@ public:
 		next();
 	}
 
-
-	pcg32()
-	{
-		// high resolution clock to avoid same seed on
-		uint64_t sd = std::chrono::high_resolution_clock::
-			now().time_since_epoch().count();
-		// hash function to get uint from thread id
-		std::hash<std::thread::id> pcg_hasher;
-		// seed on high res clock and thread id
-		seed((uint64_t) sd,
-			 2 * (uint64_t) pcg_hasher(std::this_thread::get_id()) + 1 );
+    //constructor with seed inputted
+	pcg32(uint64_t sd1, uint64_t sd2) {
+		seed(sd1,sd2);
 	}
 
 #pragma warning (push)
 #pragma warning (disable : 4146) //pragmas disable error on intended "unsigned out of range" behavior
 #pragma warning (disable : 4244)
 	//Generate a uniformly distributed 32-bit random number
-	uint32_t next()
-	{
+	uint32_t next()	{
 		uint64_t oldstate = this->state;
 		this->state = oldstate * 6364136223846793005ULL + this->inc;
 		uint32_t xorshifted = ((oldstate >> 18u) ^ oldstate) >> 27u;
@@ -64,13 +53,33 @@ public:
 	}
 
 
-	float next_float()
-	{
+	float next_float() {
 		return (next() >> 8) * (1.f / ((uint32_t) 1 << 24));
 	}
 #pragma warning (pop)
 };
 
+std::vector<std::pair<uint64_t,uint64_t>> hash_seeds(uint64_t seed1, uint64_t seed2, int threads){
+    std::vector<std::pair<uint64_t,uint64_t>> the_seeds;
+    for(int i = 0; i < threads; i++){
+        uint64_t new_seed1;
+        uint64_t new_seed2;
+	    if (seed1 == std::numeric_limits<uint64_t>::max()){
+	        new_seed1 = std::chrono::high_resolution_clock::now().time_since_epoch().count()+i*712;
+	    } else {
+	        new_seed1 = seed1+i*2354;
+	    }
+
+	    if (seed2 == std::numeric_limits<uint64_t>::max()){
+	        std::hash<std::thread::id> pcg_hasher;
+	        new_seed2 = 2 * (uint64_t) pcg_hasher(std::this_thread::get_id()) + 1 + i+413;
+	    } else {
+	 	   seed2 = seed2+i*5223;
+	    }
+        the_seeds.push_back(std::make_pair(new_seed1, new_seed2));
+    }
+    return the_seeds;
+}
 
 
 //**********************************cnpy**************************************//
@@ -299,8 +308,9 @@ void check_dtype8(NpyArray file){
 //********************************Erdos-Renyi*********************************//
 
 void add_edges_ER(int index, int n, int threads, prob_t p,
-               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col){
-    pcg32 rng;
+               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col,
+               uint64_t seed1, uint64_t seed2){
+    pcg32 rng(seed1,seed2);
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < p) {
@@ -324,9 +334,10 @@ void add_edges_ER(int index, int n, int threads, prob_t p,
 
 void add_edges_SBM(int index, int n, int threads,
                std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col,
-               std::vector<std::vector<prob_t>>& pathways, std::vector<mtype_t>& neuron_info){
+               std::vector<std::vector<prob_t>>& pathways, std::vector<mtype_t>& neuron_info,
+               uint64_t seed1, uint64_t seed2){
 
-    pcg32 rng;
+    pcg32 rng(seed1,seed2);
 	for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < pathways[neuron_info[i]][neuron_info[j]]) {
@@ -359,8 +370,9 @@ coeff_t model_DD2(int i, int j, coeff_t a, coeff_t b, std::vector<coord_t>& xyz)
 }
 
 void add_edges_DD2(int index, int n, int threads, coeff_t a, coeff_t b,
-               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz){
-    pcg32 rng;
+               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col,
+               std::vector<coord_t>& xyz, uint64_t seed1, uint64_t seed2){
+    pcg32 rng(seed1,seed2);
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < model_DD2(i,j,a,b,xyz)) {
@@ -388,8 +400,9 @@ coeff_t model_DD3(int i, int j, coeff_t a1, coeff_t b1, coeff_t a2, coeff_t b2, 
 }
 
 void add_edges_DD3(int index, int n, int threads, coeff_t a1, coeff_t b1, coeff_t a2, coeff_t b2,
-               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz, std::vector<coeff_t>& depth){
-    pcg32 rng;
+               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz,
+               std::vector<coeff_t>& depth, uint64_t seed1, uint64_t seed2){
+    pcg32 rng(seed1,seed2);
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < model_DD3(i,j,a1,b1,a2,b2,xyz,depth)) {
@@ -412,8 +425,9 @@ coeff_t model_DD2_block_pre(int i, int j, std::vector<std::pair<coeff_t,coeff_t>
 }
 
 void add_edges_DD2_block_pre(int index, int n, int threads, std::vector<std::pair<coeff_t,coeff_t>>& pathways,
-               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
-    pcg32 rng;
+               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz,
+               std::vector<mtype_t>& neuron_info, uint64_t seed1, uint64_t seed2){
+    pcg32 rng(seed1,seed2);
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < model_DD2_block_pre(i,j,pathways,xyz,neuron_info)) {
@@ -438,8 +452,9 @@ coeff_t model_DD2_block(int i, int j, std::vector<std::vector<std::pair<coeff_t,
 }
 
 void add_edges_DD2_block(int index, int n, int threads, std::vector<std::vector<std::pair<coeff_t,coeff_t>>>& pathways,
-               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz, std::vector<mtype_t>& neuron_info){
-    pcg32 rng;
+               std::vector<vertex_t>& this_row, std::vector<vertex_t>& this_col, std::vector<coord_t>& xyz,
+               std::vector<mtype_t>& neuron_info, uint64_t seed1, uint64_t seed2){
+    pcg32 rng(seed1,seed2);
     for(int i = index; i < n; i=i+threads){
 		for (int j = 0; j < i; j++) {
 			if (rng.next_float() < model_DD2_block(i,j,pathways,xyz,neuron_info)) {

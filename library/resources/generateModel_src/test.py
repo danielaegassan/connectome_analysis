@@ -102,22 +102,22 @@ for x in range(repeat_1):
                    'data_dir': None,                  # Output directory where to save the extracted data (None to disable saving)
                    'do_plot': False,                  # Enable/disable output plotting
                    'plot_dir': None,                  # Output directory where to save the plots (None to disable saving)
-                   'N_split': 1}
+                   'N_split': None}
     with suppress_stdout():
         data_dict, model_dict = modelling.run_model_building(adj_matrix, xyz_df, **config_dict)
-    a = model_dict['model_params']['a_opt']
-    b = model_dict['model_params']['b_opt']
+    a = model_dict['model_params']['exp_model_scale']
+    b = model_dict['model_params']['exp_model_exponent']
     a_vals = []
     b_vals = []
     for y in range(repeat_2):
-        G_gm = gm.DD2(n,model_dict['model_params']['a_opt'],model_dict['model_params']['b_opt'],xyz,threads)
+        G_gm = gm.DD2(n,model_dict['model_params']['exp_model_scale'],model_dict['model_params']['exp_model_exponent'],xyz,threads)
         G_dense = np.zeros((n,n))
         for i in range(len(G_gm['row'])):
             G_dense[G_gm['row'][i]][G_gm['col'][i]] = 1
         with suppress_stdout():
             data_dict_2, model_dict_2 = modelling.run_model_building(G_dense, xyz_df, **config_dict)
-        a_vals.append(model_dict_2['model_params']['a_opt'])
-        b_vals.append(model_dict_2['model_params']['b_opt'])
+        a_vals.append(model_dict_2['model_params']['exp_model_scale'])
+        b_vals.append(model_dict_2['model_params']['exp_model_exponent'])
     a_av = np.mean(a_vals)
     b_av = np.mean(b_vals)
     if abs(a-a_av) >= 0.05  or abs(b-b_av) >= 0.005:
@@ -159,19 +159,21 @@ for x in range(repeat_1):
                    'data_dir': None,                  # Output directory where to save the extracted data (None to disable saving)
                    'do_plot': False,                  # Enable/disable output plotting
                    'plot_dir': None,                  # Output directory where to save the plots (None to disable saving)
-                   'N_split': 1}
+                   'N_split': None}
     with suppress_stdout():
         data_dict, model_dict = modelling.run_model_building(adj_matrix, xyz_df, **config_dict)
-    params = (model_dict['model_params']['aN_opt'],model_dict['model_params']['bN_opt'],model_dict['model_params']['aP_opt'],model_dict['model_params']['bP_opt'])
+    print(model_dict['model_params'].keys())
+    params = (model_dict['model_params']['bip_neg_exp_model_scale'],model_dict['model_params']['bip_neg_exp_model_scale'],model_dict['model_params']['bip_pos_exp_model_scale'],model_dict['model_params']['bip_pos_exp_model_exponent'])
     param_vals = []
     for y in range(repeat_2):
         G_gm = gm.DD3(n,params[0],params[1],params[2],params[3],xyz,depth,threads)
+        print(G_gm)
         G_dense = np.zeros((n,n))
         for i in range(len(G_gm['row'])):
             G_dense[G_gm['row'][i]][G_gm['col'][i]] = 1
         with suppress_stdout():
             data_dict_2, model_dict_2 = modelling.run_model_building(G_dense, xyz_df, **config_dict)
-        param_vals.append((model_dict_2['model_params']['aN_opt'],model_dict_2['model_params']['bN_opt'],model_dict_2['model_params']['aP_opt'],model_dict_2['model_params']['bP_opt']))
+        param_vals.append((model_dict_2['model_params']['bip_neg_exp_model_scale'],model_dict_2['model_params']['bip_neg_exp_model_scale'],model_dict_2['model_params']['bip_pos_exp_model_scale'],model_dict_2['model_params']['bip_pos_exp_model_exponent']))
     params_av = np.mean(param_vals,axis=0)
     if abs(params[0]-params_av[0]) >= a_diff or abs(params[2]-params_av[2]) >= a_diff or abs(params[1]-params_av[1]) >= b_diff or abs(params[3]-params_av[3]) >= b_diff:
         print("Caution: expected aN,bN,aP,bP = "+str(params)+" actual values = "+str(params_av))

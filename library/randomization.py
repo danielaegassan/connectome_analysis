@@ -27,7 +27,7 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 ######generateModel versions###########
-def run_ER(n,p,threads):
+def run_ER(n, p, threads, seed=(None,None)):
     """
     Erdos-Renyi model
 
@@ -38,10 +38,13 @@ def run_ER(n,p,threads):
 
     Output: coo matrix
     """
-    return gm.ER(n,p,threads)
+    if seed[0]==None or seed[1]==None:
+        return gm.ER(n,p,threads)
+    else:
+        return gm.ER(n,p,threads,seed[0],seed[1])
 
 
-def run_SBM(n, pathways, mtypes, threads):
+def run_SBM(n, pathways, mtypes, threads, seed=(None,None)):
     """
     Stochastic Block Model
 
@@ -53,7 +56,10 @@ def run_SBM(n, pathways, mtypes, threads):
 
     Output: coo matrix
     """
-    return gm.SBM(n, pathways, mtypes, threads)
+    if seed[0]==None or seed[1]==None:
+        return gm.SBM(n, pathways, mtypes, threads)
+    else:
+        return gm.SBM(n, pathways, mtypes, threads, seed[0], seed[1])
 
 
 def run_DD2(n,a,b,xyz,threads):
@@ -69,7 +75,10 @@ def run_DD2(n,a,b,xyz,threads):
 
     Output: coo matrix
     """
-    return gm.DD2(n,a,b,xyz,threads)
+    if seed[0]==None or seed[1]==None:
+        return gm.DD2(n,a,b,xyz,threads)
+    else:
+        return gm.DD2(n,a,b,xyz,threads,seed[0],seed[1])
 
 def run_DD2_model(adj, node_properties,
                   model_params_dd2=None, #an analysis that could be loaded from the pipeline
@@ -113,7 +122,7 @@ def run_DD2_model(adj, node_properties,
         return sp.coo_matrix((data, (i, j)), [n,n])
 
 
-def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
+def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads, seed=(None,None)):
     """
     Distance Dependant 3rd Order
 
@@ -127,7 +136,10 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads):
 
     Output: coo matrix
     """
-    return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
+    if seed[0]==None or seed[1]==None:
+        return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
+    else:
+        return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads,seed[0],seed[1])
 
 
 #######_ SHUFFLE #######################
@@ -151,7 +163,7 @@ def seed_random_state(shuffler, seeder=np.random.seed):
     return seed_and_run_method
 
 
-def run_DD2_block_pre(n,pathways,mtypes,xyz,threads):
+def run_DD2_block_pre(n,pathways,mtypes,xyz,threads, seed=(None,None)):
     """
     Distance Dependant Stochastic Block Model (pre synaptic only)
 
@@ -164,10 +176,13 @@ def run_DD2_block_pre(n,pathways,mtypes,xyz,threads):
 
     Output: coo matrix
     """
-    return gm.DD2_block_pre(n,pathways,mtypes,xyz,threads)
+    if seed[0]==None or seed[1]==None:
+        return gm.DD2_block_pre(n,pathways,mtypes,xyz,threads)
+    else:
+        gm.DD2_block_pre(n,pathways,mtypes,xyz,threads,seed[0],seed[1])
 
 
-def run_DD2_block(n,pathways,mtypes,xyz,threads):
+def run_DD2_block(n,pathways,mtypes,xyz,threads, seed=(None,None)):
     """
     Distance Dependant Stochastic Block Model
 
@@ -180,8 +195,10 @@ def run_DD2_block(n,pathways,mtypes,xyz,threads):
 
     Output: coo matrix
     """
-    return gm.DD2_block(n,pathways,mtypes,xyz,threads)
-
+    if seed[0]==None or seed[1]==None:
+        return gm.DD2_block(n,pathways,mtypes,xyz,threads)
+    else:
+        return gm.DD2_block(n,pathways,mtypes,xyz,threads,seed[0],seed[1])
 
 ####### SHUFFLE #######################
 @seed_random_state

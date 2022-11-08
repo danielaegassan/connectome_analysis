@@ -162,12 +162,10 @@ for x in range(repeat_1):
                    'N_split': None}
     with suppress_stdout():
         data_dict, model_dict = modelling.run_model_building(adj_matrix, xyz_df, **config_dict)
-    print(model_dict['model_params'].keys())
     params = (model_dict['model_params']['bip_neg_exp_model_scale'],model_dict['model_params']['bip_neg_exp_model_scale'],model_dict['model_params']['bip_pos_exp_model_scale'],model_dict['model_params']['bip_pos_exp_model_exponent'])
     param_vals = []
     for y in range(repeat_2):
         G_gm = gm.DD3(n,params[0],params[1],params[2],params[3],xyz,depth,threads)
-        print(G_gm)
         G_dense = np.zeros((n,n))
         for i in range(len(G_gm['row'])):
             G_dense[G_gm['row'][i]][G_gm['col'][i]] = 1

@@ -62,7 +62,7 @@ def run_SBM(n, pathways, mtypes, threads, seed=(None,None)):
         return gm.SBM(n, pathways, mtypes, threads, seed[0], seed[1])
 
 
-def run_DD2(n,a,b,xyz,threads):
+def run_DD2(n,a,b,xyz,threads, seed=(None,None)):
     """
     Distance Dependant 2nd Order
 

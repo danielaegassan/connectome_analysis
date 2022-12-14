@@ -1,1 +1,1 @@
-from genModels import *
+from generate_model import *

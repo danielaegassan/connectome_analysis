@@ -4,7 +4,7 @@
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(generate_model, m) {
+PYBIND11_MODULE(genModels, m) {
 
   m.doc() = "Python interface for random models";
 

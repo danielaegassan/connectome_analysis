@@ -1,8 +1,0 @@
-[submodule "library/resources/generateModel_src/generateModel/pybind11"]
-	path = library/resources/generateModel_src/generateModel/pybind11
-	url = https://github.com/pybind/pybind11
-
-[submodule "src/generate_model/generateModel/pybind11"]
-	path = src/generate_model/generateModel/pybind11
-	url = https://github.com/pybind/pybind11
-

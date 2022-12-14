@@ -12,3 +12,4 @@ dist/
 extra/
 __pycache__
 *.so
+**/pybind11/

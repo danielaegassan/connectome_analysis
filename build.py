@@ -13,6 +13,7 @@ from distutils.version import LooseVersion
 
 # This is exactly what is contained in src/generate_model_cpp/setup.py
 # In the future, we should probably avoid code duplication and import those classes
+# If you do that, be careful to update `dir_pybind11`
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])
@@ -32,8 +33,20 @@ class CMakeBuild(build_ext):
             if cmake_version < '3.1.0':
                 raise RuntimeError("CMake >= 3.1.0 is required on Windows")
 
+        self.install_dependencies()
+
         for ext in self.extensions:
             self.build_extension(ext)
+
+    def install_dependencies(self):
+        dir_start = os.getcwd()
+        dir_pybind11 = os.path.join(dir_start, 'src/generate_model/pybind11')
+        if os.path.exists(dir_pybind11):
+            return 0
+        os.mkdir(dir_pybind11)
+        subprocess.check_call(['git', 'clone',
+                               'https://github.com/pybind/pybind11.git',
+                               dir_pybind11])
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))

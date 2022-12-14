@@ -13,7 +13,7 @@ from distutils.version import LooseVersion
 
 # This is exactly what is contained in src/generate_model_cpp/setup.py
 # In the future, we should probably avoid code duplication and import those classes
-# If you do that, be careful to update `dir_pybind11`
+# If you do that, be careful to handle `dir_pybind11`
 class CMakeExtension(Extension):
     def __init__(self, name, sourcedir=''):
         Extension.__init__(self, name, sources=[])

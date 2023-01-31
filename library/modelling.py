@@ -1,4 +1,5 @@
-# Generate models for connectomes.
+#Moved to src/connalysis/modelling/modelling.py
+#Generate models for connectomes.
 #
 # Author(s): C. Pokorny
 # Last modified: 12/2021

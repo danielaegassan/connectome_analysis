@@ -1,4 +1,5 @@
-# -*- coding: utf-8 -*-
+#Moved to src/connalysis/network
+#-*- coding: utf-8 -*-
 """
 Network metrics on a graph
 authors: Daniela Egas Santander, Nicolas Ninin

@@ -28,13 +28,24 @@ pip install connectome_analysis
 * Clone this repository
 * Requirements:
   * [Poetry](https://python-poetry.org/)
+  * [gcc](https://gcc.gnu.org/) 9
   * [CMake](https://cmake.org/)
   * Python 3.8+
+
 * Create a virtual environment and install the dependencies
 
 ```sh
 poetry install
 ```
+
+CMake may have difficulties to find the right compilers to compile the C++ code. 
+If that is the case, you have to specify the path tot he compilers yourself:
+
+```sh
+CC=/path/to/gcc CXX=/path/to/g++ poetry install
+```
+
+This is especially important on MacOS.
 
 * Activate the virtual environment
 

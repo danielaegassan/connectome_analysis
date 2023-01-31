@@ -75,12 +75,12 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
 setup(
-    name='generateModel',
+    name='generate_model',
     version='0.0.2',
     author='Jason P. Smith',
     description='A pybind11 wrapper for generating random graph models',
-    ext_modules=[CMakeExtension('generateModel')],
+    ext_modules=[CMakeExtension('generate_model')],
     cmdclass=dict(build_ext=CMakeBuild),
-    packages=['generateModel'],
+    packages=['generate_model'],
     zip_safe=False,
 )

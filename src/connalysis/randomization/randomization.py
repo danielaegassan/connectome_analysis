@@ -1,4 +1,3 @@
-#Moved to src/connalysis/randomization/randomization.py
 # Functions that implement random controls of a network.  Three class of models
 
 # Shuffle: Random controls implementing by shuffling edges.  Number of edges remain constant.

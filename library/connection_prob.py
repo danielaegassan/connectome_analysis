@@ -1,3 +1,4 @@
+#Moved to src/connalysis/network
 import numpy
 
 from scipy.spatial import distance

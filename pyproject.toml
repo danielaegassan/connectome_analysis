@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "connectome_analysis"
 version = "0.0.1"
-description = "Functions for network analysis of graphs coming brain models"
+description = "Functions for network analysis of graphs coming brain models and activity on them"
 authors = [
     "Daniela Egas Santander <daniela.egassantander@epfl.ch>",
-    "Other authors", # TODO: Update this and check the whole file
+    "Christoph Pokorny <christoph.pokorny@epfl.ch>",
+    "Michael Wolfgang Reimann <michael.reimann@epfl.ch>",
+    "Jason Smith <jason.smith@ntu.ac.uk>", #TODO: I make the list alpabhetical, am I missing someone?
 ]
 license = "TO BE DECIDED"
 readme = "README.md"
@@ -28,6 +30,7 @@ classifiers = [
 
 packages = [
     { include = "connalysis", from = "src" },
+    #{ include = "generate_model", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -36,6 +39,9 @@ numpy = "*"
 pandas = "*"
 scipy = "*"
 matplotlib = "*"
+progressbar ="2.5"
+tqdm="*"
+pyflagsercount = "0.2.2"
 
 [tool.poetry.dev-dependencies]
 black = "*"
@@ -44,6 +50,9 @@ mkdocs-material = "*"
 pytest = "*"
 pytest-github-actions-annotate-failures = "*"
 pytest-cov = "*"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]

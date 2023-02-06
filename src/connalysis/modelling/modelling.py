@@ -1,7 +1,7 @@
 # Generate models for connectomes.
 #
 # Author(s): C. Pokorny
-# Last modified: 12/2021
+# Last modified: 02/2023
 
 
 import numpy as np
@@ -22,10 +22,45 @@ stream_handler = logging.StreamHandler(sys.stdout)
 stream_handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s: %(message)s'))
 logging.basicConfig(level=logging.INFO, handlers=[stream_handler])
 
-PROB_CMAP = plt.cm.get_cmap('hot')
+PROB_CMAP = plt.colormaps.get_cmap('hot')
 DATA_COLOR = 'tab:blue'
 MODEL_COLOR = 'tab:red'
 MODEL_COLOR2 = 'tab:olive'
+
+
+###################################################################################################
+# Wrapper function for running model building from a SLURM batch script (optionally, on different data splits)
+###################################################################################################
+
+def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
+    """ Main function for data extraction and model building
+        to be used in batch script on different data splits
+    """
+
+    # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
+    adj = sps.load_npz(adj_file)
+    if os.path.splitext(nrn_file)[-1] == '.h5':
+        node_properties = pd.read_hdf(nrn_file)
+    elif os.path.splitext(nrn_file)[-1] == '.feather':
+        node_properties = pd.read_feather(nrn_file)
+    else:
+        assert False, f'ERROR: Neuron table format "{os.path.splitext(nrn_file)[-1]}" not supported!'
+
+    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
+    logging.info(f'Loaded connectivity and properties of {node_properties.shape[0]} neurons')
+
+    # Load config file (.json)
+    with open(cfg_file, 'r') as f:
+        config_dict = json.load(f)
+
+    # Set/Overwrite data split options
+    if N_split is not None:
+        config_dict.update({'N_split': int(N_split)})
+    if part_idx is not None:
+        config_dict.update({'part_idx': int(part_idx)})
+
+    # Run model building
+    run_model_building(adj, node_properties, **config_dict)
 
 
 ###################################################################################################
@@ -60,6 +95,15 @@ def conn_prob_3rd_order_model(adj, node_properties, **kwargs):
     return conn_prob_model(adj, node_properties, model_order=3, **kwargs)
 
 
+def conn_prob_3rd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
+    """3rd-order probability model building for separate pathways (i.e., non-symmetric adj),
+       optionally for multiple random subsets of neurons."""
+
+    assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
+
+    return conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, model_order=3, **kwargs)
+
+
 def conn_prob_model(adj, node_properties, **kwargs):
     """General probability model building, optionally for multiple random subsets of neurons."""
 
@@ -87,7 +131,7 @@ def conn_prob_model(adj, node_properties, **kwargs):
     for seed in sample_seeds:
         kwargs.update({'sample_seed': seed})
         _, model_dict = run_model_building(adj, node_properties, model_name, model_order, **kwargs)
-        model_params = model_params.append(pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed')))
+        model_params = pd.concat([model_params, pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed'))])
 
     return model_params
 
@@ -120,7 +164,7 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
     for seed in sample_seeds:
         kwargs.update({'sample_seed': seed})
         _, model_dict = run_pathway_model_building(adj, node_properties_src, node_properties_tgt, model_name, model_order, **kwargs)
-        model_params = model_params.append(pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed')))
+        model_params = pd.concat([model_params, pd.DataFrame(model_dict['model_params'], index=pd.Index([seed], name='seed'))])
 
     return model_params
 
@@ -769,43 +813,3 @@ def plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn
         out_fn = os.path.abspath(os.path.join(plot_dir, model_name + '__data_counts.png'))
         plt.savefig(out_fn)
         logging.info(f'Figure saved to {out_fn}')
-
-
-
-###################################################################################################
-# Main function for running as batch script (optionally, on different data splits)
-###################################################################################################
-
-def main(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
-    """ Main function for data extraction and model building
-        to be used in batch script on different data splits
-    """
-
-    # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
-    adj = sps.load_npz(adj_file)
-    if os.path.splitext(nrn_file)[-1] == '.h5':
-        node_properties = pd.read_hdf(nrn_file)
-    elif os.path.splitext(nrn_file)[-1] == '.feather':
-        node_properties = pd.read_feather(nrn_file)
-    else:
-        assert False, f'ERROR: Neuron table format "{os.path.splitext(nrn_file)[-1]}" not supported!'
-
-    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
-    logging.info(f'Loaded connectivity and properties of {node_properties.shape[0]} neurons')
-
-    # Load config file (.json)
-    with open(cfg_file, 'r') as f:
-        config_dict = json.load(f)
-
-    # Set/Overwrite data split options
-    if N_split is not None:
-        config_dict.update({'N_split': int(N_split)})
-    if part_idx is not None:
-        config_dict.update({'part_idx': int(part_idx)})
-
-    # Run model building
-    run_model_building(adj, node_properties, **config_dict)
-
-
-if __name__ == "__main__":
-    main(*sys.argv[1:])

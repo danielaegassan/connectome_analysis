@@ -1,5 +1,5 @@
 site_name: connalysis
-repo_url: https://github.com/danielaegassan/connectom_analysis
+repo_url: https://github.com/danielaegassan/connectome_analysis
 
 theme:
   name: material
@@ -31,5 +31,6 @@ plugins:
             show_signature_annotations: true
             show_source: true
             show_submodules: true
-      watch:
-        - src/connalysis
+
+watch:
+  - src/connalysis

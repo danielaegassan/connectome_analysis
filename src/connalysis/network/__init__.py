@@ -1,7 +1,7 @@
 """"Functions for getting parameters for modelling of random graphs."""
 
 # TODO: Import all functions that the user might need
-from .network import (
+from .topology import (
     simplex_counts,_flagser_counts,
 )
 

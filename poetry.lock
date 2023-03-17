@@ -333,7 +333,7 @@ devel = ["colorama", "json-spec", "jsonschema", "pylint", "pytest", "pytest-benc
 
 [[package]]
 name = "fonttools"
-version = "4.39.0"
+version = "4.39.2"
 description = "Tools to manipulate font files"
 category = "main"
 optional = false
@@ -1322,7 +1322,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
 name = "pyflagsercount"
-version = "0.2.2"
+version = "0.2.4"
 description = "A program for counting directed cliques in directed graphs"
 category = "main"
 optional = false
@@ -1865,7 +1865,7 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8.3, <4.0"
-content-hash = "7d19100f010883fc8e7f3c73105cb1735906832996a89a2f3d1ac54367f48863"
+content-hash = "43503806e0fe8c1fba0bae1c8f8d16a2dd6c0abcdf4c9ff0b7fabe3f0224aa34"
 
 [metadata.files]
 anyio = [
@@ -2333,8 +2333,8 @@ fastjsonschema = [
     {file = "fastjsonschema-2.16.3.tar.gz", hash = "sha256:4a30d6315a68c253cfa8f963b9697246315aa3db89f98b97235e345dedfb0b8e"},
 ]
 fonttools = [
-    {file = "fonttools-4.39.0-py3-none-any.whl", hash = "sha256:f5e764e1fd6ad54dfc201ff32af0ba111bcfbe0d05b24540af74c63db4ed6390"},
-    {file = "fonttools-4.39.0.zip", hash = "sha256:909c104558835eac27faeb56be5a4c32694192dca123d073bf746ce9254054af"},
+    {file = "fonttools-4.39.2-py3-none-any.whl", hash = "sha256:85245aa2fd4cf502a643c9a9a2b5a393703e150a6eaacc3e0e84bb448053f061"},
+    {file = "fonttools-4.39.2.zip", hash = "sha256:e2d9f10337c9e3b17f9bce17a60a16a885a7d23b59b7f45ce07ea643e5580439"},
 ]
 fqdn = [
     {file = "fqdn-1.5.1-py3-none-any.whl", hash = "sha256:3a179af3761e4df6eb2e026ff9e1a3033d3587bf980a0b1b2e1e5d08d7358014"},
@@ -2989,8 +2989,8 @@ pycparser = [
     {file = "pycparser-2.21.tar.gz", hash = "sha256:e644fdec12f7872f86c58ff790da456218b10f863970249516d60a5eaca77206"},
 ]
 pyflagsercount = [
-    {file = "pyflagsercount-0.2.2-cp38-cp38-manylinux_2_31_x86_64.whl", hash = "sha256:06989a11d119c8ef0cf17374e8854ffbadea8453a64c8a5f14a8b827eb1e1769"},
-    {file = "pyflagsercount-0.2.2.tar.gz", hash = "sha256:5d9634501a71a50d17e08794d2c31739a3f3382eebb6f2ed5613e0afe8776fc5"},
+    {file = "pyflagsercount-0.2.4-cp38-cp38-manylinux_2_31_x86_64.whl", hash = "sha256:b069eebccd1cf407b0e2b0f45f4e332b92a091efc65c949e05a3993c74490bb1"},
+    {file = "pyflagsercount-0.2.4.tar.gz", hash = "sha256:6bfa2f1f4b441fa7c9fd091c6fa083d5281040f0727b444ac198ebc64b5ac04f"},
 ]
 pygments = [
     {file = "Pygments-2.14.0-py3-none-any.whl", hash = "sha256:fa7bd7bd2771287c0de303af8bfdfc731f51bd2c6a47ab69d117138893b82717"},

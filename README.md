@@ -39,7 +39,7 @@ poetry install
 ```
 
 CMake may have difficulties to find the right compilers to compile the C++ code. 
-If that is the case, you have to specify the path tot he compilers yourself:
+If that is the case, you have to specify the path to the compilers yourself:
 
 ```sh
 CC=/path/to/gcc CXX=/path/to/g++ poetry install

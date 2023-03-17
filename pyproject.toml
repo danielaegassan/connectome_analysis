@@ -34,7 +34,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8.3, <3.10"
+python = ">=3.8.3, <4"
 numpy = "*"
 pandas = "*"
 tables = "*"
@@ -42,7 +42,7 @@ scipy = "*"
 matplotlib = "*"
 progressbar ="2.5"
 tqdm="*"
-pyflagsercount = "0.2.3"
+pyflagsercount = "0.2.6"
 
 [tool.poetry.dev-dependencies]
 black = "*"

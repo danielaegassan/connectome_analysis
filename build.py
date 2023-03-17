@@ -47,6 +47,8 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['git', 'clone',
                                'https://github.com/pybind/pybind11.git',
                                dir_pybind11])
+        #subprocess.check_call(['git', 'checkout', '0bd8896'])
+
 
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))

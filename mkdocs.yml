@@ -15,7 +15,8 @@ theme:
 
 nav:
   - Introduction: 'index.md'
-  - api_docs.md
+  - 'api_docs.md'
+  - Modelling: 'modelling.md'
 
 markdown_extensions:
   - pymdownx.snippets:
@@ -34,3 +35,5 @@ plugins:
 
 watch:
   - src/connalysis
+
+

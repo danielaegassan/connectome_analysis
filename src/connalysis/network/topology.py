@@ -1,4 +1,14 @@
-### TOPOLOGICAL NETWORK ANALYSIS FUNCTIONS
+# Network analysis functions based on topological constructions
+#
+# Author(s): D. Egas Santander, M. Santoro, J. Smith, V. Sood
+# Last modified: 03/2023
+
+#TODO: rc_in_simplex, filtered_simplex_counts, persistence
+
+
+#######################################################
+################# UNWEIGHTED NETWORKS #################
+#######################################################
 
 import sys
 import resource
@@ -16,8 +26,6 @@ import pandas as pd
 
 from typing import List
 
-# Functions that take as input a (weighted) network and give as output a topological feature.
-#TODO: rc_in_simplex, filtered_simplex_counts, persistence
 
 import numpy as np
 import pandas as pd
@@ -30,25 +38,69 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     datefmt="%Y-%m-%d %H:%M:%S")
 
 
-def _series_by_dim(from_array, name):
+
+def rc_submatrix(adj):
+    """Returns the submatrix of reciprocal connections of adj
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].
+    node_properties: dataframe
+        Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
+    Returns
+    -------
+    sparse matrix of the same dtype as adj
+    """
+    adj=sp.csr_matrix(adj)
+    if np.count_nonzero(adj.diagonal()) != 0:
+        logging.warning('The diagonal is non-zero and this may lead to errors!')
+    mask=adj.copy().astype('bool')
+    mask=(mask.multiply(mask.T))
+    mask.eliminate_zeros
+    return adj.multiply(mask).astype(adj.dtype)
+
+def underlying_undirected_matrix(adj):
+    """Returns the symmetric matrix of undirected connections of adj
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].
+    node_properties: dataframe
+        Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
+    Returns
+    -------
+    sparse boolean matrix
+    """
+    adj=sp.csr_matrix(adj)
+    if np.count_nonzero(adj.diagonal()) != 0:
+        logging.warning('The diagonal is non-zero and this may lead to errors!')
+    return (adj+adj.T).astype('bool')
+
+
+def _series_by_dim(from_array, name_index=None, index=None, name=None):
     """A series of counts, like simplex counts:
     one count for a given value of simplex dimension.
     """
     if from_array is None:
         return None
+    if index is None:
+        index = pd.Index(range(len(from_array)), name=name_index)
+    else:
+        assert len(index)==len(from_array), "array and index are not the same length"
+        index = pd.Index(index, name=name_index)
+    return pd.Series(from_array, index=index, name=name)
 
-    dim = pd.Index(range(len(from_array)), name="dim")
-    return pd.Series(from_array, name=name, index=dim)
 
-
-def _frame_by_dim(from_array, name, index):
+def _frame_by_dim(from_array, no_columns, name, index):
     """A dataframe of counts, like node participation:
     one count for a node and simplex dimension.
     """
     if from_array is None:
         return None
-
-    columns = pd.Index(range(from_array.shape[1]), name=index)
+    #Todo add method for when no_columns is not given
+    columns = pd.Index(range(no_columns), name=index)
     return pd.DataFrame(from_array, columns=columns).fillna(0).astype(int)
 
 
@@ -57,46 +109,80 @@ QUANTITIES = {"simplices",
               "bettis",
               "bidrectional-edges"}
 
-
 def _flagser_counts(adjacency,
                     max_simplices=False,
                     count_node_participation=False,
                     list_simplices=False,
-                    threads=1):
+                    threads=1,max_dim=-1):
     """Call package `pyflagsercount's flagser_count` method that can be used to compute
     some analyses, getting counts of quantities such as simplices,
     or node-participation (a.k.a. `containment`)
     """
     import pyflagsercount
-    adjacency = adjacency.astype(bool).astype(int)
+    adjacency = sp.csr_matrix(adjacency.astype(bool).astype(int))
+    if np.count_nonzero(adjacency.diagonal()) != 0:
+        logging.warning('The diagonal is non-zero!  Non-zero entries in the diagonal will be ignored.')
+
 
     flagser_counts = pyflagsercount.flagser_count(adjacency,
                                                   max_simplices=max_simplices,
                                                   containment=count_node_participation,
                                                   return_simplices=list_simplices,
-                                                  threads=threads)
+                                                  threads=threads,max_dim=max_dim)
 
     counts =  {"euler": flagser_counts.pop("euler"),
                "simplex_counts": _series_by_dim(flagser_counts.pop("cell_counts"),
-                                                name="simplex_count"),
+                                                name="simplex_count", name_index="dim"),
                "max_simplex_counts": _series_by_dim(flagser_counts.pop("max_cell_counts", None),
-                                                    name="max_simplex_count"),
-               "node-participation": _frame_by_dim(flagser_counts.pop("contain_counts", None),
-                                                   name="node_participation", index="node"),
+                                                    name="max_simplex_count", name_index="dim"),
                "simplices": flagser_counts.pop("simplices", None)}
+    if counts["max_simplex_counts"] is None:
+        max_dim_participation=counts["simplex_counts"].shape[0]
+    else:
+        max_dim_participation=counts["max_simplex_counts"].shape[0]
+    counts["node_participation"]= _frame_by_dim(flagser_counts.pop("contain_counts", None),max_dim_participation,
+                                                name="node_participation", index="node")
     counts.update(flagser_counts)
     return counts
 
 
-def node_degree(adj, node_properties=[], direction=None, **kwargs):
-    """Count the degree of each node in the adjacency matrix.
+def node_degree(adj, node_properties=None, direction=None, weighted=False, **kwargs):
+    """Compute degree of nodes in network adj
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].
+    node_properties: dataframe
+        Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
+    direction : string [‘IN’|’OUT’|’None’(default)] or tuple of strings ('IN', 'OUT')
+        Direction for which to compute the degree
+        'IN' - In degree
+        'OUT'- Out degree
+        None - Total degree i.e. IN+OUT
+    Returns
+    -------
+    array_like
+        pandas series or data frame of degrees
 
-    TODO: CHECK THE DIRECTION OF AXIS BELOW, expect adj is CSR
+    Raises
+    ------
+    Warning
+        If adj has non-zero entries in the diagonal
+    AssertionError
+        If direction is invalid
     """
     assert not direction or direction in ("IN", "OUT") or tuple(direction) == ("IN", "OUT"),\
         f"Invalid `direction`: {direction}"
 
-    matrix = adj.toarray()
+    if not isinstance(adj, np. ndarray):
+        matrix = adj.toarray()
+    else:
+        matrix=adj.copy()
+    if not weighted:
+        matrix=matrix.astype('bool')
+    if np.count_nonzero(np.diag(matrix)) != 0:
+        logging.warning('The diagonal is non-zero!  This may cause errors in the analysis')
     index = pd.Series(range(matrix.shape[0]), name="node")
     series = lambda array: pd.Series(array, index)
     in_degree = lambda: series(matrix.sum(axis=0))
@@ -113,17 +199,480 @@ def node_degree(adj, node_properties=[], direction=None, **kwargs):
 
     return in_degree() if direction == "IN" else out_degree()
 
+def node_k_degree(adj, node_properties=None, direction=("IN", "OUT"), max_dim=-1, **kwargs):
+    #TODO: Generalize add simplex_type and relative degree (from or to a fixed subset of nodes)
+    """Compute generalized degree of nodes in network adj.  The k-(in/out)-degree of a node v is the number of
+    k-simplices with all its nodes mapping to/from the node v.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    direction : string [’IN’|’OUT’|(’IN’, ’OUT’)(default)]
+        Direction for which to compute the degree
+        'IN' - In degree
+        'OUT'- Out degree
+        (’IN’, ’OUT’) - both
+    max_dim = maximal dimension for which to compute the degree max_dim >=2
 
-def simplex_counts(adj, node_properties=[],
-                   max_simplices=False, threads=1,
+    Returns
+    -------
+    Data frame of k-(in/out)-degrees
+
+    Raises
+    ------
+    Warning
+        If adj has non-zero entries in the diagonal which are ignored in the analysis
+    AssertionError
+        If direction is invalid
+    AssertionError
+        If not max_dim >1
+
+    Notes
+    -----
+    Note that the k-in-degree of a node v is the number of (k+1) simplices the node v is a sink of.
+    Dually, the k-out-degree of a node v is the number of (k+1) simplices the node v is a source of.
+    """
+    matrix = sp.csr_matrix(adj)
+    assert (max_dim > 1) or (max_dim==-1), "max_dim should be >=2"
+    assert direction in ("IN", "OUT") or tuple(direction) == ("IN", "OUT"), \
+        f"Invalid `direction`: {direction}"
+    if np.count_nonzero(matrix.diagonal()) != 0:
+        logging.warning('The diagonal is non-zero!  Non-zero entries in the diagonal will be ignored.')
+    import pyflagsercount
+    flagser_out = pyflagsercount.flagser_count(matrix, return_simplices=True, max_dim=max_dim)
+    max_dim_possible = len(flagser_out['cell_counts']) - 1
+    if max_dim==-1:
+        max_dim = max_dim_possible
+    elif max_dim > max_dim_possible:
+        logging.warning("The maximum dimension selected is not attained")
+        max_dim = max_dim_possible
+    if (max_dim <= 1) and (max_dim!=-1):
+        print("There are no simplices of dimension 2 or higher")
+    else:
+        index = pd.Series(range(matrix.shape[0]), name="node")
+        generalized_degree = pd.DataFrame(index=index)
+        for dim in np.arange(2, max_dim + 1):
+            if "OUT" in direction:
+                # getting source participation across dimensions
+                x, y = np.unique(np.array(flagser_out['simplices'][dim])[:, 0], return_counts=True)
+                generalized_degree[f'{dim}_out_degree'] = pd.Series(y, index=x)
+            if "IN" in direction:
+                # getting sink participation across dimensions
+                x, y = np.unique(np.array(flagser_out['simplices'][dim])[:, dim], return_counts=True)
+                generalized_degree[f'{dim}_in_degree'] = pd.Series(y, index=x)
+        return generalized_degree.fillna(0)
+
+
+def simplex_counts(adj, node_properties=None,max_simplices=False,
+                   threads=1,max_dim=-1, simplex_type='directed', **kwargs):
+    """Compute the number of simplex motifs in the network adj.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+
+    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’] (See Notes)
+        Type of simplex to consider
+        ’directed’ - directed simplices
+        ’undirected’ - simplices in the underlying undirected graph
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+    Returns
+    -------
+    panda series of simplex counts
+
+    Raises
+    ------
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    AssertionError
+        If adj is not square.
+    Notes
+    -----
+    A directed simplex of dimension k in adj is a set of (k+1) nodes which are all to all connected in a feedforward manner.
+    That is, they can be ordered from 0 to k such that there is an edge from i to j whenever i < j.
+
+    An undirected simplex of dimension k in adj is a set of (k+1) nodes in adj which are all to all connected.  That is, they
+    are all to all connected in the underlying undirected graph of adj.  In the literature this is also called a (k+1)-clique
+    of the underlying undirected graph.
+
+    A reciprocal simplex of dimension k in adj is a set of (k+1) nodes in adj which are all to all reciprocally connected.
+    That is, they are all to all connected in the undirected graph of reciprocal connections of adj.  In the literature this is
+    also called a (k+1)-clique of the undirected graph of reciprocal connections.
+    """
+    adj=sp.csr_matrix(adj)
+    assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
+    N, M = adj.shape
+    assert N == M, 'Dimension mismatch. The matrix must be square.'
+
+
+    #Symmetrize matrix if simplex_type is not 'directed'
+    if simplex_type=='undirected':
+        adj=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
+    elif simplex_type=="reciprocal":
+        adj=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
+
+    flagser_counts = _flagser_counts(adj, threads=threads, max_simplices=max_simplices, max_dim=max_dim)
+    if max_simplices:
+        return flagser_counts["max_simplex_counts"]
+    else:
+        return flagser_counts["simplex_counts"]
+
+def normalized_simplex_counts(adj, node_properties=None,
+                   max_simplices=False, threads=1,max_dim=-1,
                    **kwargs):
+    """Compute the ratio of directed/undirected simplex counts normalized to be between 0 and 1.
+    See simplex_counts and undirected_simplex_counts for details.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    Returns
+    -------
+    panda series of normalized simplex counts
 
-    #Compute simplex counts of adj
-    #TODO: Change this to pyflagser_count and add options for max dim and threads,
-    #Delete neuron properties from input?
+    Raises
+    ------
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    Notes
+    -----
+    In the literature undirected k-simplices are sometimes called (k+1)-cliques of the underlying undirected graph."""
 
-    flagser_counts = _flagser_counts(adj, threads)
-    return flagser_counts["simplex_counts"]
+    from scipy.special import factorial
+    denominator=simplex_counts(adj, node_properties=node_properties,max_simplices=max_simplices,
+                                          threads=threads,max_dim=max_dim,simplex_type='undirected', **kwargs).to_numpy()
+    #Global maximum dimension since every directed simplex has an underlying undirected one of the same dimension
+    max_dim_global=denominator.size
+    #Maximum number of possible directed simplices for each undirected simplex across dimensions
+    max_possible_directed=np.array([factorial(i+1) for i in np.arange(max_dim_global)])
+    denominator=np.multiply(denominator, max_possible_directed)
+    numerator=simplex_counts(adj, node_properties=node_properties,max_simplices=max_simplices,
+                             threads=threads,max_dim=max_dim,simple_type='directed', **kwargs).to_numpy()
+    numerator=np.pad(numerator, (0, max_dim_global-len(numerator)), 'constant', constant_values=0)
+    return _series_by_dim(np.divide(numerator,denominator)[1:],name="normalized_simplex_counts",
+                          index=np.arange(1,max_dim_global), name_index="dim")
+
+
+def node_participation(adj, node_properties=None, max_simplices=False,
+                       threads=1,max_dim=-1,simplex_type='directed',**kwargs):
+    """Compute the number of simplex motifs in the network adj each node is part of.
+    See simplex_counts for details.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’]
+        Type of simplex to consider
+        ’directed’ - directed simplices
+        ’undirected’ - simplices in the underlying undirected graph
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+    Returns
+    -------
+    data frame with index he nodes in adj and columns de dimension for which node participation is counted
+
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    AssertionError
+        If adj is not square.
+    """
+
+    adj=sp.csr_matrix(adj).astype('bool')
+    assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
+    N, M = adj.shape
+    assert N == M, 'Dimension mismatch. The matrix must be square.'
+
+
+    #Symmetrize matrix if simplex_type is not 'directed'
+    if simplex_type=='undirected':
+        adj=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
+    elif simplex_type=="reciprocal":
+        adj=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
+
+    flagser_counts = _flagser_counts(adj, count_node_participation=True, threads=threads,
+                                     max_simplices=max_simplices, max_dim=max_dim)
+    return flagser_counts["node_participation"]
+
+'''def reciprocal_node_participation(adj, node_properties=None, max_simplices=False, 
+                       threads=1,max_dim=-1,**kwargs):
+    """Compute the number of reciprocal simplex motifs in the network adj each node is part of.  
+    See rc_simplex_counts for details.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.  
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj. 
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.  
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    Returns
+    -------
+    data frame with index he nodes in adj and columns de dimension for which node participation is counted
+
+    Raises
+    ------
+    Warning
+        If adj has non-zero entries in the diagonal which are ignored in the analysis
+    """
+
+    A=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
+    return node_participation(A, node_properties=node_properties, max_simplices=max_simplices, 
+                              threads=threads,max_dim=max_dim,**kwargs)
+
+def undirected_node_participation(adj, node_properties=None, max_simplices=False, 
+                       threads=1,max_dim=-1,**kwargs):
+    """Compute the number of undirected simplex motifs in the network adj each node is part of.  
+    See undirected_simplex_counts for details.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.  
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj. 
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.  
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    Returns
+    -------
+    data frame with index he nodes in adj and columns de dimension for which node participation is counted
+
+    Raises
+    ------
+    Warning
+        If adj has non-zero entries in the diagonal which are ignored in the analysis
+    """
+
+    A=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
+    return node_participation(A, node_properties=node_properties, max_simplices=max_simplices, 
+                              threads=threads,max_dim=max_dim,**kwargs)'''
+
+
+def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,max_dim=-1,nodes=None,
+                                verbose=False, simplex_type='directed', **kwargs):
+    """List all simplex motifs in the network adj.
+    Parameters
+    ----------
+    adj : 2d (N,N)-array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties: dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim: maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’]
+        Type of simplex to consider
+        ’directed’ - directed simplices
+        ’undirected’ - simplices in the underlying undirected graph
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+    nodes: 1d array or None(default)
+        Restrict to list only the simplices whose source node is in nodes.  If none list all simplices
+
+    Returns
+    -------
+    panda series of simplex lists indexed per dimension.  In dimension k its a (no. of k-simplices, k+1)-array
+    is given, where each row denotes a simplex.
+
+    Raises
+    ------
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    AssertionError
+        If adj is not square.
+    AssertionError
+        If nodes is not a subarray of np.arange(N)
+
+    See Also
+    --------
+    simplex_counts : A function that counts the simplices instead of listing them and has descriptions of the
+    simplex types.
+    """
+    LOG.info("COMPUTE list of %ssimplices by dimension", "max-" if max_simplices else "")
+
+    import pyflagsercount
+
+    adj=sp.csr_matrix(adj)
+    assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
+    N, M = adj.shape
+    assert N == M, 'Dimension mismatch. The matrix must be square.'
+    if not nodes is None:
+        assert np.isin(nodes,np.arange(N)).all(), "nodes must be a subarray of the nodes of the matrix"
+
+    #Symmetrize matrix if simplex_type is not 'directed'
+    if simplex_type=='undirected':
+        adj=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
+    elif simplex_type=="reciprocal":
+        adj=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
+
+    n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
+
+
+    # Only the simplices that have sources stored in this temporary file will be considered
+    if not nodes is None:
+        import tempfile
+        import os
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        vertices_todo = tmp_file.name + ".npy"
+        np.save(vertices_todo, nodes, allow_pickle=False)
+    else:
+        vertices_todo=''
+
+    #Generate simplex_list
+    original=pyflagsercount.flagser_count(adj, max_simplices=max_simplices,threads=n_threads,max_dim=max_dim,
+                                      vertices_todo=vertices_todo, return_simplices=True)['simplices']
+
+    #Remove temporary file
+    if not nodes is None:
+        os.remove(vertices_todo)
+
+    #Format output
+    max_dim = len(original)
+    dims = pd.Index(np.arange(max_dim), name="dim")
+    simplices = pd.Series(original, name="simplices", index=dims).apply(np.array)
+    #When counting all simplices flagser doesn't list dim 0 and 1 because they correspond to vertices and edges
+    if not max_simplices:
+        if nodes is None:
+            nodes=np.arange(0, N)
+        coom = adj.tocoo()
+        simplices[0] = np.reshape(nodes, (nodes.size, 1))
+        mask=np.isin(coom.row,nodes)
+        simplices[1] = np.stack([coom.row[mask], coom.col[mask]]).T
+    return simplices
+
+
+'''
+OLD VERSION KEEP HERE JUST FOR A LITTLE BIT FOR VISHAL'S CHECK 
+def list_simplices_by_dimension(adj, nodes=None, max_simplices=False,
+                                verbose=False, **kwargs):
+    """List all the simplices (upto a max dimension) in an adjacency matrix.
+    """
+    LOG.info("COMPUTE list of %s simplices by dimension", "max-" if max_simplices else "")
+
+    N, M = adj.shape
+    assert N == M, f"{N} != {M}"
+
+    n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
+    fcounts = _flagser_counts(adj, list_simplices=True, max_simplices=max_simplices,
+                              threads=n_threads)
+    original = fcounts["simplices"]
+    coom = adj.tocoo()
+
+    max_dim = len(original)
+    dims = pd.Index(np.arange(max_dim), name="dim")
+    simplices = pd.Series(original, name="simplices", index=dims)
+    simplices[0] = np.reshape(np.arange(0, N), (N, 1))
+    simplices[1] = np.stack([coom.row, coom.col]).T
+    return simplices'''
+
+def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simplices=False,
+                          simplex_type='directed',threads=1,max_dim=-1,**kwargs):
+    #TODO DO THE OUTDEGREE VERSION maybe one where populations are defined within a matrix?
+    """Compute generalized in-degree of nodes in adj_target from nodes in adj_source.
+    The k-in-degree of a node v is the number of k-simplices in adj_source with all its nodes mapping to v
+    through edges in adj_cross.
+    Parameters
+    ----------
+    adj_source : (n, n)-array or sparse matrix
+        Adjacency matrix of the source network where n is the number of nodes in the source network.
+        A non-zero entry adj_source[i,j] implies there is an edge from node i -> j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    adj_cross : (n,m) array or sparse matrix
+        Matrix of connections from the nodes in adj_n to the target population.
+        n is the number of nodes in adj_source and m is the number of nodes in adj_target.
+        A non-zero entry adj_cross[i,j] implies there is an edge from i-th node of adj_source
+        to the j-th node of adj_target.
+    node_properties: tuple of dataframes (nrn_table_source, nrn_table_target)
+        Each nrn_table is a data frame of neuron properties the neurons in adj_source, adj_target.
+        Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices: bool, optional
+        If False (default) counts all simplices.
+        If True counts only maximal simplices.
+    max_dim: maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    Returns
+    -------
+    Data frame of cross-k-in-degrees
+
+    Raises
+    ------
+    AssertionError
+        If adj_source has non-zero entries in the diagonal which can produce errors.
+    Notes
+    -----
+    We should probably write some notes here
+    """
+    adj_source=sp.csr_matrix(adj_source).astype('bool')
+    adj_cross=sp.csr_matrix(adj_cross).astype('bool')
+    assert np.count_nonzero(adj_source.diagonal()) == 0, \
+    'The diagonal of the source matrix is non-zero and this may lead to errors!'
+    assert adj_source.shape[0] == adj_source.shape[1], \
+    'Dimension mismatch. The source matrix must be square.'
+    assert adj_source.shape[0] == adj_cross.shape[0], \
+    'Dimension mismatch. The source matrix and cross matrix must have the same number of rows.'
+
+    n_source=adj_source.shape[0] #Size of the source population
+    n_target=adj_cross.shape[1] #Size of the target population
+    #Building a square matrix [[adj_source, adj_cross], [0,0]]
+    adj=sp.bmat([[adj_source, adj_cross],
+                 [sp.csr_matrix((n_target, n_source), dtype='bool'),
+                  sp.csr_matrix((n_target, n_target), dtype='bool')]])
+    #Tranposing to restric computation to ``source nodes'' in adj_target in flagsercount
+    adj=adj.T
+    nodes=np.arange(n_source, n_source+n_target) #nodes on target population
+    slist=list_simplices_by_dimension(adj, max_simplices=max_simplices, max_dim=max_dim,nodes=nodes,
+                                      simplex_type='directed',verbose=False,**kwargs)
+
+    #Count participation as a source in transposed matrix i.e. participation as sink in the original
+    cross_col_deg=pd.DataFrame(columns=slist.index[1:], index=nodes)
+    for dim in slist.index[1:]:
+        index,deg=np.unique(slist[dim][:,0],return_counts=True)
+        cross_col_deg[dim].loc[index]=deg
+    cross_col_deg=cross_col_deg.fillna(0)
+    return cross_col_deg
+
+
+
+
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################  BELOW STILL TO CLEAN UP
+
 
 
 def betti_counts(adj, node_properties=[],
@@ -189,23 +738,14 @@ def betti_counts(adj, node_properties=[],
                      index=pd.Index(range(len(bettis)), name="dim"))
 
 
-def node_participation(adj, node_properties=None):
-    # Compute the number of simplices a vertex is part of
-    # Input: adj adjancency matrix representing a graph with 0 in the diagonal, neuron_properties as data frame with index gid of nodes
-    # Out: List L of lenght adj.shape[0] where L[i] is a list of the participation of vertex i in simplices of a given dimensio
-    # TODO:  Should we merge this with simplex counts so that we don't do the computation twice?
-
-    flagser_counts = _flagser_counts(adj, count_node_participation=True)
-    return flagser_counts["node_participation"]
-
-
-''''#INPUT: Address of binary file storing simplices
-#OUTPUT: A list if lists L where L[i] contains the vertex ids of the i'th simplex,
-#          note the simplices appear in no particular order
 
 def binary2simplex(address, test=None, verbosity=1000000):
     """...Not used --- keeping it here as it is of interest to understanmd
     how simplices are represented on the disc by Flagser.
+    #INPUT: Address of binary file storing simplices
+    #OUTPUT: A list if lists L where L[i] contains the vertex ids of the i'th simplex,
+    #          note the simplices appear in no particular order
+
     """
     LOG.info("Load binary simplex info from %s", address)
     simplex_info = pd.Series(np.fromfile(address, dtype=np.uint64))
@@ -251,29 +791,9 @@ def binary2simplex(address, test=None, verbosity=1000000):
         return simplices
 
     return (vertices.vertices, simplices)
-'''
 
-def list_simplices_by_dimension(adj, nodes=None, max_simplices=False,
-                                verbose=False, **kwargs):
-    """List all the simplices (upto a max dimension) in an adjacency matrix.
-    """
-    LOG.info("COMPUTE list of %s simplices by dimension", "max-" if max_simplices else "")
 
-    N, M = adj.shape
-    assert N == M, f"{N} != {M}"
 
-    n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
-    fcounts = _flagser_counts(adj, list_simplices=True, max_simplices=max_simplices,
-                              threads=n_threads)
-    original = fcounts["simplices"]
-    coom = adj.tocoo()
-
-    max_dim = len(original)
-    dims = pd.Index(np.arange(max_dim), name="dim")
-    simplices = pd.Series(original, name="simplices", index=dims)
-    simplices[0] = np.reshape(np.arange(0, N), (N, 1))
-    simplices[1] = np.stack([coom.row, coom.col]).T
-    return simplices
 
 
 def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
@@ -318,7 +838,10 @@ def convex_hull(adj, node_properties):# --> topology
     pass
 
 
-## Filtered objects
+#######################################################
+################## WEIGHTED NETWORKS ##################
+#######################################################
+
 def at_weight_edges(weighted_adj, threshold, method="strength"):
     """ Returns thresholded network on edges
     :param method: distance returns edges with weight smaller or equal than thresh
@@ -495,4 +1018,3 @@ def betti_curve(B,D):
     for thresh in filt_values:
         bettis.append(num_cycles(B,D,thresh))
     return filt_values,np.array(bettis)
-

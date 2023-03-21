@@ -42,7 +42,7 @@ scipy = "*"
 matplotlib = "*"
 progressbar ="2.5"
 tqdm="*"
-pyflagsercount = "0.2.6"
+pyflagsercount = "0.2.41"
 
 [tool.poetry.dev-dependencies]
 black = "*"

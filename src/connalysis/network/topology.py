@@ -419,67 +419,6 @@ def node_participation(adj, node_properties=None, max_simplices=False,
                                      max_simplices=max_simplices, max_dim=max_dim)
     return flagser_counts["node_participation"]
 
-'''def reciprocal_node_participation(adj, node_properties=None, max_simplices=False, 
-                       threads=1,max_dim=-1,**kwargs):
-    """Compute the number of reciprocal simplex motifs in the network adj each node is part of.  
-    See rc_simplex_counts for details.
-    Parameters
-    ----------
-    adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.  
-        The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
-        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
-        If False (default) counts all simplices in adj. 
-        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.  
-        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
-    Returns
-    -------
-    data frame with index he nodes in adj and columns de dimension for which node participation is counted
-
-    Raises
-    ------
-    Warning
-        If adj has non-zero entries in the diagonal which are ignored in the analysis
-    """
-
-    A=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
-    return node_participation(A, node_properties=node_properties, max_simplices=max_simplices, 
-                              threads=threads,max_dim=max_dim,**kwargs)
-
-def undirected_node_participation(adj, node_properties=None, max_simplices=False, 
-                       threads=1,max_dim=-1,**kwargs):
-    """Compute the number of undirected simplex motifs in the network adj each node is part of.  
-    See undirected_simplex_counts for details.
-    Parameters
-    ----------
-    adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.  
-        The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
-        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
-        If False (default) counts all simplices in adj. 
-        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.  
-        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
-    Returns
-    -------
-    data frame with index he nodes in adj and columns de dimension for which node participation is counted
-
-    Raises
-    ------
-    Warning
-        If adj has non-zero entries in the diagonal which are ignored in the analysis
-    """
-
-    A=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
-    return node_participation(A, node_properties=node_properties, max_simplices=max_simplices, 
-                              threads=threads,max_dim=max_dim,**kwargs)'''
-
-
 def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,max_dim=-1,nodes=None,
                                 verbose=False, simplex_type='directed', **kwargs):
     """List all simplex motifs in the network adj.

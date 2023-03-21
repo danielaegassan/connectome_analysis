@@ -40,17 +40,18 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
 
 
 def rc_submatrix(adj):
-    """Returns the submatrix of reciprocal connections of adj
+    """Returns the symmetric submatrix of reciprocal connections of adj
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
-        of weight adj[i,j].
-    node_properties: dataframe
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+    node_properties : dataframe
         Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
+
     Returns
     -------
-    sparse matrix of the same dtype as adj
+    sparse matrix
+        symmetric matrix of the same dtype as adj of reciprocal connections
     """
     adj=sp.csr_matrix(adj)
     if np.count_nonzero(adj.diagonal()) != 0:
@@ -65,13 +66,14 @@ def underlying_undirected_matrix(adj):
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
-        of weight adj[i,j].
-    node_properties: dataframe
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+    node_properties : data frame
         Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
+
     Returns
     -------
     sparse boolean matrix
+        Corresponding to the symmetric underlying undirected graph
     """
     adj=sp.csr_matrix(adj)
     if np.count_nonzero(adj.diagonal()) != 0:
@@ -151,19 +153,22 @@ def node_degree(adj, node_properties=None, direction=None, weighted=False, **kwa
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j
         of weight adj[i,j].
-    node_properties: dataframe
+    node_properties : data frame
         Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
-    direction : string [‘IN’|’OUT’|’None’(default)] or tuple of strings ('IN', 'OUT')
+    direction : string or tuple of strings
         Direction for which to compute the degree
+
         'IN' - In degree
+
         'OUT'- Out degree
-        None - Total degree i.e. IN+OUT
+
+        None or ('IN', 'OUT') - Total degree i.e. IN+OUT
+
     Returns
     -------
-    array_like
-        pandas series or data frame of degrees
+    series or data frame
 
     Raises
     ------
@@ -200,26 +205,32 @@ def node_degree(adj, node_properties=None, direction=None, weighted=False, **kwa
     return in_degree() if direction == "IN" else out_degree()
 
 def node_k_degree(adj, node_properties=None, direction=("IN", "OUT"), max_dim=-1, **kwargs):
-    #TODO: Generalize add simplex_type and relative degree (from or to a fixed subset of nodes)
+    #TODO: Generalize from one population to another
     """Compute generalized degree of nodes in network adj.  The k-(in/out)-degree of a node v is the number of
     k-simplices with all its nodes mapping to/from the node v.
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j
         of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
+    node_properties : dataframe
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    direction : string [’IN’|’OUT’|(’IN’, ’OUT’)(default)]
+    direction : string
         Direction for which to compute the degree
+
         'IN' - In degree
+
         'OUT'- Out degree
+
         (’IN’, ’OUT’) - both
-    max_dim = maximal dimension for which to compute the degree max_dim >=2
+    max_dim : int
+        Maximal dimension for which to compute the degree max_dim >=2 or -1 in
+        which case it computes all dimensions.
 
     Returns
     -------
-    Data frame of k-(in/out)-degrees
+    data frame
+        Table of of k-(in/out)-degrees
 
     Raises
     ------
@@ -272,24 +283,29 @@ def simplex_counts(adj, node_properties=None,max_simplices=False,
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j
         of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
+    node_properties : dataframe
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
-        If False (default) counts all simplices in adj.
+    max_simplices : bool
+        If False counts all simplices in adj.
         If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
         The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex_type: string
+        Type of simplex to consider (See Notes):
 
-    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’] (See Notes)
-        Type of simplex to consider
         ’directed’ - directed simplices
+
         ’undirected’ - simplices in the underlying undirected graph
+
         ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+
     Returns
     -------
-    panda series of simplex counts
+    series
+        simplex counts
 
     Raises
     ------
@@ -297,6 +313,7 @@ def simplex_counts(adj, node_properties=None,max_simplices=False,
         If adj has non-zero entries in the diagonal which can produce errors.
     AssertionError
         If adj is not square.
+
     Notes
     -----
     A directed simplex of dimension k in adj is a set of (k+1) nodes which are all to all connected in a feedforward manner.
@@ -336,26 +353,30 @@ def normalized_simplex_counts(adj, node_properties=None,
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j
         of weight adj[i,j].  The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
+    node_properties : dataframe
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
-        If False (default) counts all simplices in adj.
+    max_simplices : bool
+        If False counts all simplices in adj.
         If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
         The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+
     Returns
     -------
-    panda series of normalized simplex counts
+    panda series
+        Normalized simplex counts
 
     Raises
     ------
     AssertionError
         If adj has non-zero entries in the diagonal which can produce errors.
+
     Notes
     -----
-    In the literature undirected k-simplices are sometimes called (k+1)-cliques of the underlying undirected graph."""
+    Maybe we should say why we choose this metric"""
 
     from scipy.special import factorial
     denominator=simplex_counts(adj, node_properties=node_properties,max_simplices=max_simplices,
@@ -379,24 +400,32 @@ def node_participation(adj, node_properties=None, max_simplices=False,
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
         The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
+    node_properties : dataframe
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
+    max_simplices : bool
         If False (default) counts all simplices in adj.
         If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
         The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
-    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’]
-        Type of simplex to consider
+    simplex_type : string
+        Type of simplex to consider:
+
         ’directed’ - directed simplices
+
         ’undirected’ - simplices in the underlying undirected graph
+
         ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+
     Returns
     -------
-    data frame with index he nodes in adj and columns de dimension for which node participation is counted
+    data frame
+        Indexed by the nodes in adj and with columns de dimension for which node participation is counted
 
+    Raises
+    -------
     AssertionError
         If adj has non-zero entries in the diagonal which can produce errors.
     AssertionError
@@ -425,27 +454,32 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
     Parameters
     ----------
     adj : 2d (N,N)-array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i -> j.
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
         The matrix can be asymmetric, but must have 0 in the diagonal.
-    node_properties: dataframe
+    node_properties :  data frame
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
+    max_simplices : bool
         If False (default) counts all simplices in adj.
         If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-    max_dim: maximal dimension up to which simplex motifs are counted.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
         The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
-    simplex_type: string [’directed’(default)|’undirected’|’reciprocal’]
-        Type of simplex to consider
+    simplex_type : string
+        Type of simplex to consider:
+
         ’directed’ - directed simplices
+
         ’undirected’ - simplices in the underlying undirected graph
+
         ’reciprocal’ - simplices in the undirected graph of reciprocal connections
-    nodes: 1d array or None(default)
-        Restrict to list only the simplices whose source node is in nodes.  If none list all simplices
+    nodes : 1d array or None(default)
+        Restrict to list only the simplices whose source node is in nodes.  If None list all simplices
 
     Returns
     -------
-    panda series of simplex lists indexed per dimension.  In dimension k its a (no. of k-simplices, k+1)-array
-    is given, where each row denotes a simplex.
+    series
+        Simplex lists indexed per dimension.  The dimension k entry is a (no. of k-simplices, k+1)-array
+        is given, where each row denotes a simplex.
 
     Raises
     ------
@@ -548,29 +582,35 @@ def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simpl
     ----------
     adj_source : (n, n)-array or sparse matrix
         Adjacency matrix of the source network where n is the number of nodes in the source network.
-        A non-zero entry adj_source[i,j] implies there is an edge from node i -> j.
+        A non-zero entry adj_source[i,j] implies there is an edge from node i to j.
         The matrix can be asymmetric, but must have 0 in the diagonal.
     adj_cross : (n,m) array or sparse matrix
         Matrix of connections from the nodes in adj_n to the target population.
         n is the number of nodes in adj_source and m is the number of nodes in adj_target.
         A non-zero entry adj_cross[i,j] implies there is an edge from i-th node of adj_source
         to the j-th node of adj_target.
-    node_properties: tuple of dataframes (nrn_table_source, nrn_table_target)
-        Each nrn_table is a data frame of neuron properties the neurons in adj_source, adj_target.
+    node_properties : tuple of data frames
         Only necessary if used in conjunction with TAP or connectome utilities.
-    max_simplices: bool, optional
-        If False (default) counts all simplices.
+        Tuple (nrn_table_source, nrn_table_target)
+        Each nrn_table is a data frame of neuron properties the neurons in adj_source, adj_target.
+    max_simplices : bool
+        If False counts all simplices.
         If True counts only maximal simplices.
-    max_dim: maximal dimension up to which simplex motifs are counted.
-        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.
+        Particularly useful for large or dense graphs.
+
     Returns
     -------
-    Data frame of cross-k-in-degrees
+    Data frame
+        Table of cross-k-in-degrees indexed by the nodes in adj_target.
 
     Raises
     ------
     AssertionError
         If adj_source has non-zero entries in the diagonal which can produce errors.
+
     Notes
     -----
     We should probably write some notes here
@@ -678,7 +718,7 @@ def betti_counts(adj, node_properties=[],
 
 
 
-def binary2simplex(address, test=None, verbosity=1000000):
+def _binary2simplex(address, test=None, verbosity=1000000):
     """...Not used --- keeping it here as it is of interest to understanmd
     how simplices are represented on the disc by Flagser.
     #INPUT: Address of binary file storing simplices

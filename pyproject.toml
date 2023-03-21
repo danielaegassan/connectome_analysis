@@ -54,6 +54,7 @@ pytest-cov = "*"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
+seaborn = "*"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]

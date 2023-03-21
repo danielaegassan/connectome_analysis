@@ -31,7 +31,7 @@ MODEL_COLOR2 = 'tab:olive'
 # Test function for mkdocs documentation
 ###################################################################################################
 
-def test_func(adj_matrix, size, **kwargs):
+def aa_test_func(adj_matrix, size, **kwargs):
     """General probability model building, optionally for multiple random subsets of neurons.
     
     Parameters
@@ -51,8 +51,8 @@ def test_func(adj_matrix, size, **kwargs):
     Examples
     --------
     A comment explaining this example.
-    >>> adj = np.array([0,1,1],[0,0,1],[0,0,0])
-    >>> test_func(adj, 3)
+    > adj = np.array([0,1,1],[0,0,1],[0,0,0])
+    > test_func(adj, 3)
     np.array([[0,0,0],[1,0,0],[1,1,0]])
 
     Raises
@@ -62,8 +62,7 @@ def test_func(adj_matrix, size, **kwargs):
 
     Notes
     -----
-    An insightful math comment:
-    .. math:: \Sum_{i=1}^\infty K_i+\frac{4}{i}
+    Math comments are not working yet.
 
     See Also
     --------

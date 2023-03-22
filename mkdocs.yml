@@ -20,8 +20,12 @@ nav:
   - Network: 'network.md'
 
 markdown_extensions:
+  #- toc:
+  #    permalink: True
   - pymdownx.snippets:
       check_paths: true
+  - pymdownx.arithmatex:
+      generic: true
 
 plugins:
   - search:
@@ -33,6 +37,12 @@ plugins:
             show_signature_annotations: true
             show_source: true
             show_submodules: true
+
+extra_javascript:
+  - javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
 
 watch:
   - src/connalysis

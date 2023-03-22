@@ -10,25 +10,22 @@
 ################# UNWEIGHTED NETWORKS #################
 #######################################################
 
-import sys
 import resource
-import tempfile
-import numpy as np
-import pickle
-import logging
-from functools import partial
-
-from pathlib import Path
-from tqdm import tqdm
-import scipy.sparse as sp
 import numpy as np
 import pandas as pd
+import logging
+import scipy.sparse as sp
 
+#Imports not used as global imports, check what can be removed.
+import sys
+import tempfile
+import pickle
+from functools import partial
+from pathlib import Path
+from tqdm import tqdm
 from typing import List
 
 
-import numpy as np
-import pandas as pd
 
 
 LOG = logging.getLogger("connectome-analysis-topology")
@@ -45,8 +42,6 @@ def rc_submatrix(adj):
     ----------
     adj : 2d array or sparse matrix
         Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
-    node_properties : dataframe
-        Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
 
     Returns
     -------
@@ -67,8 +62,6 @@ def underlying_undirected_matrix(adj):
     ----------
     adj : 2d array or sparse matrix
         Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
-    node_properties : data frame
-        Data frame of neuron properties in adj. Only necessary if used in conjunction with TAP or connectome utilities.
 
     Returns
     -------
@@ -645,25 +638,102 @@ def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simpl
     return cross_col_deg
 
 
-
-
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################  BELOW STILL TO CLEAN UP
-
-
-
-def betti_counts(adj, node_properties=[],
-                 min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
+def betti_counts(adj, node_properties=None,
+                 min_dim=0, max_dim=[], simplex_type='directed', approximation=None,
                  **kwargs):
-    """..."""
+    """Count betti counts of flag complex of adj.  Type of flag complex is given by simplex_type.
+
+    Parameters
+    ----------
+    adj : 2d (N,N)-array or sparse matrix
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.  Matrix will be cast to 0,1 entries so weights
+        will be ignored.
+    node_properties :  data frame
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    min_dim : int
+        Minimal dimension from which betti counts are computed.
+        The default min_dim = 0 (counting number of connected components).
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = [] counts betti numbers up to the maximal dimension of the complex.
+    simplex_type : string
+        Type of flag complex to consider, given by the type of simplices it is built on.
+        Possible types are:
+
+        ’directed’ - directed simplices (directed flag complex)
+
+        ’undirected’ - simplices in the underlying undirected graph (clique complex of the underlying undirected graph)
+
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections (clique complex of the
+        undirected graph of reciprocal connections.)
+    approximation : list of integers  or None
+        Approximation parameter for the computation of the betti numbers.  Useful for large networks.
+        If None all betti numbers are computed exactly.
+        Otherwise, min_dim must be 0 and approximation but be a list of positive integers or -1.
+        The list approximation is either extended by -1 entries on the right or sliced from [0:max_dim+1] to obtain
+        a list of length max_dim.  Each entry of the list denotes the approximation value for the betti computation
+        of that dimension if -1 approximation in that dimension is set to None.
+
+        If the approximation value at a given dimension is `a` flagser skips cells creating columns in the reduction
+        matrix with more than `a` entries.  This is useful for hard problems.  For large, sparse networks a good value
+        if often `100,00`.  If set to `1` that dimension will be virtually ignored.  See [1]_
+
+    Returns
+    -------
+    series
+        Betti counts indexed per dimension from min_dim to max_dim.
+
+    Raises
+    ------
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    AssertionError
+        If adj is not square.
+    AssertionError
+        If approximation != None and min_dim != 0.
+
+    See Also
+    --------
+    [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts) :
+    A function that counts the simplices forming the complex from which bettis are count.
+    Simplex types are described there in detail.
+
+    Notes
+    -----
+    Let
+    $$
+    X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+    $$
+
+    References
+    ----------
+    For details about the approximation algorithm see
+
+    ..[1] D. Luetgehetmann, "Documentation of the C++ flagser library";
+           [GitHub: luetge/flagser](https://github.com/luetge/flagser/blob/\
+           master/docs/documentation_flagser.pdf).
+
+    """
     LOG.info("Compute betti counts for %s-type adjacency matrix and %s-type node properties",
              type(adj), type(node_properties))
 
     from pyflagser import flagser_unweighted
-    import numpy as np
-    adj=adj.astype('bool').astype('int') #Needed in case adj is not a 0,1 matrix
+
+    #Checking matrix
+    adj = sp.csr_matrix(adj).astype(bool).astype('int')
+    assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
+    N, M = adj.shape
+    assert N == M, 'Dimension mismatch. The matrix must be square.'
+    assert (not approximation in None) and (min_dim!=0), \
+        'For approximation != None, min_dim must be set to 0.  \nLower dimensions can be ignored by setting approximation to 1 on those dimensions'
+
+    # Symmetrize matrix if simplex_type is not 'directed'
+    if simplex_type == 'undirected':
+        adj = sp.triu(underlying_undirected_matrix(adj))  # symmtrize and keep upper triangular only
+    elif simplex_type == "reciprocal":
+        adj = sp.triu(rc_submatrix(adj))  # symmtrize and keep upper triangular only
+    #Computing bettis
     if max_dim==[]:
         max_dim=np.inf
 
@@ -673,7 +743,7 @@ def betti_counts(adj, node_properties=[],
                                     directed=True, coeff=2,
                                     approximation=None)['betti']
     else:
-        assert (all([isinstance(item,int) for item in approximation])) # asssert it's a list of integers
+        assert (all([isinstance(item,int) for item in approximation])) # assert it's a list of integers
         approximation=np.array(approximation)
         bettis=[]
 
@@ -714,8 +784,13 @@ def betti_counts(adj, node_properties=[],
                                              approximation=a)['betti']
 
     return pd.Series(bettis, name="betti_count",
-                     index=pd.Index(range(len(bettis)), name="dim"))
+                     index=pd.Index(np.arange(min_dim, len(bettis)-min_dim), name="dim"))
 
+
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################  BELOW STILL TO CLEAN UP
 
 
 def _binary2simplex(address, test=None, verbosity=1000000):

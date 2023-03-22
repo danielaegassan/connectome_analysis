@@ -22,10 +22,14 @@ nav:
 markdown_extensions:
   #- toc:
   #    permalink: True
+  - admonition:
   - pymdownx.snippets:
       check_paths: true
+  #- mdx_math:
+  #    enable_dollar_delimiter: True
   - pymdownx.arithmatex:
       generic: true
+
 
 plugins:
   - search:
@@ -33,13 +37,13 @@ plugins:
       default_handler: python
       handlers:
         python:
-          rendering:
+          options:
             show_signature_annotations: true
             show_source: true
             show_submodules: true
 
 extra_javascript:
-  - javascripts/config.js
+  #- javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 

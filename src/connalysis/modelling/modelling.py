@@ -62,12 +62,11 @@ def aa_test_func(adj_matrix, size, **kwargs):
 
     Notes
     -----
-    Math comments are not working yet.  This might be working for now, but I think it's linked to why
-    References are not linking to each other from notes to references. [1]_  The warning is raised because of the
-    backlash omega
+    Math comments are not working yet.  This is working now.
+    Still references are not linking to each other from notes to references. [1]_
 
     $$
-    X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+    X(e^{j\\omega } ) = x(n)e^{ - j\\omega n}
     $$
 
     See Also

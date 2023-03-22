@@ -703,7 +703,7 @@ def betti_counts(adj, node_properties=None,
     -----
     Let
     $$
-    X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+    X(e^{j\\omega } ) = x(n)e^{ - j\\omega n}
     $$
 
     References
@@ -711,8 +711,7 @@ def betti_counts(adj, node_properties=None,
     For details about the approximation algorithm see
 
     ..[1] D. Luetgehetmann, "Documentation of the C++ flagser library";
-           [GitHub: luetge/flagser](https://github.com/luetge/flagser/blob/\
-           master/docs/documentation_flagser.pdf).
+           [GitHub: luetge/flagser](https://github.com/luetge/flagser/blob/master/docs/documentation_flagser.pdf).
 
     """
     LOG.info("Compute betti counts for %s-type adjacency matrix and %s-type node properties",

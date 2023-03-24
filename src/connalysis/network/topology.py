@@ -447,12 +447,12 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
     Parameters
     ----------
     adj : 2d (N,N)-array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
         The matrix can be asymmetric, but must have 0 in the diagonal.
     node_properties :  data frame
         Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
     max_simplices : bool
-        If False (default) counts all simplices in adj.
+        If False counts all simplices in adj.
         If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
     max_dim : int
         Maximal dimension up to which simplex motifs are counted.
@@ -565,8 +565,8 @@ def list_simplices_by_dimension(adj, nodes=None, max_simplices=False,
     simplices[1] = np.stack([coom.row, coom.col]).T
     return simplices'''
 
-def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simplices=False,
-                          simplex_type='directed',threads=1,max_dim=-1,**kwargs):
+def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
+                          threads=1,max_dim=-1,**kwargs):
     #TODO DO THE OUTDEGREE VERSION maybe one where populations are defined within a matrix?
     """Compute generalized in-degree of nodes in adj_target from nodes in adj_source.
     The k-in-degree of a node v is the number of k-simplices in adj_source with all its nodes mapping to v
@@ -582,10 +582,6 @@ def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simpl
         n is the number of nodes in adj_source and m is the number of nodes in adj_target.
         A non-zero entry adj_cross[i,j] implies there is an edge from i-th node of adj_source
         to the j-th node of adj_target.
-    node_properties : tuple of data frames
-        Only necessary if used in conjunction with TAP or connectome utilities.
-        Tuple (nrn_table_source, nrn_table_target)
-        Each nrn_table is a data frame of neuron properties the neurons in adj_source, adj_target.
     max_simplices : bool
         If False counts all simplices.
         If True counts only maximal simplices.
@@ -627,7 +623,7 @@ def cross_col_k_in_degree(adj_cross, adj_source, node_properties=None, max_simpl
     adj=adj.T
     nodes=np.arange(n_source, n_source+n_target) #nodes on target population
     slist=list_simplices_by_dimension(adj, max_simplices=max_simplices, max_dim=max_dim,nodes=nodes,
-                                      simplex_type='directed',verbose=False,**kwargs)
+                                      simplex_type='directed',verbose=False,threads=threads,**kwargs)
 
     #Count participation as a source in transposed matrix i.e. participation as sink in the original
     cross_col_deg=pd.DataFrame(columns=slist.index[1:], index=nodes)
@@ -724,7 +720,7 @@ def betti_counts(adj, node_properties=None,
     assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
     N, M = adj.shape
     assert N == M, 'Dimension mismatch. The matrix must be square.'
-    assert (not approximation in None) and (min_dim!=0), \
+    assert not((not approximation is None) and (min_dim!=0)), \
         'For approximation != None, min_dim must be set to 0.  \nLower dimensions can be ignored by setting approximation to 1 on those dimensions'
 
     # Symmetrize matrix if simplex_type is not 'directed'
@@ -783,13 +779,7 @@ def betti_counts(adj, node_properties=None,
                                              approximation=a)['betti']
 
     return pd.Series(bettis, name="betti_count",
-                     index=pd.Index(np.arange(min_dim, len(bettis)-min_dim), name="dim"))
-
-
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################  BELOW STILL TO CLEAN UP
+                     index=pd.Index(np.arange(min_dim, len(bettis)+min_dim), name="dim"))
 
 
 def _binary2simplex(address, test=None, verbosity=1000000):
@@ -846,6 +836,301 @@ def _binary2simplex(address, test=None, verbosity=1000000):
     return (vertices.vertices, simplices)
 
 
+def _generate_abstract_edges_in_simplices(dim, position="all"):
+    import itertools
+    """Generate indices of edges in a simplex with nodes 0, 1, ... dim
+
+    Parameters
+    ----------
+    dim : int
+        Dimension of the simplex
+    position: str
+        Position of the edges to extract
+
+        'all': all edges of the simplex 
+
+        'spine': edges along the spine of the simplex
+
+    Returns
+    -------
+    list
+        list of pairs of nodes indexing the edges selected
+    """
+    if position == "all":
+        edges_abstract = np.array(list(itertools.combinations(range(dim + 1), 2)))
+    elif position == "spine":
+        edges_abstract = np.array([[i, i + 1] for i in range(dim)])
+    return edges_abstract
+
+
+def extract_submatrix_of_simplices(simplex_list, N, position="all"):
+    """Generate binary submatrix of NxN matrix of edges in simplex list.
+
+    Parameters
+    ----------
+    simplex list: 2d-array
+        Array of dimension (no. of simplices, dimension).
+        Each row corresponds to a list of nodes on a simplex
+        indexed by the order of the nodes in an NxN matrix.
+    N: int
+        Number of nodes in original graph defining the NxN matrix.
+    position: str
+        Position of the edges to extract
+
+        'all': all edges of the simplex
+
+        'spine': edges along the spine of the simplex
+        (only makes sense for directed simplices)
+
+    Returns
+    -------
+    csr bool matrix
+        Matrix with of shape (N,N) with entries `True` corresponding to edges in simplices.
+    """
+    if simplex_list.shape[0] == 0:
+        return sp.csr_matrix((N, N), dtype=bool)  # no simplices in this dimension
+    else:
+        dim = simplex_list.shape[1] - 1
+        edges_abstract = _generate_abstract_edges_in_simplices(dim,
+                                                               position=position)  # abstract list of edges to extract from each simplex
+        edges = np.unique(np.concatenate([simplex_list[:, edge] for edge in edges_abstract]), axis=0)
+        return (sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])), shape=(N, N))).tocsr().astype(bool)
+
+
+def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_type='directed',
+                        simplex_list=None, N=None, position="all",
+                        **kwargs):
+    # Choose only some dimensions???
+    # check max dim is consistent with simplex_list only used if adj is given and must be >0
+    # adj only used is simplex list is none
+    # Add requirement to give adj is direction is undirected and multiply adj by mat!!!
+    """Return the edges of the (maximal) k-skeleton of the flag complex of adj for all k<= max_dim in the position determined
+    by position.
+    If simplex list are provided, it will compute the edges directly from these and not use adj,
+    in which case N (the number of rows and columns of adj) is required.
+    If simplex lists are not provided they will be calculated with for the flag complex whose type is determined by
+    simplex_type as for simplex_counts.
+
+    Parameters
+    ----------
+    adj : (N,N)-array or sparse matrix
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    max_simplices : bool
+        If False counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    dimensions : list of ints
+        Dimensions `k` for which the `k`-skeleta is computed, if None all dimensions are computed.
+    simplex_type : string
+        Type of simplex to consider if computed from adj:
+
+        ’directed’ - directed simplices
+
+        ’undirected’ - simplices in the underlying undirected graph
+
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+    simplex list: series
+        Series 2d-arrays indexed by dimension.
+        Each array is of dimension (no. of simplices, dimension).
+        Each row corresponds to a list of nodes on a simplex.
+        If provided adj will be ignored but N will be required.
+    N: int
+        Number of nodes in original graph.
+    position: str
+        Position of the edges to extract
+
+        'all': all edges of the simplex
+
+        'spine': edges along the spine of the simplex
+        (only makes sense if simplices are directed)
+
+    Returns
+    -------
+    dict
+        Dictionary with keys dimensions and values boolean (N,N) matrices with entries `True`
+        corresponding to edges in (maximal) simplices of that dimension.
+
+    Raises
+    ------
+    AssertionError
+        If neither adj nor simplex_list are provided
+    AssertionError
+        If N <= than an entry in the simplex list
+    AssertionError
+        If a dimension is required that is not an index in the simplex list
+
+    Notes
+    ------
+    In order to list k-simplices and thus the k-skeleton, flagsercount needs to list all lower
+    dimensional simplices anyhow.
+
+    """
+
+    assert not (adj is None and simplex_list is None), "Either adj or simplex_list need to be provided"
+
+    if dimensions == None:
+        max_dim = -1
+    else:
+        max_dim = np.max(np.array(dimensions))
+
+    if (simplex_list is None):  # Compute simplex lists if not provided
+        simplex_list = list_simplices_by_dimension(adj, node_properties=None,
+                                                   max_simplices=max_simplices, max_dim=max_dim,
+                                                   simplex_type=simplex_type,
+                                                   nodes=None, verbose=False, **kwargs)
+        N = adj.shape[0]
+    else:
+        assert isinstance(N, int), 'If simplex list are provide N must be provided'
+        assert N > np.nanmax(simplex_list.explode().explode()), \
+            "N must be larger than all the entries in the simplex list"
+        assert (dimensions == None) or np.isin(dimensions, simplex_list.index).all(), \
+            f'Some requested dimensions={dimensions} are not in the simplex lists index={simplex_list.index.to_numpy()}'
+    # Extract 'k'-skeleton
+    dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    if dimensions != None:
+        dims = dims[np.isin(dims, dimensions)]
+    skeleton_mats = {f'dimension_{dim}': None for dim in dims}
+    for dim in dims:
+        mat = extract_submatrix_of_simplices(simplex_list[dim], N, position=position)
+        if simplex_type in ('undirected', 'reciprocal'):
+            mat = (mat + mat.T).astype(bool)
+        skeleton_mats[f'dimension_{dim}'] = mat
+    return skeleton_mats
+
+
+def count_rc_edges_k_skeleton(simplex_list_at_dim, N, position="all", return_mat=False):
+    """Count the edges and reciprocal edges in the simplex list provided.
+    If the list is all the k (maximal)simplices of a directed flag complex, it is counting the number of
+    edges and reciprocal edges of the its k-skeleton.
+
+    Parameters
+    ----------
+    simplex_list_at_dim: 2d-array
+        Array of dimension (no. of simplices, dimension).
+        Each row corresponds to a list of nodes on a simplex indexed by the
+        ordering given for all nodes in the graph
+    N: int
+        Number of nodes in original graph
+    position: str
+        Position of the edges to extract
+
+        'all': all edges of the simplex
+
+        'spine': edges along the spine of the simplex
+        (only makes sense for directed simplices)
+
+    Returns
+    -------
+    tuple of ints
+        Counts of (edges, reciprocal edges) in the simplex list
+
+    Raises
+    ------
+    AssertionError
+        If N <= than an entry in the simplex list
+    """
+
+    assert N > np.max(simplex_list_at_dim), \
+        "N must be larger than all the entries in the simplex list"
+
+    mat = extract_submatrix_of_simplices(simplex_list_at_dim, N, position=position)
+    edge_counts = mat.sum()
+    rc_edge_counts = rc_submatrix(mat).sum()
+    # Return mats?
+    if return_mat == True:
+        return edge_counts, rc_edge_counts, mat
+    else:
+        return edge_counts, rc_edge_counts
+
+
+def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
+                           simplex_list=None, N=None,
+                           position="all", return_mats=False, **kwargs):
+    # check max dim is consistent with simplex_list only used if adj is given and must be >0
+    # adj only used is simplex list is none
+    # Add requirement to give adj is direction is undirected and multiply adj by mat!!!
+    """Count the edges and reciprocal edges in the k-skeleta of the directed flag complex of adj for all
+    k<= max_dim. If simplex list are provided, it will compute the skeleta directly from these and not use adj.
+
+    Parameters
+    ----------
+    adj : (N,N)-array or sparse matrix
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    max_simplices : bool
+        If False counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex list: series
+        Series 2d-arrays indexed by dimension.
+        Each array is of dimension (no. of simplices, dimension).
+        Each row corresponds to a list of nodes on a simplex.
+        If provided adj will be ignored but N will be required.
+    N: int
+        Number of nodes in original graph.
+    position: str ?????? aqui aqui
+        Position of the edges to extract
+
+        'all': all edges of the simplex
+
+        'spine': edges along the spine of the simplex
+        (only makes sense if simplices are directed)
+    return_mats : bool
+        If True return the matrices of the underlying graphs of the k-skeleta as in
+        get_k_skeleta_graph.
+
+    Returns
+    -------
+    data frame, (dict)
+        data frame with index dimensions and columns number of (rc) edges in the corresponding skeleta
+        if return_mats==True, also return the graphs of the k skeleta as in get_k_skeleta_graph.
+
+    Raises
+    ------
+    AssertionError
+        If neither adj nor simplex_list are provided
+    AssertionError
+        If N <= than an entry in the simplex list
+    """
+
+    assert not (adj is None and simplex_list is None), "Either adj or simplex_list need to be provided"
+
+    if (simplex_list is None):  # Compute simplex lists if not provided
+        simplex_list = list_simplices_by_dimension(adj, node_properties=None,
+                                                   max_simplices=max_simplices, max_dim=max_dim,
+                                                   simplex_type='directed',
+                                                   nodes=None, verbose=False, **kwargs)
+        N = adj.shape[0]
+    else:
+        assert N > np.nanmax(simplex_list.explode().explode()), \
+            "N must be larger than all the entries in the simplex list"
+
+    # Extract 'k'-skeleton and count (rc-)edges
+    dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    edge_counts = pd.DataFrame(index=dims, columns=["number_of_edges", "number_of_rc_edges", "rc/edges_percent"])
+    if return_mats == True:
+        skeleton_mats = {f'dimension_{dim}': None for dim in dims}
+    for dim in dims:
+
+        edges, rc_edges, mat = count_rc_edges_k_skeleton(simplex_list[dim], N,
+                                                         position=position, return_mat=True)
+        edge_counts["number_of_edges"].loc[dim] = edges
+        edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
+        edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
+        if return_mats == True:
+            skeleton_mats[f'dimension_{dim}'] = mat
+    if return_mats == True:
+        return edge_counts, skeleton_mats
+    else:
+        return edge_counts
+
+
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################  BELOW STILL TO CLEAN UP
 
 
 

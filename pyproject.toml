@@ -43,6 +43,7 @@ matplotlib = "*"
 progressbar ="2.5"
 tqdm="*"
 pyflagsercount = "0.2.41"
+pyflagser ="*"
 
 [tool.poetry.dev-dependencies]
 black = "*"

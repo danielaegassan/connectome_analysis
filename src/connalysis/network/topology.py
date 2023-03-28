@@ -3,12 +3,9 @@
 # Author(s): D. Egas Santander, M. Santoro, J. Smith, V. Sood
 # Last modified: 03/2023
 
-#TODO: rc_in_simplex, filtered_simplex_counts, persistence
+#TODO unweighted: convex hull, combinatorial ricci,
+#TODO weighted: filtered_simplex_counts, persistence,
 
-
-#######################################################
-################# UNWEIGHTED NETWORKS #################
-#######################################################
 
 import resource
 import numpy as np
@@ -26,15 +23,15 @@ from tqdm import tqdm
 from typing import List
 
 
-
-
 LOG = logging.getLogger("connectome-analysis-topology")
 LOG.setLevel("INFO")
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 
-
+#######################################################
+################# UNWEIGHTED NETWORKS #################
+#######################################################
 
 def rc_submatrix(adj):
     """Returns the symmetric submatrix of reciprocal connections of adj
@@ -695,13 +692,6 @@ def betti_counts(adj, node_properties=None,
     A function that counts the simplices forming the complex from which bettis are count.
     Simplex types are described there in detail.
 
-    Notes
-    -----
-    Let
-    $$
-    X(e^{j\\omega } ) = x(n)e^{ - j\\omega n}
-    $$
-
     References
     ----------
     For details about the approximation algorithm see
@@ -1047,8 +1037,6 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
                            simplex_list=None, N=None,
                            position="all", return_mats=False, **kwargs):
     # check max dim is consistent with simplex_list only used if adj is given and must be >0
-    # adj only used is simplex list is none
-    # Add requirement to give adj is direction is undirected and multiply adj by mat!!!
     """Count the edges and reciprocal edges in the k-skeleta of the directed flag complex of adj for all
     k<= max_dim. If simplex list are provided, it will compute the skeleta directly from these and not use adj.
 
@@ -1070,7 +1058,7 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
         If provided adj will be ignored but N will be required.
     N: int
         Number of nodes in original graph.
-    position: str ?????? aqui aqui
+    position: str
         Position of the edges to extract
 
         'all': all edges of the simplex
@@ -1085,7 +1073,7 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
     -------
     data frame, (dict)
         data frame with index dimensions and columns number of (rc) edges in the corresponding skeleta
-        if return_mats==True, also return the graphs of the k skeleta as in get_k_skeleta_graph.
+        if return_mats==True, also return the graphs of the k-skeleta as in get_k_skeleta_graph.
 
     Raises
     ------
@@ -1113,7 +1101,6 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
     if return_mats == True:
         skeleton_mats = {f'dimension_{dim}': None for dim in dims}
     for dim in dims:
-
         edges, rc_edges, mat = count_rc_edges_k_skeleton(simplex_list[dim], N,
                                                          position=position, return_mat=True)
         edge_counts["number_of_edges"].loc[dim] = edges
@@ -1127,25 +1114,55 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
         return edge_counts
 
 
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################  BELOW STILL TO CLEAN UP
 
 
 
-def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
-    """...
-    adj : Adjacency matrix N * N
-    simplices : sequence of 2D arrays that contain simplices by dimension.
-    ~           The Dth array will be of shape N * D
-    ~           where D is the dimension of the simplices
-    """
+def bedge_counts(adjacency, simplices=None,
+                 max_simplices = False, max_dim = -1, simplex_type = 'directed', ** kwargs):
+    """Count the sum number of edges per position on the subgraphs defined by the nodes of the simplices in simplices. 
+
+        Parameters
+        ----------
+        adjacency : (N,N)-array or sparse matrix
+            Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+            The matrix can be asymmetric, but must have 0 in the diagonal.
+        simplices : series
+            Series  of 2d-arrays indexed by dimension.
+            Each array is of dimension (no. of simplices, dimension).
+            Each row corresponds to a list of nodes on a simplex.
+        max_simplices : bool
+            If False counts all simplices in adj.
+            If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+        max_dim : int
+            Maximal dimension up to which simplex motifs are counted.
+            The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+        simplex_type: str
+            See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
+
+        Returns
+        -------
+        series
+            pandas series with index dimensions values (dim+1, dim+1) arrays.  The (i,j) entry counts the number of edges
+            from node i to node j on all the subgraphs of adjacency on the nodes of the simplices listed.  See notes.
+
+        Notes
+        -------
+        Every directed $k$-simplex $[v_o, v_1, \\ldots, v_k]$ defines as subgraph of the adjacency matrix, with edges
+        $v_i \\to v_j$ whenever $i\leq j$, but also possibly with ''reverse'' edges.  One can represent this structure
+        with a non-symmetric $(k+1, k+1)$-matrix with `1`'s for every edge in the subgraph.  The output of this function
+        gives for each dimension the sum of all these matrices over all the simplices provided in `simplices` or over
+        all the simplices in the adjacency matrix if none is provided.  The lower triangular part of these matrices is
+        therefore a metric of recurrence within simplices, or "higher dimensional recurrence".
+        In particular, in dimension 1 it is the number of reciprocal edges in the network.
+        """
+
     adj = adjacency
 
     if simplices is None:
         LOG.info("COMPUTE `bedge_counts(...)`: No argued simplices.")
-        return bedge_counts(adj, nodes, list_simplices_by_dimension(adj), **kwargs)
+        return bedge_counts(adj,
+                            list_simplices_by_dimension(adj, max_simplices = max_simplices,
+                                                        max_dim = max_dim, simplex_type = simplex_type, ** kwargs))
     else:
         LOG.info("COMPUTE `bedge_counts(...): for simplices: %s ", simplices.shape)
 
@@ -1171,10 +1188,14 @@ def bedge_counts(adjacency, nodes=None, simplices=None, **kwargs):
     return simplices.apply(count_bedges)
 
 
-def convex_hull(adj, node_properties):# --> topology
+def _convex_hull(adj, node_properties):# --> topology
     """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
     pass
 
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################
+#################################################################################################################################################  BELOW STILL TO CLEAN UP
 
 #######################################################
 ################## WEIGHTED NETWORKS ##################

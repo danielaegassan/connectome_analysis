@@ -16,5 +16,4 @@ def test_imports():
     from connalysis.modelling import conn_prob_3rd_order_model
     from connalysis.modelling import conn_prob_3rd_order_pathway_model
     from connalysis import network
-    #TODO: commented out until pipy pyflagser distribution is fixed
     import pyflagsercount

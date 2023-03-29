@@ -538,30 +538,6 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
     return simplices
 
 
-'''
-OLD VERSION KEEP HERE JUST FOR A LITTLE BIT FOR VISHAL'S CHECK 
-def list_simplices_by_dimension(adj, nodes=None, max_simplices=False,
-                                verbose=False, **kwargs):
-    """List all the simplices (upto a max dimension) in an adjacency matrix.
-    """
-    LOG.info("COMPUTE list of %s simplices by dimension", "max-" if max_simplices else "")
-
-    N, M = adj.shape
-    assert N == M, f"{N} != {M}"
-
-    n_threads = kwargs.get("threads", kwargs.get("n_threads", 1))
-    fcounts = _flagser_counts(adj, list_simplices=True, max_simplices=max_simplices,
-                              threads=n_threads)
-    original = fcounts["simplices"]
-    coom = adj.tocoo()
-
-    max_dim = len(original)
-    dims = pd.Index(np.arange(max_dim), name="dim")
-    simplices = pd.Series(original, name="simplices", index=dims)
-    simplices[0] = np.reshape(np.arange(0, N), (N, 1))
-    simplices[1] = np.stack([coom.row, coom.col]).T
-    return simplices'''
-
 def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
                           threads=1,max_dim=-1,**kwargs):
     #TODO DO THE OUTDEGREE VERSION maybe one where populations are defined within a matrix?
@@ -570,15 +546,15 @@ def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
     through edges in adj_cross.
     Parameters
     ----------
-    adj_source : (n, n)-array or sparse matrix
-        Adjacency matrix of the source network where n is the number of nodes in the source network.
-        A non-zero entry adj_source[i,j] implies there is an edge from node i to j.
-        The matrix can be asymmetric, but must have 0 in the diagonal.
     adj_cross : (n,m) array or sparse matrix
         Matrix of connections from the nodes in adj_n to the target population.
         n is the number of nodes in adj_source and m is the number of nodes in adj_target.
         A non-zero entry adj_cross[i,j] implies there is an edge from i-th node of adj_source
         to the j-th node of adj_target.
+    adj_source : (n, n)-array or sparse matrix
+        Adjacency matrix of the source network where n is the number of nodes in the source network.
+        A non-zero entry adj_source[i,j] implies there is an edge from node i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
     max_simplices : bool
         If False counts all simplices.
         If True counts only maximal simplices.
@@ -590,7 +566,7 @@ def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
     Returns
     -------
     Data frame
-        Table of cross-k-in-degrees indexed by the nodes in adj_target.
+        Table of cross-k-in-degrees indexed by the m nodes in the target population.
 
     Raises
     ------
@@ -610,13 +586,13 @@ def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
     assert adj_source.shape[0] == adj_cross.shape[0], \
     'Dimension mismatch. The source matrix and cross matrix must have the same number of rows.'
 
-    n_source=adj_source.shape[0] #Size of the source population
-    n_target=adj_cross.shape[1] #Size of the target population
-    #Building a square matrix [[adj_source, adj_cross], [0,0]]
+    n_source = adj_source.shape[0] #Size of the source population
+    n_target = adj_cross.shape[1] #Size of the target population
+    # Building a square matrix [[adj_source, adj_cross], [0,0]]
     adj=sp.bmat([[adj_source, adj_cross],
                  [sp.csr_matrix((n_target, n_source), dtype='bool'),
                   sp.csr_matrix((n_target, n_target), dtype='bool')]])
-    #Tranposing to restric computation to ``source nodes'' in adj_target in flagsercount
+    # Transposing to restrict computation to ``source nodes'' in adj_target in flagsercount
     adj=adj.T
     nodes=np.arange(n_source, n_source+n_target) #nodes on target population
     slist=list_simplices_by_dimension(adj, max_simplices=max_simplices, max_dim=max_dim,nodes=nodes,
@@ -1186,6 +1162,157 @@ def bedge_counts(adjacency, simplices=None,
                 .agg("sum"))
 
     return simplices.apply(count_bedges)
+
+
+#TRIAD ANALYSIS
+label_edges = np.arange(3 * 3).reshape(3, 3)  # Indexing edges on a 3x3 matrix going from left to right and up to down
+def _get_triad_id(edges):
+    """Given a the edges on a graph on nodes {0,1,2}
+    return a list of edges indexed from 0 to 8 as in label_edges.
+
+    Parameters
+    ----------
+    edges : tuple of pairs
+        Each pair is of the form $(i,j)$ where $i, j \\in \\{0,1,2}$.
+
+    Returns
+    -------
+    list of integers between 0 and 8 indexing the edges as in label_edges
+    """
+    row, col = tuple(zip(*edges))
+    return tuple(np.sort(label_edges[row, col]))
+
+# We list all connected triads by hand as sort them as in Gal et al., 2017
+connected_triads = {
+    # On two edges
+    0: ((0, 2), (1, 0)),
+    1: ((0, 2), (1, 2)),
+    2: ((0, 1), (0, 2)),
+    # On three edges
+    3: ((0, 1), (1, 2), (0, 2)),
+    4: ((0, 1), (0, 2), (1, 0)),
+    5: ((0, 1), (1, 0), (2, 0)),
+    6: ((0, 1), (1, 2), (2, 0)),
+    # On four edges
+    7: ((0, 1), (0, 2), (1, 0), (2, 0)),
+    8: ((0, 1), (0, 2), (1, 0), (2, 1)),
+    9: ((0, 1), (0, 2), (1, 0), (1, 2)),
+    10: ((0, 1), (0, 2), (1, 2), (2, 1)),
+    # On 5 edge
+    11: ((0, 1), (0, 2), (1, 0), (1, 2), (2, 0)),
+    # On 6 edges
+    12: ((0, 1), (0, 2), (1, 0), (1, 2), (2, 0), (2, 1))
+}
+
+# Exhaustive dictionary of triads (digraphs on 3 nodes) represented by their list of edges as indexed in
+# label_edges.  The 3-cycle needs to be entered twice because all edges have the same in-out degree but there
+# are two graphs in the isomorphism class.
+triad_dict = {_get_triad_id(connected_triads[i]): i for i in range(13)}
+triad_dict[(2, 3, 7)] = 6
+# Size of isomorphism class of each triad type i.e., number of permutation of the vertices giving the same graph
+triad_combinations = np.array([6, 3, 3,  # 2 edges
+                               6, 6, 6, 2,  # 3 edges
+                               3, 6, 3, 3,  # 4 edges
+                               6,  # 5 edges
+                               1])  # 3-clique
+def count_triads_fully_connected(adj, max_num_sampled=5000000):
+    """Counts the numbers of each triadic motif in the matrix adj.
+
+    Parameters
+    ----------
+    adj : 2d-array
+        Adjacency matrix of a directed network.
+    max_num_sampled : int
+        The maximal number of connected triads classified. If the number of
+        connected triads is higher than that, only the specified number is sampled at random and
+        classified. The final counts are extrapolated as (actual_num_triads/ max_num_sampled) * counts.
+
+    Returns
+    -------
+    1d array
+        The counts of the various triadic motifs in adj as ordered in Figure 5 [1]_.
+
+    Notes
+    ------
+    Only connectected motifs are counted, i.e. motifs with less than 2 connections or only a single bidirectional
+    connection are not counted. The connected motifs are ordered as in Figure 5 [1]_.
+
+    References
+    -------
+
+    ..[1] Gal, Eyal, et al.
+    ["Rich cell-type-specific network topology in neocortical microcircuitry."](https://www.nature.com/articles/nn.4576)
+    Nature neuroscience 20.7 (2017): 1004-1013.
+
+    """
+
+    # Functions to indetify triads
+    def canonical_sort(M):
+        """Sorts row/columns of the matrix adj using the lexicographical order of the
+        tuple (out_degree, in_degree).
+
+        Parameters
+        ----------
+        M : 2d-array
+            Adjacency matrix of a directed network.
+
+        Returns
+        -------
+        2d-array
+            the matrix adj with rows/columns sorted
+        """
+        in_degree = np.sum(M, axis=0)
+        out_degree = np.sum(M, axis=1)
+        idx = np.argsort(-in_degree - 10 * out_degree)
+        return M[:, idx][idx]
+
+    def identify_motif(M):
+        """
+        Identifies the connected directed digraph on three nodes M as on in the full classification
+        list given in the dictionary triad_dict.
+
+        Parameters
+        ----------
+        M : array
+            A (3,3) array describing a directed connected digraph on three nodes.
+
+        Returns
+        -------
+        The index of the motif as indexed in the dictiroanry triad_dict which follows the
+        ordering of Gal et al., 2017
+        """
+        triad_code = tuple(np.nonzero(canonical_sort(M).flatten())[0])
+        return triad_dict[triad_code]
+
+    # Finding and counting triads
+    import time
+    adj = adj.toarray()  # Casting to array makes finding triads an order of magnitude faster
+    t0 = time.time()
+    undirected_adj = underlying_undirected_matrix(adj).toarray()
+    # Matrix with i,j entries number of undirected paths between i and j in adj
+    path_counts = np.triu(undirected_adj @ undirected_adj, 1)
+    connected_pairs = np.nonzero(path_counts)
+    triads = set()
+    print("Testing {0} potential triadic pairs".format(len(connected_pairs[0])))
+    for x, y in zip(*connected_pairs):
+        # zs = np.nonzero((undirected_adj.getrow(x).multiply(undirected_adj.getrow(y))).toarray()[0])[0]
+        zs = np.nonzero(undirected_adj[x] & undirected_adj[y])[0]
+        for z in zs:
+            triads.add(tuple(sorted([x, y, z])))
+    triads = list(triads)
+    print("Time spent finding triads: {0}".format(time.time() - t0))
+    print("Found {0} connected triads".format(len(triads)))
+    t0 = time.time()
+    counts = np.zeros(np.max(list(triad_dict.values())) + 1)
+    sample_idx = np.random.choice(len(triads),
+                                  np.minimum(max_num_sampled, len(triads)),
+                                  replace=False)
+    for idx in sample_idx:
+        triad = triads[idx]
+        motif_id = identify_motif(adj[:, triad][triad, :])
+        counts[motif_id] += 1
+    print("Time spent classifying triads: {0}".format(time.time() - t0))
+    return ((len(triads) / len(sample_idx)) * counts).astype(int)
 
 
 def _convex_hull(adj, node_properties):# --> topology

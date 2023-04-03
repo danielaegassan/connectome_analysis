@@ -1215,7 +1215,7 @@ triad_combinations = np.array([6, 3, 3,  # 2 edges
                                3, 6, 3, 3,  # 4 edges
                                6,  # 5 edges
                                1])  # 3-clique
-def count_triads_fully_connected(adj, max_num_sampled=5000000):
+def count_triads_fully_connected(adj, max_num_sampled=5000000, return_normalized=False):
     """Counts the numbers of each triadic motif in the matrix adj.
 
     Parameters
@@ -1226,10 +1226,15 @@ def count_triads_fully_connected(adj, max_num_sampled=5000000):
         The maximal number of connected triads classified. If the number of
         connected triads is higher than that, only the specified number is sampled at random and
         classified. The final counts are extrapolated as (actual_num_triads/ max_num_sampled) * counts.
+    return_normalized : bool
+        If True return the triad counts divided by the size of each isomorphism class.  That is, the total counts
+        divided by the following array:
+
+        $[6, 3, 3, 6, 6, 6, 2, 3, 6, 3, 3, 6, 1].$
 
     Returns
     -------
-    1d array
+    1d-array
         The counts of the various triadic motifs in adj as ordered in Figure 5 [1]_.
 
     Notes
@@ -1312,7 +1317,12 @@ def count_triads_fully_connected(adj, max_num_sampled=5000000):
         motif_id = identify_motif(adj[:, triad][triad, :])
         counts[motif_id] += 1
     print("Time spent classifying triads: {0}".format(time.time() - t0))
-    return ((len(triads) / len(sample_idx)) * counts).astype(int)
+    if return_normalized:
+        return (((len(triads) / len(sample_idx)) * counts).astype(int)) / triad_combinations
+    else:
+        return (((len(triads) / len(sample_idx)) * counts).astype(int))
+
+
 
 
 def _convex_hull(adj, node_properties):# --> topology

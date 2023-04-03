@@ -1,7 +1,7 @@
 # Generate models for connectomes.
 #
 # Author(s): C. Pokorny
-# Last modified: 02/2023
+# Last modified: 04/2023
 
 
 import numpy as np
@@ -86,8 +86,29 @@ def aa_test_func(adj_matrix, size, **kwargs):
 ###################################################################################################
 
 def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
-    """ Main function for data extraction and model building
-        to be used in batch script on different data splits
+    """Main function for data extraction and model building to be used in a batch script on different data splits.
+    
+    Parameters
+    ----------
+    adj_file : str
+        File name (.npz format) of scipy.sparse adjacency matrix of the circuit
+    nrn_file : str
+        File name (.h5 or .feather format) of pandas.DataFrame with neuron properties
+    cfg_file : str
+        File name (.json format) of config dict specifying the model building operation
+    N_split : int, optional
+        Number of data splits to divide data extraction into (to reduce memory consumption)
+    part_idx : int, optional
+        Index of current data split (part) to extract data from
+        Range: 0 .. N_split - 1 Run data extraction of given data split
+               -1               Merge data splits and build model
+    
+    Returns
+    -------
+    None
+        Nothing returned here; data/model/figures written to disc
+
+
     """
 
     # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)

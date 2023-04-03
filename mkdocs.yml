@@ -15,9 +15,9 @@ theme:
 
 nav:
   - Introduction: 'index.md'
-  - 'api_docs.md'
-  - Modelling: 'modelling.md'
-  - Network: 'network.md'
+  - Functions:
+    - Modelling: 'modelling.md'
+    - Network: 'network.md'
 
 markdown_extensions:
   #- toc:

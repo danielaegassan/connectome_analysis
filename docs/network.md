@@ -1,4 +1,4 @@
-# Functions for modelling
+# Functions for working with networks
 
 This page describes functions contained in the network module
 

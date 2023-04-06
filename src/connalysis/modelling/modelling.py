@@ -87,7 +87,7 @@ def aa_test_func(adj_matrix, size, **kwargs):
 
 def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
     """Main function for data extraction and model building to be used in a batch script on different data splits.
-    
+
     Parameters
     ----------
     adj_file : str
@@ -102,13 +102,22 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
         Index of current data split (part) to extract data from
         Range: 0 .. N_split - 1 Run data extraction of given data split
                -1               Merge data splits and build model
-    
+
     Returns
     -------
     None
-        Nothing returned here; data/model/figures written to disc
+        Nothing returned here; Data/model/figures are written to disc
 
+    Raises
+    ------
+    AssertionError
+        If nrn_file is not in .h5 or .feather format
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
 
+    See Also
+    --------
+    run_model_building : Underlying main function for model building
     """
 
     # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
@@ -145,7 +154,26 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
 ###################################################################################################
 
 def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
-    """2nd-order probability model building, optionally for multiple random subsets of neurons."""
+    """2nd-order probability model building, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    kwargs : dict, optional
+        Additional model building settings
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+
+    Notes
+    -----
+    Description of 2nd-order model...
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -197,7 +225,7 @@ def conn_prob_model(adj, node_properties, **kwargs):
         sample_seeds = kwargs.pop('sample_seeds', 1)
 
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
-            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
+            sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
 
@@ -230,7 +258,7 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
         sample_seeds = kwargs.pop('sample_seeds', 1)
 
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
-            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
+            sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
 
@@ -243,7 +271,7 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
     return model_params
 
 
-def generate_seeds(num_seeds, num_digits=6, meta_seed=0):
+def _generate_seeds(num_seeds, num_digits=6, meta_seed=0):
     """Helper function to generate list of unique random seeds with given number of digits."""
 
     assert isinstance(num_seeds, int) and num_seeds > 0, 'ERROR: Number of seeds must be a positive integer!'

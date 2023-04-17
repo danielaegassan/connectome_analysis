@@ -54,11 +54,11 @@ def rc_submatrix(adj):
     return adj.multiply(mask).astype(adj.dtype)
 
 def underlying_undirected_matrix(adj):
-    """Returns the symmetric matrix of undirected connections of adj
+    """Returns the symmetric matrix of undirected connections of `adj`.
     Parameters
     ----------
     adj : 2d array or sparse matrix
-        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        Adjacency matrix of the directed network.  A non-zero entry in `adj[i][j]` implies there is an edge from vertex `i` to vertex `j`.
 
     Returns
     -------

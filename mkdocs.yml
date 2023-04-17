@@ -18,6 +18,7 @@ nav:
   - Functions:
     - Modelling: 'modelling.md'
     - Network: 'network.md'
+  - About: 'about.md'
 
 markdown_extensions:
   #- toc:

@@ -813,7 +813,7 @@ def _generate_abstract_edges_in_simplices(dim, position="all"):
     position: str
         Position of the edges to extract
 
-        'all': all edges of the simplex 
+        'all': all edges of the simplex
 
         'spine': edges along the spine of the simplex
 
@@ -1095,7 +1095,7 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
 
 def bedge_counts(adjacency, simplices=None,
                  max_simplices = False, max_dim = -1, simplex_type = 'directed', ** kwargs):
-    """Count the sum number of edges per position on the subgraphs defined by the nodes of the simplices in simplices. 
+    """Count the sum number of edges per position on the subgraphs defined by the nodes of the simplices in simplices.
 
         Parameters
         ----------
@@ -1318,6 +1318,32 @@ def count_triads_fully_connected(adj, max_num_sampled=5000000):
 def _convex_hull(adj, node_properties):# --> topology
     """Return the convex hull of the sub gids in the 3D space using x,y,z position for gids"""
     pass
+
+def get_all_simplices_from_max(max_simplices):
+    """Takes the list of maximal simplices are returns the list of all simplices.
+
+        Parameters
+        ----------
+        max_simplices : list
+            A list of lists of tuples. Where max_simplices[k] is a list of the 0 dimensional maximal simplices,
+            where each simplex is a tuple of the vertices of the simplex
+
+        Returns
+        -------
+        list
+            A list of lists of tuples. Of the same format as the inputted list but now contains all simplices.
+        """
+    simplices = list(max_simplices)
+    for k in range(len(max_simplices)-1,0,-1):
+        print(max_simplices[k])
+        for simplex in simplices[k]:
+            if
+            for s in range(k,-1,-1):
+                x = tuple(simplex[:s]+simplex[s+1:])
+                if x not in simplices[k-1]:
+                    simplices[k-1].append(x)
+
+    return simplices
 
 #################################################################################################################################################
 #################################################################################################################################################

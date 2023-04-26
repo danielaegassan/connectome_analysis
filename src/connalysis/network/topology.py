@@ -1337,7 +1337,6 @@ def get_all_simplices_from_max(max_simplices):
     for k in range(len(max_simplices)-1,0,-1):
         print(max_simplices[k])
         for simplex in simplices[k]:
-            if
             for s in range(k,-1,-1):
                 x = tuple(simplex[:s]+simplex[s+1:])
                 if x not in simplices[k-1]:

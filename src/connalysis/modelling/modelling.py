@@ -95,18 +95,18 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
     nrn_file : str
         File name (.h5 or .feather format) of pandas.DataFrame with neuron properties
     cfg_file : str
-        File name (.json format) of config dict specifying the model building operation
+        File name (.json format) of config dict specifying the model building operation; see Notes for details
     N_split : int, optional
         Number of data splits to divide data extraction into (to reduce memory consumption)
     part_idx : int, optional
         Index of current data split (part) to extract data from
-        Range: 0 .. N_split - 1 Run data extraction of given data split
-               -1               Merge data splits and build model
+        Range:  0 .. N_split - 1 Run data extraction of given data split
+               -1                Merge data splits and build model
 
     Returns
     -------
     None
-        Nothing returned here; Data/model/figures are written to disc
+        Nothing returned here; Data/model/figures are written to output directories as specified in `cfg_file`
 
     Raises
     ------
@@ -115,9 +115,29 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
     AssertionError
         If the adjacency matrix is not a square matrix matching the length of the neuron properties table
 
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    `cfg_file` must be a .json file containing a dictionary with following entries, some of which are optional:
+
+    - `model_name` Name of the model (to be used in file names, ...)
+    - `model_order` Model order (1 or 2)
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seed` Seed for reproducible selection of random subset of neurons (optional)
+    - `model_dir` Output directory where to save the model (optional; default: no saving)
+    - `data_dir` Output directory where to save the extracted data (optional; default: no saving)
+    - `do_plot` Enable/disable output plotting (optional; default: no plotting)
+    - `plot_dir` Output directory where to save the plots, if plotting enabled (optional; default: no saving)
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+    - `part_idx` Part index (from 0 to N_split-1) to run data extraction only on a specific data split; -1 to merge existing splits and build model (optional; default: data extraction and model building for all splits)
+
     See Also
     --------
     run_model_building : Underlying main function for model building
+
     """
 
     # Load adjacency matrix (.npz) & neuron properties table (.h5 or .feather)
@@ -154,12 +174,12 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
 ###################################################################################################
 
 def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
-    """2nd-order probability model building, optionally for multiple random subsets of neurons.
+    """Wrapper function for 2nd-order probability model building, optionally for multiple random subsets of neurons.
 
     Parameters
     ----------
     adj : scipy.sparse
-        Sparse adjacency matrix of the circuit
+        Sparse (symmetric) adjacency matrix of the circuit
     node_properties : pandas.DataFrame
         Data frame with neuron properties
     kwargs : dict, optional
@@ -170,9 +190,33 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
     pandas.DataFrame
         Data frame with model paramters (columns) for different seeds (rows)
 
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but no positive integer
+    Warning
+        If sample sample_seeds is provided but ignored because no subsampling is applied
+
     Notes
     -----
-    Description of 2nd-order model...
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order model as defined in [1]_ describes connection probabilities as a function of distance between pre- and post-synaptic neurons. Specifically, we use here an exponential distance-dependent model of the form:
+    $$
+    p(d) = \mbox{scale} * exp(-\mbox{exponent} * d)
+    $$
+    with `d` as distance in $\mu m$, and the model parameters `scale` defining the connection probability at distance zero, and `exponent` the exponent of distance-dependent decay in $\mu m^{-1}$.
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
     """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
@@ -181,8 +225,42 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """2nd-order probability model building for separate pathways (i.e., non-symmetric adj),
-       optionally for multiple random subsets of neurons."""
+    """Wrapper function for 2nd-order probability model building when source and target populations are not the same, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    kwargs : dict, optional
+        Additional model building settings
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but no positive integer
+    Warning
+        If sample sample_seeds is provided but ignored because no subsampling is applied
+
+    See Also
+    --------
+    conn_prob_2nd_order_model : Special case of 2nd-order model building function for same source/target node population; further details to be found here
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -209,7 +287,9 @@ def conn_prob_3rd_order_pathway_model(adj, node_properties_src, node_properties_
 def conn_prob_model(adj, node_properties, **kwargs):
     """General probability model building, optionally for multiple random subsets of neurons."""
 
-    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
+
+    invalid_args = ['model_name', 'sample_seed', 'model_dir', 'data_dir', 'plot_dir', 'do_plot', 'N_split'] # Not allowed arguments, as they will be set/used internally
     for arg in invalid_args:
         assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
     kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
@@ -242,7 +322,9 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
     """General probability model building for separate pathways (i.e., non-symmetric adj),
        optionally for multiple random subsets of neurons."""
 
-    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    assert adj.shape[0] == node_properties_src.shape[0] and adj.shape[1] == node_properties_tgt.shape[0], 'ERROR: Data size mismatch!'
+
+    invalid_args = ['model_name', 'sample_seed', 'model_dir', 'data_dir', 'plot_dir', 'do_plot', 'N_split'] # Not allowed arguments, as they will be set/used internally
     for arg in invalid_args:
         assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
     kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
@@ -293,6 +375,8 @@ def run_model_building(adj, node_properties, model_name, model_order, **kwargs):
       Data extraction, model fitting, and (optionally) data/model visualization
     """
     logging.info(f'Running order-{model_order} model building {kwargs}...')
+
+    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
 
     # Subsampling (optional)
     sample_size = kwargs.get('sample_size')
@@ -361,6 +445,8 @@ def run_pathway_model_building(adj, node_properties_src, node_properties_tgt, mo
       consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization
     """
     logging.info(f'Running order-{model_order} model building {kwargs}...')
+
+    assert adj.shape[0] == node_properties_src.shape[0] and adj.shape[1] == node_properties_tgt.shape[0], 'ERROR: Data size mismatch!'
 
     # Subsampling (optional)
     sample_size = kwargs.get('sample_size')

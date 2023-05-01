@@ -183,7 +183,7 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
     node_properties : pandas.DataFrame
         Data frame with neuron properties
     kwargs : dict, optional
-        Additional model building settings
+        Additional model building settings; see Notes for details
 
     Returns
     -------
@@ -201,7 +201,9 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
     AssertionError
         If sample_seeds provided as scalar but no positive integer
     Warning
-        If sample sample_seeds is provided but ignored because no subsampling is applied
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because no subsampling applicable
 
     Notes
     -----
@@ -212,6 +214,10 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
     p(d) = \mbox{scale} * exp(-\mbox{exponent} * d)
     $$
     with `d` as distance in $\mu m$, and the model parameters `scale` defining the connection probability at distance zero, and `exponent` the exponent of distance-dependent decay in $\mu m^{-1}$.
+
+    `kwargs` may contain following settings:
+
+    - To be added...
 
     References
     ----------
@@ -236,7 +242,7 @@ def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_
     node_properties_tgt : pandas.DataFrame
         Data frame with target neuron properties (corresponding to the columns in adj)
     kwargs : dict, optional
-        Additional model building settings
+        Additional model building settings; see See Also for details
 
     Returns
     -------
@@ -254,7 +260,9 @@ def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_
     AssertionError
         If sample_seeds provided as scalar but no positive integer
     Warning
-        If sample sample_seeds is provided but ignored because no subsampling is applied
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because no subsampling applicable
 
     See Also
     --------
@@ -297,7 +305,7 @@ def conn_prob_model(adj, node_properties, **kwargs):
     model_order = kwargs.pop('model_order')
 
     sample_size = kwargs.get('sample_size')
-    if sample_size is None or sample_size >= node_properties.shape[0]:
+    if sample_size is None or sample_size <= 0 or sample_size >= node_properties.shape[0]:
         sample_seeds = [None] # No randomization
         if kwargs.pop('sample_seeds', None) is not None:
             logging.warning('Using all neurons, ignoring sample seeds!')
@@ -307,7 +315,10 @@ def conn_prob_model(adj, node_properties, **kwargs):
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
             sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
+            num_seeds = len(sample_seeds)
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+            if len(sample_seeds) < num_seeds:
+                logging.warning(f'Duplicate seeds provided!')
 
     model_params = pd.DataFrame()
     for seed in sample_seeds:
@@ -332,7 +343,7 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
     model_order = kwargs.pop('model_order')
 
     sample_size = kwargs.get('sample_size')
-    if sample_size is None or sample_size >= np.maximum(node_properties_src.shape[0], node_properties_tgt.shape[0]):
+    if sample_size is None  or sample_size <= 0 or sample_size >= np.maximum(node_properties_src.shape[0], node_properties_tgt.shape[0]):
         sample_seeds = [None] # No randomization
         if kwargs.pop('sample_seeds', None) is not None:
             logging.warning('Using all neurons, ignoring sample seeds!')
@@ -342,7 +353,10 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
             sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
+            num_seeds = len(sample_seeds)
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+            if len(sample_seeds) < num_seeds:
+                logging.warning(f'Duplicate seeds provided!')
 
     model_params = pd.DataFrame()
     for seed in sample_seeds:

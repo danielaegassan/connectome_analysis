@@ -127,6 +127,8 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
     - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
     - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
     - `sample_seed` Seed for reproducible selection of random subset of neurons (optional)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (default: ["x", "y", "z"])
+    - `depth_name` Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (default: "depth")
     - `model_dir` Output directory where to save the model (optional; default: no saving)
     - `data_dir` Output directory where to save the extracted data (optional; default: no saving)
     - `do_plot` Enable/disable output plotting (optional; default: no plotting)
@@ -199,11 +201,11 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
     AssertionError
         If model fitting error occurs
     AssertionError
-        If sample_seeds provided as scalar but no positive integer
+        If sample_seeds provided as scalar but is not a positive integer
     Warning
         If sample_seeds provided as list with duplicates
     Warning
-        If sample_seeds provided but ignored because no subsampling applicable
+        If sample_seeds provided but ignored because subsampling not applicable
 
     Notes
     -----
@@ -231,7 +233,7 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """Wrapper function for 2nd-order probability model building when source and target populations are not the same, optionally for multiple random subsets of neurons.
+    """Wrapper function for 2nd-order probability model building for different source and target node populations, optionally for multiple random subsets of neurons.
 
     Parameters
     ----------
@@ -258,11 +260,11 @@ def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_
     AssertionError
         If model fitting error occurs
     AssertionError
-        If sample_seeds provided as scalar but no positive integer
+        If sample_seeds provided as scalar but is not a positive integer
     Warning
         If sample_seeds provided as list with duplicates
     Warning
-        If sample_seeds provided but ignored because no subsampling applicable
+        If sample_seeds provided but ignored because subsampling not applicable
 
     See Also
     --------
@@ -276,7 +278,62 @@ def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_
 
 
 def conn_prob_3rd_order_model(adj, node_properties, **kwargs):
-    """3rd-order probability model building, optionally for multiple random subsets of neurons."""
+    """Wrapper function for 3rd-order probability model building, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse (symmetric) adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    kwargs : dict, optional
+        Additional model building settings; see Notes for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 3rd-order model as defined in [1]_ describes connection probabilities as a bipolar function of distance between pre- and post-synaptic neurons. Specifically, we use here an bipolar exponential distance-dependent model of the form:
+    $$
+    p(d, \Delta depth) = \mbox{scale}_N * exp(-\mbox{exponent}_N * d)~\mbox{if}~\Delta depth < 0
+    $$
+    $$
+    p(d, \Delta depth) = \mbox{scale}_P * exp(-\mbox{exponent}_P * d)~\mbox{if}~\Delta depth > 0
+    $$
+    $$
+    p(d, \Delta depth) = \mbox{Average of both}~\mbox{if}~\Delta depth = 0
+    $$
+    with `d` as distance in $\mu m$, $\Delta depth$ as difference in depth coordinate (arbitrary unit, as only sign is used; post-synaptic neuron below ($\Delta depth < 0$) or above ($\Delta depth > 0$) pre-synaptic neuron), and the model parameters `scale` defining the connection probability at distance zero, and `exponent` the exponent of distance-dependent decay in $\mu m^{-1}$ for both cases.
+
+    `kwargs` may contain following settings:
+
+    - To be added...
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -284,8 +341,44 @@ def conn_prob_3rd_order_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_3rd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """3rd-order probability model building for separate pathways (i.e., non-symmetric adj),
-       optionally for multiple random subsets of neurons."""
+    """Wrapper function for 3rd-order probability model building for different source and target node populations, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    kwargs : dict, optional
+        Additional model building settings; see See Also for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    See Also
+    --------
+    conn_prob_3rd_order_model : Special case of 3rd-order model building function for same source/target node population; further details to be found here
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 

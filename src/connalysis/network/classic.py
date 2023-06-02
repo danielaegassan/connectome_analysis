@@ -3,14 +3,23 @@
 
 
 def closeness_connected_components(adj, neuron_properties=[], directed=False, return_sum=True):
-    """
-    Compute the closeness of each connected component of more than 1 vertex
-    :param matrix: shape (n,n)
-    :param directed: if True compute using strong component and directed closeness
-    :param return_sum: if True return only one list given by summing over all the component
-    :return a single array( if return_sum=True) or a list of array of shape n,
-    containting closeness of vertex in this component
-    or 0 if vertex is not in the component, in any case closeness cant be zero otherwise
+    """Compute the closeness of each connected component of more than 1 vertex
+    
+    Parameters
+    ----------
+    adj : array_like
+        Adjacency matrix of the graph
+    directed : bool
+        If `True`, will be computed using strongly connected components and directed closeness.
+    return_sum : bool
+        If `True`, only one list will be returned, by summing over all the connected components.
+
+
+    Returns
+    -------
+    array_like
+        A single array( if `return_sum=True`) or a list of arrays of shape `n`, containting closeness of vertices in that component, or 0 if the vertex is not in the component. Closeness cannot be zero otherwise.
+
     """
     import numpy as np
     from sknetwork.ranking import Closeness

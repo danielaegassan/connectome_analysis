@@ -27,53 +27,135 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
 ######generate_model versions###########
-def run_ER(n, p, threads, seed=(None,None)):
-    """
-    Erdos-Renyi model
+def run_ER(n, p, threads=8, seed=(None,None)):
+    """Creates an Erdos Renyi digraph.
 
-    Input: n, p, threads
-       n = number of vertices (int)
-       p = edge probability (double)
-       threads = number of threads to use (int)
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    p : float
+        Edge probablity, must satisfy $0 \\le p \\le 1$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
 
-    Output: coo matrix
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    Setting n=3 and p=1 gives the complete digraph on 3 vertices:
+    >>> connalysis.randomization.run_ER(3,1)
+    {'row': [0, 0, 1, 1, 2, 2], 'col': [1, 2, 0, 2, 0, 1]}
+
+    Raises
+    ------
+    AssertionError
+        If p is not between 0 and 1
+
     """
+    assert (p >= 0 and p <= 1), "p must be between 0 and 1"
     if seed[0]==None or seed[1]==None:
         return gm.ER(n,p,threads)
     else:
         return gm.ER(n,p,threads,seed[0],seed[1])
 
 
-def run_SBM(n, pathways, mtypes, threads, seed=(None,None)):
-    """
-    Stochastic Block Model
+def run_SBM(n, probs, blocks, threads=8, seed=(None,None)):
+    """Creates a random digraph using the stochastic block model.
 
-    Input: n, pathways, mtypes, threads
-       n = number of vertices (int)
-       pathways = pathways[i][j] entry is probability of edge between mtype i and mtype j (numpy array, shape=(m,m), dtype=float64), where m is number of mtypes
-       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
-       threads = number of threads to use (int)
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    probs : numpy array of floats
+        shape=(m,m) where m is the number of blocks.
+        probs[i][j] is probability of an edge between block i and block j
+    blocks : numpy array of ints
+        shape=(n,). The i'th entry gives to which block vertex i belongs.
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
 
-    Output: coo matrix
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    To create an SBM digraph on 4 vertices where the even to
+    odd, or odd to even, vertices connect with high probablity (p=0.9)
+    and the even to evens or odd to odds connect with low probability (p=0.1):
+    >>> connalysis.randomization.run_SBM(4,np.array([[0.1,0.9],[0.9,0.1]]),np.array([0,1,0,1]))
+    {'row': [0, 0, 1, 1, 1, 2, 2, 3, 3], 'col': [1, 3, 0, 2, 3, 1, 3, 0, 2]
+
+
+    Raises
+    ------
+    TypeError
+        If blocks contains non-integers
+
+    References
+    ----------
+    [1] P.W. Holland, K. Laskey, S. Leinhardt,
+    ["Stochastic Blockmodels: First Steps"](https://www.sciencedirect.com/science/article/pii/0378873383900217),
+    Soc Networks, 5-2, pp. 109-137, 1982
+
     """
+
     if seed[0]==None or seed[1]==None:
-        return gm.SBM(n, pathways, mtypes, threads)
+        return gm.SBM(n, probs, blocks, threads)
     else:
-        return gm.SBM(n, pathways, mtypes, threads, seed[0], seed[1])
+        return gm.SBM(n, probs, blocks, threads, seed[0], seed[1])
 
 
-def run_DD2(n,a,b,xyz,threads, seed=(None,None)):
-    """
-    Distance Dependant 2nd Order
+def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
+    """Creates a random digraph using the 2nd-order probability model.
 
-    Input: n, a, b, xyz, threads
-       n = number of vertices (int)
-       a = coefficient of probability function (double)
-       b = coefficient of probability function (double)
-       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-       threads = number of threads to use (int)
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    a : float
+        Coefficient of probability function
+    b : float
+        Absolute value of power of exponent in probability function
+    xyz : (n,3)-numpy array of floats
+        Co-ordinates of vertices in $\mathbb{R}^3$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
 
-    Output: coo matrix
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    TODO
+
+    See Also
+    --------
+    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) : A variant of this function for neurons
+
+    References
+    ----------
+    [1] TODO
+
     """
     if seed[0]==None or seed[1]==None:
         return gm.DD2(n,a,b,xyz,threads)
@@ -122,19 +204,47 @@ def run_DD2_model(adj, node_properties,
         return sp.coo_matrix((data, (i, j)), [n,n])
 
 
-def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads, seed=(None,None)):
-    """
-    Distance Dependant 3rd Order
+def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
+    """Creates a random digraph using the 2nd-order probability model.
 
-    Input: n, a, b, xyz, threads
-       n = number of vertices (int)
-       a1 and a2 = coefficients of probability function for dz<0 (double)
-       a2 and b2 = coefficient of probability function for dz>0 (double)
-       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-       depths = i'th entry is depth of vertex i (numpy array, shape=(n,), dtype=float64)
-       threads = number of threads to use (int)
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    a1 : float
+        Coefficient of probability function for negative depth
+    b1 : float
+        Absolute value of power of exponent in probability function for negative depth
+    a2 : float
+        Coefficient of probability function for positive depth
+    b2 : float
+        Absolute value of power of exponent in probability function for positive depth
+    xyz : (n,3)-numpy array of floats
+        Co-ordinates of vertices in $\mathbb{R}^3$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
 
-    Output: coo matrix
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    TODO
+
+    See Also
+    --------
+    [conn_prob_3rd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_3rd_order_model) : A variant of this function for neurons
+
+    References
+    ----------
+    [1] TODO
+
     """
     if seed[0]==None or seed[1]==None:
         return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
@@ -163,42 +273,115 @@ def seed_random_state(shuffler, seeder=np.random.seed):
     return seed_and_run_method
 
 
-def run_DD2_block_pre(n,pathways,mtypes,xyz,threads, seed=(None,None)):
+def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
+    """Creates a random digraph using a combination of the stochastic block model
+       and the 2nd order distance dependent model. Such that the probability of an edge
+       is given by the distance dependent equation, but the parameters of that equation
+       vary depending on the block of the source of the edge.
+
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    probs : numpy array of floats
+        shape=(m,2) where m is the number of blocks.
+        probs[i][0] is the coefficient of the distance dependent equation (value a) for source vertex i and
+        probs[i][0] is the absolute value of power of exponent in the distance dependent equation (value b)
+    blocks : numpy array of ints
+        shape=(n,). The i'th entry is which block vertex i belongs to.
+    xyz : (n,3)-numpy array of floats
+        Co-ordinates of vertices in $\mathbb{R}^3$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
+
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    TODO
+
+
+    Raises
+    ------
+    TypeError
+        If blocks contains non-integers
+
+    See Also
+    --------
+    run_SBM: Function which runs the stochastic block model
+
+    run_DD2 : Function which runs the 2nd distance dependent model
+
+    run_DD2_block : Similar function that also accounts for the block of the target vertex
+
     """
-    Distance Dependant Stochastic Block Model (pre synaptic only)
 
-    Input: n, pathways, mtypes, xyz, threads
-       n = number of vertices (int)
-       pathways = pathways[i] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,2), dtype=double), where m is number of mtypes
-       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
-       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-       threads = number of threads to use (int)
+    if seed[0]==None or seed[1]==None:
+        return gm.DD2_block_pre(n, probs, blocks, xyz, threads)
+    else:
+        gm.DD2_block_pre(n, probs, blocks, xyz, threads, seed[0], seed[1])
 
-    Output: coo matrix
+
+def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
+    """Creates a random digraph using a combination of the stochastic block model
+       and the 2nd order distance dependent model. Such that the probability of an edge
+       is given by the distance dependent equation, but the parameters of that equation
+       vary depending on the block of the source of the edge and block of the target.
+
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    probs : numpy array of floats
+        shape=(m,m,2) where m is the number of blocks. For source vertex i and target vertex j
+        probs[i][j][0] is the coefficient of the distance dependent equation (value a) and
+        probs[i][j][0] is the absolute value of power of exponent in the distance dependent equation (value b)
+    blocks : numpy array of ints
+        shape=(n,). The i'th entry is which block vertex i belongs to.
+    xyz : (n,3)-numpy array of floats
+        Co-ordinates of vertices in $\mathbb{R}^3$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
+
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    TODO
+
+
+    Raises
+    ------
+    TypeError
+        If blocks contains non-integers
+
+    See Also
+    --------
+    run_DD2 : Function which runs the 2nd distance dependent model
+
+    run_SBM: Function which runs the stochastic block model
+
+    run_DD2_block_pre : Similar function that only accounts for the block of the source vertex
+
     """
     if seed[0]==None or seed[1]==None:
-        return gm.DD2_block_pre(n,pathways,mtypes,xyz,threads)
+        return gm.DD2_block(n, probs, blocks, xyz, threads)
     else:
-        gm.DD2_block_pre(n,pathways,mtypes,xyz,threads,seed[0],seed[1])
-
-
-def run_DD2_block(n,pathways,mtypes,xyz,threads, seed=(None,None)):
-    """
-    Distance Dependant Stochastic Block Model
-
-    Input: n, pathways, mtypes, xyz, threads
-       n = number of vertices (int)
-       pathways = pathways[i][j] is a pair (a,b) of coefficients for DD2 probability function (numpy array, shape=(m,m,2), dtype=double), where m is number of mtypes
-       mtypes = i'th entry is mtype of vertex i (numpy array, shape=(n,), dtype=uint8)
-       xyz = the coordinates of the vertices, (numpy array, shape=(n,3), dtype=float64)
-       threads = number of threads to use (int)
-
-    Output: coo matrix
-    """
-    if seed[0]==None or seed[1]==None:
-        return gm.DD2_block(n,pathways,mtypes,xyz,threads)
-    else:
-        return gm.DD2_block(n,pathways,mtypes,xyz,threads,seed[0],seed[1])
+        return gm.DD2_block(n, probs, blocks, xyz, threads, seed[0], seed[1])
 
 ####### SHUFFLE #######################
 @seed_random_state

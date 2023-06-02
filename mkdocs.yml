@@ -18,6 +18,8 @@ nav:
   - Functions:
     - Modelling: 'modelling.md'
     - Network: 'network.md'
+    - Randomization: 'randomization.md'
+  - About: 'about.md'
 
 markdown_extensions:
   #- toc:
@@ -50,5 +52,3 @@ extra_javascript:
 
 watch:
   - src/connalysis
-
-

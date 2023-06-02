@@ -87,7 +87,7 @@ def aa_test_func(adj_matrix, size, **kwargs):
 
 def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_idx=None):
     """Main function for data extraction and model building to be used in a batch script on different data splits.
-    
+
     Parameters
     ----------
     adj_file : str
@@ -95,19 +95,56 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
     nrn_file : str
         File name (.h5 or .feather format) of pandas.DataFrame with neuron properties
     cfg_file : str
-        File name (.json format) of config dict specifying the model building operation
+        File name (.json format) of config dict specifying the model building operation; see Notes for details
     N_split : int, optional
         Number of data splits to divide data extraction into (to reduce memory consumption)
     part_idx : int, optional
         Index of current data split (part) to extract data from
-        Range: 0 .. N_split - 1 Run data extraction of given data split
-               -1               Merge data splits and build model
-    
+        Range:  0 .. N_split - 1 Run data extraction of given data split
+               -1                Merge data splits and build model
+
     Returns
     -------
     None
-        Nothing returned here; data/model/figures written to disc
+        Nothing returned here; Data/model/figures are written to output directories as specified in `cfg_file`
 
+    Raises
+    ------
+    AssertionError
+        If nrn_file is not in .h5 or .feather format
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If model order not supported (supported: 2, 3)
+    AssertionError
+        If model fitting error occurs
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    `cfg_file` must be a .json file containing a dictionary with following entries, most of which are optional:
+
+    - `model_name` Name of the model (to be used in file names, ...)
+    - `model_order` Model order (2 or 3)
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seed` Seed for reproducible selection of random subset of neurons (optional)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])
+    - `depth_name` Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")
+    - `model_dir` Output directory where to save the model (optional; default: no saving)
+    - `data_dir` Output directory where to save the extracted data (optional; default: no saving)
+    - `do_plot` Enable/disable output plotting (optional; default: no plotting)
+    - `plot_dir` Output directory where to save the plots, if plotting enabled (optional; default: no saving)
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+    - `part_idx` Part index (from 0 to N_split-1) to run data extraction only on a specific data split; -1 to merge existing splits and build model (optional; default: data extraction and model building for all splits)
+
+    See Also
+    --------
+    run_model_building : Underlying main function for model building
 
     """
 
@@ -145,7 +182,70 @@ def run_batch_model_building(adj_file, nrn_file, cfg_file, N_split=None, part_id
 ###################################################################################################
 
 def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
-    """2nd-order probability model building, optionally for multiple random subsets of neurons."""
+    """Wrapper function for 2nd-order probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse (symmetric) adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    kwargs : dict, optional
+        Additional model building settings; see Notes for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order model as defined in [1]_ describes connection probabilities as a function of distance between pre- and post-synaptic neurons. Specifically, we use here an exponential distance-dependent model of the form:
+    $$
+    p(d) = \mbox{scale} * exp(-\mbox{exponent} * d)
+    $$
+    with `d` as distance in $\mu m$, and the model parameters `scale` defining the connection probability at distance zero, and `exponent` the exponent of distance-dependent decay in $\mu m^{-1}$.
+
+    `kwargs` may contain following (optional) settings:
+
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seeds` Integer number of seeds to randomly generate, or list of specific random seeds, for reproducible selection of random subset of neurons (optional)
+    - `meta_seed` Meta seed for generating N random seeds, if integer number N of sample_seeds is provided (optional; default: 0)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+
+    See Also
+    --------
+    conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node populations
+    conn_prob_model : Underlying generic model building function wrapper
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -153,8 +253,59 @@ def conn_prob_2nd_order_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """2nd-order probability model building for separate pathways (i.e., non-symmetric adj),
-       optionally for multiple random subsets of neurons."""
+    """Wrapper function for 2nd-order probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    kwargs : dict, optional
+        Additional model building settings; see "See Also" for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If data splitting selected, which is not supported for pathway model building
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order model as defined in [1]_. See "See Also" for details.
+
+    See Also
+    --------
+    conn_prob_2nd_order_model : Special case of 2nd-order model building function wrapper for same source/target node population; further details to be found here
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -162,7 +313,77 @@ def conn_prob_2nd_order_pathway_model(adj, node_properties_src, node_properties_
 
 
 def conn_prob_3rd_order_model(adj, node_properties, **kwargs):
-    """3rd-order probability model building, optionally for multiple random subsets of neurons."""
+    """Wrapper function for 3rd-order probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse (symmetric) adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    kwargs : dict, optional
+        Additional model building settings; see Notes for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 3rd-order model as defined in [1]_ describes connection probabilities as a bipolar function of distance between pre- and post-synaptic neurons. Specifically, we use here an bipolar exponential distance-dependent model of the form:
+    $$
+    p(d, \Delta depth) = \mbox{scale}_N * exp(-\mbox{exponent}_N * d)~\mbox{if}~\Delta depth < 0
+    $$
+    $$
+    p(d, \Delta depth) = \mbox{scale}_P * exp(-\mbox{exponent}_P * d)~\mbox{if}~\Delta depth > 0
+    $$
+    $$
+    p(d, \Delta depth) = \mbox{Average of both}~\mbox{if}~\Delta depth = 0
+    $$
+    with `d` as distance in $\mu m$, $\Delta depth$ as difference in depth coordinate (arbitrary unit, as only sign is used; post-synaptic neuron below ($\Delta depth < 0$) or above ($\Delta depth > 0$) pre-synaptic neuron), and the model parameters `scale` defining the connection probability at distance zero, and `exponent` the exponent of distance-dependent decay in $\mu m^{-1}$ for both cases.
+
+    `kwargs` may contain following (optional) settings:
+
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seeds` Integer number of seeds to randomly generate, or list of specific random seeds, for reproducible selection of random subset of neurons (optional)
+    - `meta_seed` Meta seed for generating N random seeds, if integer number N of sample_seeds is provided (optional; default: 0)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])
+    - `depth_name` Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+
+    See Also
+    --------
+    conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node populations
+    conn_prob_model : Underlying generic model building function wrapper
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -170,8 +391,59 @@ def conn_prob_3rd_order_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_3rd_order_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """3rd-order probability model building for separate pathways (i.e., non-symmetric adj),
-       optionally for multiple random subsets of neurons."""
+    """Wrapper function for 3rd-order probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    kwargs : dict, optional
+        Additional model building settings; see "See Also" for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper (like model_order, ...)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If data splitting selected, which is not supported for pathway model building
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 3rd-order model as defined in [1]_. See "See Also" for details.
+
+    See Also
+    --------
+    conn_prob_3rd_order_model : Special case of 3rd-order model building function wrapper for same source/target node population; further details to be found here
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
 
     assert 'model_order' not in kwargs.keys(), f'ERROR: Invalid argument "model_order" in kwargs!'
 
@@ -179,17 +451,85 @@ def conn_prob_3rd_order_pathway_model(adj, node_properties_src, node_properties_
 
 
 def conn_prob_model(adj, node_properties, **kwargs):
-    """General probability model building, optionally for multiple random subsets of neurons."""
+    """Wrapper function for generic probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.
 
-    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse (symmetric) adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    kwargs : dict, optional
+        Additional model building settings; see Notes for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    AssertionError
+        If model order not supported (supported: 2, 3)
+    KeyError
+        If model order not provided
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.
+
+    `kwargs` may contain following settings, most of which are optional:
+
+    - `model_order` Model order (2 or 3)
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seeds` Integer number of seeds to randomly generate, or list of specific random seeds, for reproducible selection of random subset of neurons (optional)
+    - `meta_seed` Meta seed for generating N random seeds, if integer number N of sample_seeds is provided (optional; default: 0)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])
+    - `depth_name` Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+
+    See Also
+    --------
+    conn_prob_2nd_order_model : 2nd-order model building function wrapper for same source/target node population
+    conn_prob_3rd_order_model : 3rd-order model building function wrapper for same source/target node population
+    conn_prob_pathway_model : Generic model building function wrapper for differet source/target node populations
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
+
+    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
+
+    invalid_args = ['model_name', 'sample_seed', 'model_dir', 'data_dir', 'plot_dir', 'do_plot', 'part_idx'] # Not allowed arguments, as they will be set/used internally
     for arg in invalid_args:
         assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
-    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
+    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'part_idx': None}) # Disable plotting/saving
     model_name = None
     model_order = kwargs.pop('model_order')
 
     sample_size = kwargs.get('sample_size')
-    if sample_size is None or sample_size >= node_properties.shape[0]:
+    if sample_size is None or sample_size <= 0 or sample_size >= node_properties.shape[0]:
         sample_seeds = [None] # No randomization
         if kwargs.pop('sample_seeds', None) is not None:
             logging.warning('Using all neurons, ignoring sample seeds!')
@@ -197,9 +537,12 @@ def conn_prob_model(adj, node_properties, **kwargs):
         sample_seeds = kwargs.pop('sample_seeds', 1)
 
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
-            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
+            sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
+            num_seeds = len(sample_seeds)
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+            if len(sample_seeds) < num_seeds:
+                logging.warning(f'Duplicate seeds provided!')
 
     model_params = pd.DataFrame()
     for seed in sample_seeds:
@@ -211,18 +554,77 @@ def conn_prob_model(adj, node_properties, **kwargs):
 
 
 def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwargs):
-    """General probability model building for separate pathways (i.e., non-symmetric adj),
-       optionally for multiple random subsets of neurons."""
+    """Wrapper function for generic probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.
 
-    invalid_args = ['model_name', 'sample_seed'] # Not allowed arguments, as they will be set/used internally
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    kwargs : dict, optional
+        Additional model building settings; see "See Also" for details
+
+    Returns
+    -------
+    pandas.DataFrame
+        Data frame with model paramters (columns) for different seeds (rows)
+        (No plotting and data/model/figures saving supported)
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If invalid arguments given in kwargs which are internally used by this wrapper
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If sample_seeds provided as scalar but is not a positive integer
+    AssertionError
+        If model order not supported (supported: 2, 3)
+    AssertionError
+        If data splitting selected, which is not supported for pathway model building
+    KeyError
+        If model order not provided
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+    Warning
+        If sample_seeds provided as list with duplicates
+    Warning
+        If sample_seeds provided but ignored because subsampling not applicable
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.
+
+    See Also
+    --------
+    conn_prob_model : Special case of generic model building function wrapper for same source/target node population; further details to be found here
+    conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node population
+    conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node population
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
+    """
+
+    assert adj.shape[0] == node_properties_src.shape[0] and adj.shape[1] == node_properties_tgt.shape[0], 'ERROR: Data size mismatch!'
+
+    invalid_args = ['model_name', 'sample_seed', 'model_dir', 'data_dir', 'plot_dir', 'do_plot', 'part_idx'] # Not allowed arguments, as they will be set/used internally
     for arg in invalid_args:
         assert arg not in kwargs.keys(), f'ERROR: Invalid argument "{arg}" in kwargs!'
-    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'N_split': None}) # Disable plotting/saving
+    kwargs.update({'model_dir': None, 'data_dir': None, 'plot_dir': None, 'do_plot': False, 'part_idx': None}) # Disable plotting/saving
     model_name = None
     model_order = kwargs.pop('model_order')
 
     sample_size = kwargs.get('sample_size')
-    if sample_size is None or sample_size >= np.maximum(node_properties_src.shape[0], node_properties_tgt.shape[0]):
+    if sample_size is None  or sample_size <= 0 or sample_size >= np.maximum(node_properties_src.shape[0], node_properties_tgt.shape[0]):
         sample_seeds = [None] # No randomization
         if kwargs.pop('sample_seeds', None) is not None:
             logging.warning('Using all neurons, ignoring sample seeds!')
@@ -230,9 +632,12 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
         sample_seeds = kwargs.pop('sample_seeds', 1)
 
         if not isinstance(sample_seeds, list): # sample_seeds corresponds to number of seeds to generate
-            sample_seeds = generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
+            sample_seeds = _generate_seeds(sample_seeds, meta_seed=kwargs.pop('meta_seed', 0))
         else:
+            num_seeds = len(sample_seeds)
             sample_seeds = list(np.unique(sample_seeds)) # Assure that unique and sorted
+            if len(sample_seeds) < num_seeds:
+                logging.warning(f'Duplicate seeds provided!')
 
     model_params = pd.DataFrame()
     for seed in sample_seeds:
@@ -243,7 +648,7 @@ def conn_prob_pathway_model(adj, node_properties_src, node_properties_tgt, **kwa
     return model_params
 
 
-def generate_seeds(num_seeds, num_digits=6, meta_seed=0):
+def _generate_seeds(num_seeds, num_digits=6, meta_seed=0):
     """Helper function to generate list of unique random seeds with given number of digits."""
 
     assert isinstance(num_seeds, int) and num_seeds > 0, 'ERROR: Number of seeds must be a positive integer!'
@@ -260,11 +665,75 @@ def generate_seeds(num_seeds, num_digits=6, meta_seed=0):
 ###################################################################################################
 
 def run_model_building(adj, node_properties, model_name, model_order, **kwargs):
+    """Main function for probability model building, consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse (symmetric) adjacency matrix of the circuit
+    node_properties : pandas.DataFrame
+        Data frame with neuron properties
+    model_name : str
+        Name of the model (to be used in file names, ...)
+    model_order : int
+        Model order (2 or 3)
+    kwargs : dict, optional
+        Additional model building settings; see Notes for details
+
+    Returns
+    -------
+    dict
+        Data dictionary containing extracted data points (connection probabilities) from the "extract" step; Data/figures also written to output directories as specified in kwargs
+    dict
+        Model dictionary containing probability model fitted to data points from "model fitting" step; Model/figures also written to output directories as specified in kwargs
+
+    Raises
+    ------
+    AssertionError
+        If the adjacency matrix is not a square matrix matching the length of the neuron properties table
+    AssertionError
+        If model order not supported (supported: 2, 3)
+    AssertionError
+        If model fitting error occurs
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.
+
+    `kwargs` may contain following (optional) settings:
+
+    - `bin_size_um` Bin size in um for depth binning (optional; default: 100)
+    - `max_range_um` Max. distance range in um to consider (optional; default: full distance range)
+    - `sample_size` Size of random subset of neurons to consider (optional; default: no subsampling)
+    - `sample_seed` Seed for reproducible selection of random subset of neurons (optional)
+    - `coord_names` Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])
+    - `depth_name` Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")
+    - `model_dir` Output directory where to save the model (optional; default: no saving)
+    - `data_dir` Output directory where to save the extracted data (optional; default: no saving)
+    - `do_plot` Enable/disable output plotting (optional; default: no plotting)
+    - `plot_dir` Output directory where to save the plots, if plotting enabled (optional; default: no saving)
+    - `N_split` Number of data splits (> 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)
+    - `part_idx` Part index (from 0 to N_split-1) to run data extraction only on a specific data split; -1 to merge existing splits and build model (optional; default: data extraction and model building for all splits)
+
+    See Also
+    --------
+    run_pathway_model_building : Main model building function for differet source/target node populations
+    conn_prob_2nd_order_model : 2nd-order model building function wrapper for same source/target node population to be used within a processing pipeline
+    conn_prob_3rd_order_model : 3rd-order model building function wrapper for same source/target node population to be used within a processing pipeline
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
     """
-    Main function for running model building, consisting of three steps:
-      Data extraction, model fitting, and (optionally) data/model visualization
-    """
+
     logging.info(f'Running order-{model_order} model building {kwargs}...')
+
+    assert adj.shape[0] == adj.shape[1] == node_properties.shape[0], 'ERROR: Data size mismatch!'
 
     # Subsampling (optional)
     sample_size = kwargs.get('sample_size')
@@ -278,13 +747,13 @@ def run_model_building(adj, node_properties, model_name, model_order, **kwargs):
 
     # Set modelling functions
     if model_order == 2: # Distance-dependent
-        fct_extract = extract_2nd_order
-        fct_fit = build_2nd_order
-        fct_plot = plot_2nd_order
+        fct_extract = _extract_2nd_order
+        fct_fit = _build_2nd_order
+        fct_plot = _plot_2nd_order
     elif model_order == 3: # Bipolar distance-dependent
-        fct_extract = extract_3rd_order
-        fct_fit = build_3rd_order
-        fct_plot = plot_3rd_order
+        fct_extract = _extract_3rd_order
+        fct_fit = _build_3rd_order
+        fct_plot = _plot_3rd_order
     else:
         assert False, f'ERROR: Order-{model_order} model building not supported!'
 
@@ -303,22 +772,22 @@ def run_model_building(adj, node_properties, model_name, model_order, **kwargs):
     else: # Run only data extraction of given part idx
         assert N_split is not None and 0 <= part_idx < N_split, 'ERROR: Part index out of range!'
         extract_only = True
-        data_fn = 'data' + get_data_part_name(N_split, part_idx)
+        data_fn = 'data' + _get_data_part_name(N_split, part_idx)
 
     # Extract connection probability data
     if part_idx == -1: # Special case: Load and merge results of existing parts
         assert N_split is not None, 'ERROR: Number of data splits required!'
-        data_dict = merge_data(kwargs.get('data_dir'), model_name, data_fn, [get_data_part_name(N_split, p) for p in range(N_split)])
+        data_dict = _merge_data(kwargs.get('data_dir'), model_name, data_fn, [_get_data_part_name(N_split, p) for p in range(N_split)])
     else:
         data_dict = fct_extract(adj, node_properties, split_indices=split_indices, part_idx=part_idx, **kwargs)
-    save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
+    _save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
 
     if extract_only: # Stop here and return data dict
         return data_dict, {}
 
     # Fit model
     model_dict = fct_fit(**data_dict, **kwargs)
-    save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
+    _save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
 
     # Visualize data/model (optional)
     if kwargs.get('do_plot'):
@@ -328,11 +797,64 @@ def run_model_building(adj, node_properties, model_name, model_order, **kwargs):
 
 
 def run_pathway_model_building(adj, node_properties_src, node_properties_tgt, model_name, model_order, **kwargs):
+    """Main function for probability model building for pathways with different source and target node populations, consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization.
+
+    Parameters
+    ----------
+    adj : scipy.sparse
+        Sparse adjacency matrix of the circuit (may be non-symmetric)
+    node_properties_src : pandas.DataFrame
+        Data frame with source neuron properties (corresponding to the rows in adj)
+    node_properties_tgt : pandas.DataFrame
+        Data frame with target neuron properties (corresponding to the columns in adj)
+    model_name : str
+        Name of the model (to be used in file names, ...)
+    model_order : int
+        Model order (2 or 3)
+    kwargs : dict, optional
+        Additional model building settings; see "See Also" for details
+
+    Returns
+    -------
+    dict
+        Data dictionary containing extracted data points (connection probabilities) from the "extract" step; Data/figures also written to output directories as specified in kwargs
+    dict
+        Model dictionary containing probability model fitted to data points from "model fitting" step; Model/figures also written to output directories as specified in kwargs
+
+    Raises
+    ------
+    AssertionError
+        If the rows/columns of the adjacency matrix are not matching the lengths of the source/target neuron properties tables
+    AssertionError
+        If model order not supported (supported: 2, 3)
+    AssertionError
+        If model fitting error occurs
+    AssertionError
+        If data splitting selected, which is not supported for pathway model building
+    KeyError
+        If name(s) of coordinates not in columns of neuron properties table
+
+    Notes
+    -----
+    The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.
+
+    The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.
+
+    See Also
+    --------
+    run_model_building : Main model building function for same source/target node populations; further details to be found here
+    conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node populations to be used within a processing pipeline
+    conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node populations to be used within a processing pipeline
+
+    References
+    ----------
+    .. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.
+
     """
-    Main function for running model building for separate pathways (i.e., non-symmetric adj),
-      consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization
-    """
+
     logging.info(f'Running order-{model_order} model building {kwargs}...')
+
+    assert adj.shape[0] == node_properties_src.shape[0] and adj.shape[1] == node_properties_tgt.shape[0], 'ERROR: Data size mismatch!'
 
     # Subsampling (optional)
     sample_size = kwargs.get('sample_size')
@@ -357,9 +879,13 @@ def run_pathway_model_building(adj, node_properties_src, node_properties_tgt, mo
 
     # Set modelling functions
     if model_order == 2: # Distance-dependent
-        fct_extract = extract_2nd_order_pathway
-        fct_fit = build_2nd_order
-        fct_plot = plot_2nd_order
+        fct_extract = _extract_2nd_order_pathway
+        fct_fit = _build_2nd_order
+        fct_plot = _plot_2nd_order
+    elif model_order == 3: # Bipolar distance-dependent
+        fct_extract = _extract_3rd_order_pathway
+        fct_fit = _build_3rd_order
+        fct_plot = _plot_3rd_order
     else:
         assert False, f'ERROR: Order-{model_order} model building not supported!'
 
@@ -371,15 +897,15 @@ def run_pathway_model_building(adj, node_properties_src, node_properties_tgt, mo
 
     # Extract connection probability data
     data_dict = fct_extract(adj, node_properties_src, node_properties_tgt, split_indices=None, part_idx=None, **kwargs)
-    save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
+    _save_data(data_dict, kwargs.get('data_dir'), model_name, data_fn)
 
     # Fit model
     model_dict = fct_fit(**data_dict, **kwargs)
-    save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
+    _save_data(model_dict, kwargs.get('model_dir'), model_name, 'model')
 
     # Visualize data/model (optional)
     if kwargs.get('do_plot'):
-        assert False, 'ERROR: Plotting not supported!'
+        fct_plot(adj, [node_properties_src, node_properties_tgt], model_name, **data_dict, **model_dict, **kwargs)
 
     return data_dict, model_dict
 
@@ -388,9 +914,10 @@ def run_pathway_model_building(adj, node_properties_src, node_properties_tgt, mo
 # Helper functions for model building
 ###################################################################################################
 
-def merge_data(part_dir, model_name, spec_name, part_list):
+def _merge_data(part_dir, model_name, spec_name, part_list):
+    """Merges data from different data splits."""
     logging.info(f'Merging {len(part_list)} data parts...')
-    
+
     count_conn_key = 'count_conn' # (fixed name; independent of model)
     count_all_key = 'count_all' # (fixed name; independent of model)
     p_key = None # Name of conn. prob. entry (model-dependent; starting with "p_")
@@ -434,7 +961,7 @@ def merge_data(part_dir, model_name, spec_name, part_list):
     return data_dict
 
 
-def save_data(save_dict, save_dir, model_name, save_spec=None):
+def _save_data(save_dict, save_dir, model_name, save_spec=None):
     """Writes data/model dict to pickled data file"""
     if not save_dir:
         return
@@ -454,12 +981,13 @@ def save_data(save_dict, save_dir, model_name, save_spec=None):
     logging.info(f'Pickled dict written to {save_file}')
 
 
-def get_data_part_name(N_split, part_idx):
+def _get_data_part_name(N_split, part_idx):
+    """Returns part name of a data split."""
     num_dig = len(str(N_split))
     return f'__part-{N_split}-{part_idx:0{num_dig}}'
 
 
-def get_model_function(model, model_inputs, model_params):
+def _get_model_function(model, model_inputs, model_params):
     """Returns model function from string representation [so any model function can be saved to file]."""
     input_str = ','.join(model_inputs + ['model_params=model_params']) # String representation of input variables
     input_param_str = ','.join(model_inputs + list(model_params.keys())) # String representation of input variables and model parameters
@@ -475,7 +1003,7 @@ def get_model_function(model, model_inputs, model_params):
     return model_fct
 
 
-def compute_dist_matrix(src_nrn_pos, tgt_nrn_pos):
+def _compute_dist_matrix(src_nrn_pos, tgt_nrn_pos):
     """Computes distance matrix between pairs of neurons."""
     dist_mat = spt.distance_matrix(src_nrn_pos, tgt_nrn_pos)
     dist_mat[dist_mat == 0.0] = np.nan # Exclude autaptic connections
@@ -483,7 +1011,7 @@ def compute_dist_matrix(src_nrn_pos, tgt_nrn_pos):
     return dist_mat
 
 
-def compute_dist_matrix_symmetric(nrn_pos):
+def _compute_dist_matrix_symmetric(nrn_pos):
     """Computes symmetric distance matrix between pairs of neurons.
        Faster implementation to be used when source and target neurons
        are the same."""
@@ -493,7 +1021,7 @@ def compute_dist_matrix_symmetric(nrn_pos):
     return dist_mat
 
 
-def compute_bip_matrix(src_depths, tgt_depths):
+def _compute_bip_matrix(src_depths, tgt_depths):
     """
     Computes bipolar matrix between pairs of neurons based on depth difference delta_d:
       POST-synaptic neuron below (delta_d < 0) or above (delta_d > 0) PRE-synaptic neuron
@@ -503,7 +1031,7 @@ def compute_bip_matrix(src_depths, tgt_depths):
     return bip_mat
 
 
-def extract_dependent_p_conn(adj, dep_matrices, dep_bins):
+def _extract_dependent_p_conn(adj, dep_matrices, dep_bins):
     """Extract D-dimensional conn. prob. dependent on D property matrices between source-target pairs of neurons within given range of bins."""
     num_dep = len(dep_matrices)
     assert len(dep_bins) == num_dep, 'ERROR: Dependencies/bins mismatch!'
@@ -544,7 +1072,7 @@ def extract_dependent_p_conn(adj, dep_matrices, dep_bins):
 #   2nd order (distance-dependent)
 ###################################################################################################
 
-def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
+def _extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
     """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
@@ -560,7 +1088,7 @@ def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
 
     if N_split == 0: # Compute all at once
         # Compute distance matrix
-        dist_mat = compute_dist_matrix_symmetric(pos_table)
+        dist_mat = _compute_dist_matrix_symmetric(pos_table)
 
         # Extract distance-dependent connection probabilities
         if max_range_um is None:
@@ -568,7 +1096,7 @@ def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
         num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
         dist_bins = np.arange(0, num_bins + 1) * bin_size_um
 
-        p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj, [dist_mat], [dist_bins])
+        p_conn_dist, count_conn, count_all = _extract_dependent_p_conn(adj, [dist_mat], [dist_bins])
 
     else: # Split computation into N_split data splits (to reduce memory consumption)
         assert max_range_um is not None, f'ERROR: Max. range must be specified if data extraction splitted into {N_split} parts!'
@@ -583,10 +1111,10 @@ def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
             logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
-            dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
+            dist_mat_split = _compute_dist_matrix(pos_table[split_sel, :], pos_table)
             
             # Extract distance-dependent connection counts
-            _, count_conn_split, count_all_split = extract_dependent_p_conn(adj[split_sel, :], [dist_mat_split], [dist_bins])
+            _, count_conn_split, count_all_split = _extract_dependent_p_conn(adj[split_sel, :], [dist_mat_split], [dist_bins])
             count_conn += count_conn_split
             count_all += count_all_split
 
@@ -597,7 +1125,7 @@ def extract_2nd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
     return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 
 
-def extract_2nd_order_pathway(adj, node_properties_src, node_properties_tgt, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
+def _extract_2nd_order_pathway(adj, node_properties_src, node_properties_tgt, bin_size_um=100, max_range_um=None, coord_names=None, split_indices=None, part_idx=None, **_):
     """Extract distance-dependent connection probability (2nd order) from a sample of pairs of neurons
        for separate pathways (i.e., non-symmetric adj)."""
 
@@ -610,7 +1138,7 @@ def extract_2nd_order_pathway(adj, node_properties_src, node_properties_tgt, bin
     pos_table_tgt = node_properties_tgt[coord_names].to_numpy()
 
     # Compute distance matrix
-    dist_mat = compute_dist_matrix(pos_table_src, pos_table_tgt)
+    dist_mat = _compute_dist_matrix(pos_table_src, pos_table_tgt)
 
     # Extract distance-dependent connection probabilities
     if max_range_um is None:
@@ -618,12 +1146,12 @@ def extract_2nd_order_pathway(adj, node_properties_src, node_properties_tgt, bin
     num_bins = np.ceil(max_range_um / bin_size_um).astype(int)
     dist_bins = np.arange(0, num_bins + 1) * bin_size_um
 
-    p_conn_dist, count_conn, count_all = extract_dependent_p_conn(adj, [dist_mat], [dist_bins])
+    p_conn_dist, count_conn, count_all = _extract_dependent_p_conn(adj, [dist_mat], [dist_bins])
 
     return {'p_conn_dist': p_conn_dist, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins}
 
 
-def build_2nd_order(p_conn_dist, dist_bins, **_):
+def _build_2nd_order(p_conn_dist, dist_bins, **_):
     """Build 2nd order model (exponential distance-dependent conn. prob.)."""
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
 
@@ -645,7 +1173,7 @@ def build_2nd_order(p_conn_dist, dist_bins, **_):
     return {'model': model, 'model_inputs': model_inputs, 'model_params': model_params}
 
 
-def plot_2nd_order(adj, node_properties, model_name, p_conn_dist, count_conn, count_all, dist_bins, model, model_inputs, model_params, plot_dir=None, **_):
+def _plot_2nd_order(adj, node_properties, model_name, p_conn_dist, count_conn, count_all, dist_bins, model, model_inputs, model_params, plot_dir=None, **_):
     """Visualize data vs. model (2nd order)."""
     if plot_dir is not None:
         if not os.path.exists(plot_dir):
@@ -655,13 +1183,19 @@ def plot_2nd_order(adj, node_properties, model_name, p_conn_dist, count_conn, co
     dist_model = np.linspace(dist_bins[0], dist_bins[-1], 100)
 
     model_str = f'f(x) = {model_params["exp_model_scale"]:.3f} * exp(-{model_params["exp_model_exponent"]:.3f} * x)'
-    model_fct = get_model_function(model, model_inputs, model_params)
+    model_fct = _get_model_function(model, model_inputs, model_params)
+
+    if isinstance(node_properties, list):
+        N_pre = node_properties[0].shape[0]  # Pre-synaptic population
+        N_post = node_properties[1].shape[0]  # Post-synaptic population
+    else:
+        N_pre = N_post = node_properties.shape[0]
 
     plt.figure(figsize=(12, 4), dpi=300)
 
     # Data vs. model
     plt.subplot(1, 2, 1)
-    plt.step(dist_bins, np.hstack([p_conn_dist[0], p_conn_dist]), color=DATA_COLOR, label=f'Data: N = {node_properties.shape[0]}x{node_properties.shape[0]} cells')
+    plt.step(dist_bins, np.hstack([p_conn_dist[0], p_conn_dist]), color=DATA_COLOR, label=f'Data: N = {N_pre}x{N_post} cells')
     plt.plot(dist_bins[:-1] + bin_offset, p_conn_dist, '.', color=DATA_COLOR)
     plt.plot(dist_model, model_fct(dist_model), '--', color=MODEL_COLOR, label='Model: ' + model_str)
     plt.grid()
@@ -706,7 +1240,7 @@ def plot_2nd_order(adj, node_properties, model_name, p_conn_dist, count_conn, co
     plt.grid()
     plt.xlabel('Distance ($\\mu$m)')
     plt.ylabel('Count')
-    plt.title(f'Distance-dependent connection counts (N = {node_properties.shape[0]}x{node_properties.shape[0]} cells)')
+    plt.title(f'Distance-dependent connection counts (N = {N_pre}x{N_post} cells)')
     plt.legend()
     plt.tight_layout()
     if plot_dir is not None:
@@ -720,7 +1254,7 @@ def plot_2nd_order(adj, node_properties, model_name, p_conn_dist, count_conn, co
 #   3rd order (bipolar distance-dependent)
 ###################################################################################################
 
-def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, split_indices=None, part_idx=None, **_):
+def _extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, split_indices=None, part_idx=None, **_):
     """Extract distance-dependent connection probability (3rd order) from a sample of pairs of neurons."""
 
     if coord_names is None:
@@ -739,10 +1273,10 @@ def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
 
     if N_split == 0: # Compute all at once
         # Compute distance matrix
-        dist_mat = compute_dist_matrix_symmetric(pos_table)
+        dist_mat = _compute_dist_matrix_symmetric(pos_table)
 
         # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
-        bip_mat = compute_bip_matrix(depth_table, depth_table)
+        bip_mat = _compute_bip_matrix(depth_table, depth_table)
 
         # Extract bipolar distance-dependent connection probabilities
         if max_range_um is None:
@@ -751,7 +1285,7 @@ def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
         dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
         bip_bins = [np.nanmin(bip_mat), 0, np.nanmax(bip_mat)]
 
-        p_conn_dist_bip, count_conn, count_all = extract_dependent_p_conn(adj, [dist_mat, bip_mat], [dist_bins, bip_bins])
+        p_conn_dist_bip, count_conn, count_all = _extract_dependent_p_conn(adj, [dist_mat, bip_mat], [dist_bins, bip_bins])
 
     else: # Split computation into N_split data splits (to reduce memory consumption)
         assert max_range_um is not None, f'ERROR: Max. range must be specified if data extraction splitted into {N_split} parts!'
@@ -767,13 +1301,13 @@ def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
             logging.info(f'<SPLIT {sidx + 1} of {N_split}>')
 
             # Compute distance matrix
-            dist_mat_split = compute_dist_matrix(pos_table[split_sel, :], pos_table)
+            dist_mat_split = _compute_dist_matrix(pos_table[split_sel, :], pos_table)
 
             # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
-            bip_mat_split = compute_bip_matrix(depth_table[split_sel], depth_table)
+            bip_mat_split = _compute_bip_matrix(depth_table[split_sel], depth_table)
 
             # Extract distance-dependent connection counts
-            _, count_conn_split, count_all_split = extract_dependent_p_conn(adj[split_sel, :], [dist_mat_split, bip_mat_split], [dist_bins, bip_bins])
+            _, count_conn_split, count_all_split = _extract_dependent_p_conn(adj[split_sel, :], [dist_mat_split, bip_mat_split], [dist_bins, bip_bins])
             count_conn += count_conn_split
             count_all += count_all_split
 
@@ -784,7 +1318,41 @@ def extract_3rd_order(adj, node_properties, bin_size_um=100, max_range_um=None, 
     return {'p_conn_dist_bip': p_conn_dist_bip, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins, 'bip_bins': bip_bins}
 
 
-def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
+def _extract_3rd_order_pathway(adj, node_properties_src, node_properties_tgt, bin_size_um=100, max_range_um=None, coord_names=None, depth_name=None, split_indices=None, part_idx=None, **_):
+    """Extract distance-dependent connection probability (3rd order) from a sample of pairs of neurons
+       for separate pathways (i.e., non-symmetric adj)."""
+
+    if coord_names is None:
+        coord_names = ['x', 'y', 'z'] # Default names of coordinatate system axes as in node_properties
+    if depth_name is None:
+        depth_name = 'depth' # Default name of depth column in node_properties
+
+    assert split_indices is None and part_idx is None, 'ERROR: Data splitting not supported!'
+
+    pos_table_src = node_properties_src[coord_names].to_numpy()
+    pos_table_tgt = node_properties_tgt[coord_names].to_numpy()
+    depth_table_src = node_properties_src[depth_name].to_numpy()
+    depth_table_tgt = node_properties_tgt[depth_name].to_numpy()
+
+    # Compute distance matrix
+    dist_mat = _compute_dist_matrix(pos_table_src, pos_table_tgt)
+
+    # Compute bipolar matrix (post-synaptic neuron below (delta_d < 0) or above (delta_d > 0) pre-synaptic neuron)
+    bip_mat = _compute_bip_matrix(depth_table_src, depth_table_tgt)
+
+    # Extract bipolar distance-dependent connection probabilities
+    if max_range_um is None:
+        max_range_um = np.nanmax(dist_mat)
+    num_dist_bins = np.ceil(max_range_um / bin_size_um).astype(int)
+    dist_bins = np.arange(0, num_dist_bins + 1) * bin_size_um
+    bip_bins = [np.nanmin(bip_mat), 0, np.nanmax(bip_mat)]
+
+    p_conn_dist_bip, count_conn, count_all = _extract_dependent_p_conn(adj, [dist_mat, bip_mat], [dist_bins, bip_bins])
+
+    return {'p_conn_dist_bip': p_conn_dist_bip, 'count_conn': count_conn, 'count_all': count_all, 'dist_bins': dist_bins, 'bip_bins': bip_bins}
+
+
+def _build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     """Build 3rd order model (bipolar exp. distance-dependent conn. prob.)."""
     bin_offset = 0.5 * np.diff(dist_bins[:2])[0]
 
@@ -811,7 +1379,7 @@ def build_3rd_order(p_conn_dist_bip, dist_bins, **_):
     return {'model': model, 'model_inputs': model_inputs, 'model_params': model_params}
 
 
-def plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn, count_all, dist_bins, model, model_inputs, model_params, plot_dir=None, **_):
+def _plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn, count_all, dist_bins, model, model_inputs, model_params, plot_dir=None, **_):
     """Visualize data vs. model (3rd order)."""
     if plot_dir is not None:
         if not os.path.exists(plot_dir):
@@ -822,7 +1390,13 @@ def plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn
 
     model_strN = f'{model_params["bip_neg_exp_model_scale"]:.3f} * exp(-{model_params["bip_neg_exp_model_exponent"]:.3f} * x)'
     model_strP = f'{model_params["bip_pos_exp_model_scale"]:.3f} * exp(-{model_params["bip_pos_exp_model_exponent"]:.3f} * x)'
-    model_fct = get_model_function(model, model_inputs, model_params)
+    model_fct = _get_model_function(model, model_inputs, model_params)
+
+    if isinstance(node_properties, list):
+        N_pre = node_properties[0].shape[0]  # Pre-synaptic population
+        N_post = node_properties[1].shape[0]  # Post-synaptic population
+    else:
+        N_pre = N_post = node_properties.shape[0]
 
     plt.figure(figsize=(12, 4), dpi=300)
 
@@ -832,7 +1406,7 @@ def plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn
     bip_data = np.concatenate((p_conn_dist_bip[::-1, 0], [np.nan], p_conn_dist_bip[:, 1]))
     all_bins = np.concatenate((-dist_bins[1:][::-1], [0.0], dist_bins[1:]))
     bin_data = np.concatenate((p_conn_dist_bip[::-1, 0], p_conn_dist_bip[:, 1]))
-    plt.step(all_bins, np.hstack([bin_data[0], bin_data]), color=DATA_COLOR, label=f'Data: N = {node_properties.shape[0]}x{node_properties.shape[0]} cells')
+    plt.step(all_bins, np.hstack([bin_data[0], bin_data]), color=DATA_COLOR, label=f'Data: N = {N_pre}x{N_post} cells')
     plt.plot(bip_dist, bip_data, '.', color=DATA_COLOR)
     plt.plot(-dist_model, model_fct(dist_model, np.sign(-dist_model)), '--', color=MODEL_COLOR, label='Model: ' + model_strN)
     plt.plot(dist_model, model_fct(dist_model, np.sign(dist_model)), '--', color=MODEL_COLOR2, label='Model: ' + model_strP)
@@ -880,7 +1454,7 @@ def plot_3rd_order(adj, node_properties, model_name, p_conn_dist_bip, count_conn
     plt.grid()
     plt.xlabel('sign($\\Delta$z) * Distance [$\\mu$m]')
     plt.ylabel('Count')
-    plt.title(f'Bipolar distance-dependent connection counts (N = {node_properties.shape[0]}x{node_properties.shape[0]} cells)')
+    plt.title(f'Bipolar distance-dependent connection counts (N = {N_pre}x{N_post} cells)')
     plt.legend()
     plt.tight_layout()
     if plot_dir is not None:

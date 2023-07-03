@@ -366,7 +366,6 @@ coeff_t distance(int i, int j, std::vector<coord_t>& xyz){
 }
 
 coeff_t model_DD2(int i, int j, coeff_t a, coeff_t b, std::vector<coord_t>& xyz){
-    std::cout<<distance(i,j,xyz) << " " << a*exp(-b*distance(i,j,xyz)) << std::endl;
     a*exp(-b*distance(i,j,xyz));
     return a*exp(-b*distance(i,j,xyz));
 }

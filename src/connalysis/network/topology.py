@@ -1562,5 +1562,6 @@ def betti_curve(B,D):
 
     """
 def simplicial_rich_club_curve(M, maximal=False, sparse_bin_set=False):
+    import pyflagsercount
     vertex_par = pyflagsercount.flagser_count(M, max_simplices=True, containment=True)['contain_counts']
     return efficient_rich_club_curve(M, pre_calculated_richness=vertex_par, sparse_bin_set=sparse_bin_set)

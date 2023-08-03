@@ -5,7 +5,6 @@ def test_imports():
     from connalysis import modelling
     from connalysis import randomization
     from connalysis.randomization import run_ER
-    from connalysis.randomization import adjusted_ER
     from connalysis.modelling import run_batch_model_building
     from connalysis.modelling import run_model_building
     from connalysis.modelling import run_pathway_model_building

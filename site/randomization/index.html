@@ -355,29 +355,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle" class="md-nav__link">
-    ER_shuffle()
+  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
+    configuration_model()
   </a>
   
-    <nav class="md-nav" aria-label="ER_shuffle()">
+    <nav class="md-nav" aria-label="configuration_model()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj" class="md-nav__link">
-    Creates an ER control by shuffling entries away from the diagonal in adj
+  <a href="#src.connalysis.randomization.randomization.configuration_model--see-also" class="md-nav__link">
+    See Also
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
-    configuration_model()
-  </a>
   
 </li>
       
@@ -506,13 +499,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.seed_random_state" class="md-nav__link">
-    seed_random_state()
-  </a>
   
 </li>
       
@@ -580,29 +566,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle" class="md-nav__link">
-    ER_shuffle()
+  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
+    configuration_model()
   </a>
   
-    <nav class="md-nav" aria-label="ER_shuffle()">
+    <nav class="md-nav" aria-label="configuration_model()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj" class="md-nav__link">
-    Creates an ER control by shuffling entries away from the diagonal in adj
+  <a href="#src.connalysis.randomization.randomization.configuration_model--see-also" class="md-nav__link">
+    See Also
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
-    configuration_model()
-  </a>
   
 </li>
       
@@ -734,13 +713,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.seed_random_state" class="md-nav__link">
-    seed_random_state()
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -786,64 +758,8 @@ generate of randomized controls of connectomes.</p>
 
 
 
-<h2 id="src.connalysis.randomization.randomization.ER_shuffle" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">ER_shuffle</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span> <span class="o">=</span> <span class="p">[])</span></code>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <h3 id="src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj">Creates an ER control by shuffling entries away from the diagonal in adj</h3>
-<p>TODO: Re-implement this using only sparse matrices</p>
-
-      <details class="quote">
-        <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">388</span>
-<span class="normal">389</span>
-<span class="normal">390</span>
-<span class="normal">391</span>
-<span class="normal">392</span>
-<span class="normal">393</span>
-<span class="normal">394</span>
-<span class="normal">395</span>
-<span class="normal">396</span>
-<span class="normal">397</span>
-<span class="normal">398</span>
-<span class="normal">399</span>
-<span class="normal">400</span>
-<span class="normal">401</span>
-<span class="normal">402</span>
-<span class="normal">403</span>
-<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@seed_random_state</span>
-<span class="k">def</span> <span class="nf">ER_shuffle</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="o">=</span><span class="p">[]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    #Creates an ER control by shuffling entries away from the diagonal in adj</span>
-<span class="sd">    TODO: Re-implement this using only sparse matrices</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">adj</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
-    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Shuffle </span><span class="si">%s</span><span class="s2"> edges following Erdos-Renyi&quot;</span><span class="p">,</span> <span class="n">adj</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-    <span class="n">above_diagonal</span> <span class="o">=</span> <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
-    <span class="n">below_diagonal</span> <span class="o">=</span> <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span>
-    <span class="n">off_diagonal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">above_diagonal</span><span class="p">,</span> <span class="n">below_diagonal</span><span class="p">])</span>
-
-    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">off_diagonal</span><span class="p">)</span>
-    <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">off_diagonal</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">off_diagonal</span><span class="p">[</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">:]</span>
-    <span class="k">return</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-      </details>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
 <h2 id="src.connalysis.randomization.randomization.configuration_model" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">configuration_model</span><span class="p">(</span><span class="n">sparse_matrix</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span></code>
 
 </h2>
 
@@ -853,12 +769,72 @@ generate of randomized controls of connectomes.</p>
       <p>Function to generate the configuration control model, obtained by
 shuffling the row and column of coo format independently, to create
 new coo matrix, then removing any multiple edges and loops.</p>
-<p>:param sparse_matrix: Sparse input matrix.
-:type: sp.coo_matrix
-:param generator_seed: Numpy generator seed.
-:type: int</p>
-<p>:return CM_matrix: Configuration model.
-:rtype: sp.csr_matrix</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>adj</code></td>
+          <td>
+                <code><span title="scipy.sparse">sp</span>.<span title="scipy.sparse.coo_matrix">coo_matrix</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Adjacency matrix of a directed network.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>seed</code></td>
+          <td>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Random seed to be used</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>csr matrix</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Configuration model control of adj</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <h4 id="src.connalysis.randomization.randomization.configuration_model--see-also">See Also</h4>
+<p>run_SBM: Function which runs the stochastic block model</p>
+<p>run_DD2 : Function which runs the 2nd distance dependent model</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
@@ -884,26 +860,44 @@ new coo matrix, then removing any multiple edges and loops.</p>
 <span class="normal">425</span>
 <span class="normal">426</span>
 <span class="normal">427</span>
-<span class="normal">428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">sparse_matrix</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Function to generate the configuration control model, obtained by</span>
+<span class="normal">428</span>
+<span class="normal">429</span>
+<span class="normal">430</span>
+<span class="normal">431</span>
+<span class="normal">432</span>
+<span class="normal">433</span>
+<span class="normal">434</span>
+<span class="normal">435</span>
+<span class="normal">436</span>
+<span class="normal">437</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate the configuration control model, obtained by</span>
 <span class="sd">    shuffling the row and column of coo format independently, to create</span>
 <span class="sd">    new coo matrix, then removing any multiple edges and loops.</span>
 
-<span class="sd">    :param sparse_matrix: Sparse input matrix.</span>
-<span class="sd">    :type: sp.coo_matrix</span>
-<span class="sd">    :param generator_seed: Numpy generator seed.</span>
-<span class="sd">    :type: int</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    adj: coo-matrix</span>
+<span class="sd">        Adjacency matrix of a directed network.</span>
+<span class="sd">    seed: int</span>
+<span class="sd">        Random seed to be used</span>
 
-<span class="sd">    :return CM_matrix: Configuration model.</span>
-<span class="sd">    :rtype: sp.csr_matrix</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    csr matrix</span>
+<span class="sd">        Configuration model control of adj</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    run_SBM: Function which runs the stochastic block model</span>
+
+<span class="sd">    run_DD2 : Function which runs the 2nd distance dependent model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">generator_seed</span><span class="p">)</span>
-    <span class="n">R</span> <span class="o">=</span> <span class="n">sparse_matrix</span><span class="o">.</span><span class="n">row</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">sparse_matrix</span><span class="o">.</span><span class="n">col</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">row</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">col</span>
     <span class="n">generator</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
     <span class="n">generator</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
-    <span class="n">CM_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">(([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">),(</span><span class="n">R</span><span class="p">,</span><span class="n">C</span><span class="p">)),</span><span class="n">shape</span><span class="o">=</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+    <span class="n">CM_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">(([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">),(</span><span class="n">R</span><span class="p">,</span><span class="n">C</span><span class="p">)),</span><span class="n">shape</span><span class="o">=</span><span class="n">adj</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
     <span class="n">CM_matrix</span><span class="o">.</span><span class="n">setdiag</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">CM_matrix</span><span class="o">.</span><span class="n">eliminate_zeros</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">CM_matrix</span>
@@ -2575,62 +2569,6 @@ Soc Networks, 5-2, pp. 109-137, 1982</p>
         <span class="k">return</span> <span class="n">gm</span><span class="o">.</span><span class="n">SBM</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">threads</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">gm</span><span class="o">.</span><span class="n">SBM</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seed</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</code></pre></div></td></tr></table></div>
-      </details>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h2 id="src.connalysis.randomization.randomization.seed_random_state" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">seed_random_state</span><span class="p">(</span><span class="n">shuffler</span><span class="p">,</span> <span class="n">seeder</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span></code>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Decorate a connectivity shuffler to seed it's random-state before execution.</p>
-<p>It is expected that the generator can be seeded calling <code>seeder(seed)</code>.</p>
-
-      <details class="quote">
-        <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">seed_random_state</span><span class="p">(</span><span class="n">shuffler</span><span class="p">,</span> <span class="n">seeder</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorate a connectivity shuffler to seed it&#39;s random-state before execution.</span>
-
-<span class="sd">    It is expected that the generator can be seeded calling `seeder(seed)`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">seed_and_run_method</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="o">=</span><span class="p">[],</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reinitialize numpy random state using the value of seed among `kwargs`.</span>
-<span class="sd">        doing nothing if no `seed` provided --- expecting an external initialization.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No seed among keyword arguments&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">seeder</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">shuffler</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">seed_and_run_method</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>

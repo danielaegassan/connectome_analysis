@@ -144,17 +144,11 @@ def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
         with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
         of the digraph, for all i.
 
-    Examples
-    --------
-    TODO
-
     See Also
     --------
-    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) : A variant of this function for neurons
+    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) :
+    The modelling function from which the parameters ``a`` and ``b``can be obtained.
 
-    References
-    ----------
-    [1] TODO
 
     """
     if seed[0]==None or seed[1]==None:
@@ -233,17 +227,13 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
         with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
         of the digraph, for all i.
 
-    Examples
-    --------
-    TODO
 
     See Also
     --------
-    [conn_prob_3rd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_3rd_order_model) : A variant of this function for neurons
+    [conn_prob_3rd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_3rd_order_model) :
+    The modelling function from which the parameters ``a1/a2`` and ``b1/b2``can be obtained.
 
-    References
-    ----------
-    [1] TODO
+
 
     """
     if seed[0]==None or seed[1]==None:
@@ -254,7 +244,7 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
 
 #######_ SHUFFLE #######################
 
-def seed_random_state(shuffler, seeder=np.random.seed):
+def _seed_random_state(shuffler, seeder=np.random.seed):
     """Decorate a connectivity shuffler to seed it's random-state before execution.
 
     It is expected that the generator can be seeded calling `seeder(seed)`.
@@ -278,7 +268,6 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
        and the 2nd order distance dependent model. Such that the probability of an edge
        is given by the distance dependent equation, but the parameters of that equation
        vary depending on the block of the source of the edge.
-       # TODO:  Add this to tutorials
 
     Parameters
     ----------
@@ -303,10 +292,6 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
         The edge list of the new digraph as a dictionary
         with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
         of the digraph, for all i.
-
-    Examples
-    --------
-    TODO
 
 
     Raises
@@ -360,10 +345,6 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
         with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
         of the digraph, for all i.
 
-    Examples
-    --------
-    TODO
-
 
     Raises
     ------
@@ -385,8 +366,8 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
         return gm.DD2_block(n, probs, blocks, xyz, threads, seed[0], seed[1])
 
 ####### SHUFFLE #######################
-@seed_random_state
-def ER_shuffle(adj, neuron_properties=[]):
+@_seed_random_state
+def _ER_shuffle(adj, neuron_properties=[]):
     """
     #Creates an ER control by shuffling entries away from the diagonal in adj
     TODO: Re-implement this using only sparse matrices
@@ -403,26 +384,35 @@ def ER_shuffle(adj, neuron_properties=[]):
     adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
     return sp.csr_matrix(adj)
 
-def configuration_model(sparse_matrix: sp.coo_matrix, generator_seed: int):
-    """
-    Function to generate the configuration control model, obtained by
+def configuration_model(adj: sp.coo_matrix, seed: int):
+    """Function to generate the configuration control model, obtained by
     shuffling the row and column of coo format independently, to create
     new coo matrix, then removing any multiple edges and loops.
 
-    :param sparse_matrix: Sparse input matrix.
-    :type: sp.coo_matrix
-    :param generator_seed: Numpy generator seed.
-    :type: int
+    Parameters
+    ----------
+    adj: coo-matrix
+        Adjacency matrix of a directed network.
+    seed: int
+        Random seed to be used
 
-    :return CM_matrix: Configuration model.
-    :rtype: sp.csr_matrix
+    Returns
+    -------
+    csr matrix
+        Configuration model control of adj
+
+    See Also
+    --------
+    run_SBM: Function which runs the stochastic block model
+
+    run_DD2 : Function which runs the 2nd distance dependent model
     """
-    generator = np.random.default_rng(generator_seed)
-    R = sparse_matrix.row
-    C = sparse_matrix.col
+    generator = np.random.default_rng(seed)
+    R = adj.row
+    C = adj.col
     generator.shuffle(R)
     generator.shuffle(C)
-    CM_matrix = sp.coo_matrix(([1]*len(R),(R,C)),shape=sparse_matrix.shape).tocsr()
+    CM_matrix = sp.coo_matrix(([1]*len(R),(R,C)),shape=adj.shape).tocsr()
     CM_matrix.setdiag(0)
     CM_matrix.eliminate_zeros()
     return CM_matrix

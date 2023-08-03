@@ -1389,214 +1389,27 @@ def get_all_simplices_from_max(max_simplices):
 
     return simplices
 
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################
-#################################################################################################################################################  BELOW STILL TO CLEAN UP
-
-#######################################################
-################## WEIGHTED NETWORKS ##################
-#######################################################
-
-def at_weight_edges(weighted_adj, threshold, method="strength"):
-    """ Returns thresholded network on edges
-    :param method: distance returns edges with weight smaller or equal than thresh
-                   strength returns edges with weight larger or equal than thresh
-                   assumes csr format for weighted_adj"""
-    data=weighted_adj.data
-    data_thresh=np.zeros(data.shape)
-    if method == "strength":
-        data_thresh[data>=threshold]=data[data>=threshold]
-    elif method == "distance":
-        data_thresh[data<=threshold]=data[data<=threshold]
-    else:
-        raise ValueError("Method has to be 'strength' or 'distance'")
-    adj_thresh=weighted_adj.copy()
-    adj_thresh.data=data_thresh
-    adj_thresh.eliminate_zeros()
-    return adj_thresh
-
-
-def filtration_weights(adj, node_properties=None, method="strength"):
-    """
-    Returns the filtration weights of a given weighted adjacency matrix.
-    :param method: distance smaller weights enter the filtration first
-                   strength larger weights enter the filtration first
-
-    TODO: Should there be a warning when the return is an empty array because the matrix is zero?
-    """
-    if method == "strength":
-        return np.unique(adj.data)[::-1]
-
-    if method == "distance":
-        return np.unique(adj.data)
-
-    raise ValueError("Method has to be 'strength' or 'distance'")
-
-
-def bin_weigths(weights, n_bins=10, return_bins=False):
-    '''Bins the np.array weights
-    Input: np.array of floats, no of bins
-    returns: bins, and binned data i.e. a np.array of the same shape as weights with entries the center value of its corresponding bin
-    '''
-    tol = 1e-8 #to include the max value in the last bin
-    min_weight = weights.min()
-    max_weight = weights.max() + tol
-    step = (max_weight - min_weight) / n_bins
-    bins = np.arange(min_weight, max_weight + step, step)
-    digits = np.digitize(weights, bins)
-
-    weights = (min_weight + step / 2) + (digits - 1) * step
-    return (weights, bins) if return_bins else weights
-
-
-def filtered_simplex_counts(adj, node_properties=None, method="strength",
-                            binned=False, n_bins=10, threads=1,
-                            **kwargs):
-    '''Takes weighted adjancecy matrix returns data frame with filtered simplex counts where index is the weight
-    method strength higher weights enter first, method distance smaller weights enter first'''
-    from tqdm import tqdm
-    adj = adj.copy()
-    if binned==True:
-        adj.data = bin_weigths(adj.data, n_bins=n_bins)
-
-    weights = filtration_weights(adj, node_properties, method)
-
-#    TODO: 1. Prove that the following is executed in the implementation that follows.
-#    TODO: 2. If any difference, update the implementation
-#    TODO: 3. Remove the reference code.
-#    n_simplices = dict.fromkeys(weights)
-#    for weight in tqdm(weights[::-1],total=len(weights)):
-#        adj = at_weight_edges(adj, threshold=weight, method=method)
-#        n_simplices[weight] = simplex_counts(adj, threads=threads)
-
-    m = method
-    def filter_weight(w):
-        adj_w = at_weight_edges(adj, threshold=w, method=m)
-        return simplex_counts(adj_w, threads=threads)
-
-    n_simplices = {w: filter_weight(w) for w in weights[::-1]}
-    return pd.DataFrame.from_dict(n_simplices, orient="index").fillna(0).astype(int)
-
-
-def chunk_approx_and_dims(min_dim=0, max_dim=[], approximation=None):
-    # Check approximation list is not too long and it's a list of integers
-    assert (all([isinstance(item, int) for item in approximation])), 'approximation must be a list of integers'
-    approximation = np.array(approximation)
-    if max_dim == []:
-        max_dim = np.inf
-    assert (approximation.size - 1 <= max_dim - min_dim), "approximation list too long for the dimension range"
-
-    # Split approximation into sub-vectors of same value to speed up computation
-    diff = approximation[1:] - approximation[:-1]
-    slice_indx = np.array(np.where(diff != 0)[0]) + 1
-    dim_chunks = np.split(np.arange(approximation.size) + min_dim, slice_indx)
-    if approximation[-1] == -1:
-        dim_chunks[-1][-1] = -1
-    else:
-        if dim_chunks[-1][-1] < max_dim:
-            dim_chunks.append([dim_chunks[-1][-1] + 1, max_dim])
-
-    # Returned chuncked lists
-    approx_chunks = []
-    for j in range(len(dim_chunks)):
-        if (approximation.size < max_dim - min_dim + 1) and approximation[-1] != -1 and j == len(dim_chunks) - 1:
-            a = -1
-        else:
-            a = approximation[int(dim_chunks[j][0]) - min_dim]
-        approx_chunks.append(a)
-    return dim_chunks, approx_chunks
-
-
-def persistence(weighted_adj, node_properties=None,
-                min_dim=0, max_dim=[], directed=True, coeff=2, approximation=None,
-                invert_weights=False, binned=False, n_bins=10, return_bettis=False,
-                **kwargs):
-    from pyflagser import flagser_weighted
-    import numpy as np
-    # Normalizing and binning data
-    adj = weighted_adj.copy()
-    if invert_weights == True:
-        # Normalizing data between 0-1 and inverting order of the entries
-        adj.data = (np.max(adj.data) - adj.data) / (np.max(adj.data) - np.min(adj.data))
-    if binned == True:
-        adj.data = bin_weigths(adj.data, n_bins=n_bins)
-
-    # Sending computation to flagser
-    # For single approximate value
-    if approximation == None or isinstance(approximation, int):
-        if min_dim != 0:
-            LOG.info("Careful of pyflagser bug with range in dimension")
-        out = flagser_weighted(adj, min_dimension=min_dim, max_dimension=max_dim, directed=True, coeff=2,
-                               approximation=approximation)
-        dgms = out['dgms']
-        bettis = out['betti']
-    # For approximate list
-    else:
-        # Chunk values to speed computations
-        dim_chunks, approx_chunks = chunk_approx_and_dims(min_dim=min_dim, max_dim=max_dim, approximation=approximation)
-        bettis = []
-        dgms = []
-        for dims_range, a in zip(dim_chunks, approx_chunks):
-            n = dims_range[0]  # min dim for computation
-            N = dims_range[-1]  # max dim for computation
-            if N == -1:
-                N = np.inf
-            if a == -1:
-                a = None
-            LOG.info("Run betti for dim range %s-%s with approximation %s",n, N, a)
-            if n != 0:
-                LOG.info("Warning, possible bug in pyflagser when not running dimension range starting at dim 0")
-            out = flagser_weighted(adj, min_dimension=n, max_dimension=N, directed=True, coeff=2, approximation=a)
-            bettis = bettis + out['betti']
-            dgms = dgms + out['dgms']
-            LOG.info("out: %s",[out['dgms'][i].shape for i in range(len(out['dgms']))])
-    if return_bettis == True:
-        return dgms, bettis
-    else:
-        return dgms
-
-#Tools for persistence
-def num_cycles(B,D,thresh):
-    #Given a persistence diagram (B,D) compute the number of cycles alive at tresh
-    #Infinite bars have death values np.inf
-    born=np.count_nonzero(B<=thresh)
-    dead=np.count_nonzero(D<=thresh)
-    return born-dead
-
-def betti_curve(B,D):
-    #Given a persistence diagram (B,D) compute its corresponding betti curve
-    #Infinite bars have death values np.inf
-    filt_values=np.concatenate([B,D])
-    filt_values=np.unique(filt_values)
-    filt_values=filt_values[filt_values!=np.inf]
-    bettis=[]
-    for thresh in filt_values:
-        bettis.append(num_cycles(B,D,thresh))
-    return filt_values,np.array(bettis)
-
-
-    """Computes the simplicial rich club curve of a network. 
-       Where the i'th entry is the density of the subnetwork induced by the vertices that are contained in
-       more than i (maximal) simplices.
-
-    Parameters
-    ----------
-    adj : 2d-array
-        Adjacency matrix of a directed network.
-    max_simplices : bool
-        If true then vertex participation is the number of maximal simplices each vertex is contained in.
-    sparse_bin_set : bool
-        If true then consecutive entries with same rich club coefficient are grouped into bins together,
-
-    Returns
-    -------
-    pandas.Series
-        Where the i'th entry is the rich club coefficient of the network induced by all vertices which are
-        contained in more that i (maximal) simplices
-
-    """
 def simplicial_rich_club_curve(M, maximal=False, sparse_bin_set=False):
+    """Computes the simplicial rich club curve of a network.
+           Where the i'th entry is the density of the subnetwork induced by the vertices that are contained in
+           more than i (maximal) simplices.
+
+        Parameters
+        ----------
+        adj : 2d-array
+            Adjacency matrix of a directed network.
+        max_simplices : bool
+            If true then vertex participation is the number of maximal simplices each vertex is contained in.
+        sparse_bin_set : bool
+            If true then consecutive entries with same rich club coefficient are grouped into bins together,
+
+        Returns
+        -------
+        pandas.Series
+            Where the i'th entry is the rich club coefficient of the network induced by all vertices which are
+            contained in more that i (maximal) simplices
+
+    """
     import pyflagsercount
     from .classic import efficient_rich_club_curve
     vertex_par = pd.DataFrame(pyflagsercount.flagser_count(M, max_simplices=maximal, containment=True)['contain_counts']).replace(np.nan,0).astype(int)

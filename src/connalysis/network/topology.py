@@ -1539,3 +1539,30 @@ def betti_curve(B,D):
     for thresh in filt_values:
         bettis.append(num_cycles(B,D,thresh))
     return filt_values,np.array(bettis)
+
+
+    """Computes the simplicial rich club curve of a network. 
+       Where the i'th entry is the density of the subnetwork induced by the vertices that are contained in
+       more than i (maximal) simplices.
+
+    Parameters
+    ----------
+    adj : 2d-array
+        Adjacency matrix of a directed network.
+    max_simplices : bool
+        If true then vertex participation is the number of maximal simplices each vertex is contained in.
+    sparse_bin_set : bool
+        If true then consecutive entries with same rich club coefficient are grouped into bins together,
+
+    Returns
+    -------
+    pandas.Series
+        Where the i'th entry is the rich club coefficient of the network induced by all vertices which are
+        contained in more that i (maximal) simplices
+
+    """
+def simplicial_rich_club_curve(M, maximal=False, sparse_bin_set=False):
+    import pyflagsercount
+    from .classic import efficient_rich_club_curve
+    vertex_par = pd.DataFrame(pyflagsercount.flagser_count(M, max_simplices=maximal, containment=True)['contain_counts']).replace(np.nan,0).astype(int)
+    return pd.DataFrame([efficient_rich_club_curve(M, pre_calculated_richness=vertex_par[i]) for i in range(vertex_par.shape[1])]).transpose().dropna(how='all')

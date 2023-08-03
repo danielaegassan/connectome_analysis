@@ -286,7 +286,7 @@ def _bin_degrees(degrees):
     return ret_x, udegrees, degrees
 
 
-def rich_club_curve(m, nrn, direction='efferent'):
+def rich_club_curve(m, direction='efferent'):
     m = m.tocsc()
     if direction == 'afferent':
         degrees = np.array(m.sum(axis=0)).flatten()
@@ -348,7 +348,7 @@ def efficient_rich_club_curve(M, direction="efferent", pre_calculated_richness=N
 
     cum_degrees = np.cumsum(con_degree[-1::-1])
 
-    return pd.DataFrame(cum_degrees / nrn_cum_pairs, degree_bins_rv)
+    return pd.Series(cum_degrees / nrn_cum_pairs, degree_bins_rv)[::-1]
 
 
 def _analytical_expected_rich_club_curve(m, direction='efferent'):
@@ -416,21 +416,22 @@ def _randomized_control_rich_club_curve(m, direction='efferent', n=10):
         m_shuf = generate_degree_based_control(m, direction=direction)
         res.append(efficient_rich_club_curve(m_shuf))
     res = pd.concat(res, axis=1)
-
+    #TODO: Something is wrong here. rr is not defined. Should it be res?
+    #      But changing rr to res causing 
     df = pd.DataFrame.from_dict(
         {
-            "mean": np.nanmean(rr, axis=1),
-            "std": np.nanstd(rr, axis=1)
+            "mean": np.nanmean(res, axis=1),
+            "std": np.nanstd(res, axis=1)
         }
     )
     df.index = res.index
     return df
 
 
-def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std',
+def normalized_rich_club_curve(m, direction='efferent', normalize='std',
                                normalize_with="shuffled", **kwargs):
     assert m.dtype == bool, "This function only works for binary matrices at the moment"
-    data = rich_club_curve(m, nrn, direction=direction)
+    data = efficient_rich_club_curve(m, direction=direction)
     A = data.index.values
     B = data.values
     if normalize_with == "analytical":
@@ -449,6 +450,6 @@ def normalized_rich_club_curve(m, nrn, direction='efferent', normalize='std',
         raise Exception("Unknown normalization: %s" % normalize)
 
 
-def rich_club_coefficient(m, nrn, **kwargs):
+def rich_club_coefficient(m, **kwargs):
     Bn = normalized_rich_club_curve(m, normalize='std', **kwargs).values
     return np.nanmean(Bn)

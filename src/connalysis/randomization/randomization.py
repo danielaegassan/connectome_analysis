@@ -162,49 +162,6 @@ def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
     else:
         return gm.DD2(n,a,b,xyz,threads,seed[0],seed[1])
 
-def run_DD3(n,a,b,xyz,threads=8, seed=(None,None)):
-    """Creates a random digraph using the 2nd-order probability model.
-
-    Parameters
-    ----------
-    n : int
-        Number of vertices
-    a : float
-        Coefficient of probability function
-    b : float
-        Absolute value of power of exponent in probability function
-    xyz : (n,3)-numpy array of floats
-        Co-ordinates of vertices in $\mathbb{R}^3$
-    threads : int
-        Number of parallel threads to be used
-    seed : pair of ints
-        Random seed to be used, if none is provided a seed is randomly selected
-
-    Returns
-    -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
-
-    Examples
-    --------
-    TODO
-
-    See Also
-    --------
-    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) : A variant of this function for neurons
-
-    References
-    ----------
-    [1] TODO
-
-    """
-    if seed[0]==None or seed[1]==None:
-        return gm.DD3(n,a,b,xyz,threads)
-    else:
-        return gm.DD3(n,a,b,xyz,threads,seed[0],seed[1])
-
 def run_DD2_model(adj, node_properties,
                   model_params_dd2=None, #an analysis that could be loaded from the pipeline
                   coord_names= ['x', 'y', 'z'],
@@ -321,6 +278,7 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
        and the 2nd order distance dependent model. Such that the probability of an edge
        is given by the distance dependent equation, but the parameters of that equation
        vary depending on the block of the source of the edge.
+       # TODO:  Add this to tutorials
 
     Parameters
     ----------
@@ -444,72 +402,6 @@ def ER_shuffle(adj, neuron_properties=[]):
     adj[np.triu_indices(n,k=1)] = off_diagonal[0:n*(n-1)//2]
     adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
     return sp.csr_matrix(adj)
-
-####### PROBABILITY ##################
-
-####### OTHER ########################
-def adjusted_ER(sparse_matrix: sp.csc_matrix, generator_seed:int) -> sp.csc_matrix:
-    """
-    Function to generate an ER with adjusted bidirectional connections.
-
-    :param sparse_matrix: Sparse input matrix.
-    :type: sp.csc_matrix
-    :param generator_seed: Numpy generator seed.
-    :type: int
-
-    :return adjER_matrix: Adjusted ER model.
-    :rtype: sp.csc_matrix
-    """
-    from .resources.randomization import bidrectional_edges, adjust_bidirectional_connections
-    generator = np.random.default_rng(generator_seed)
-    target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
-    ER_matrix = ER_shuffle(sparse_matrix).tocsc()
-    return adjust_bidirectional_connections(ER_matrix, target_bedges, generator)
-
-def underlying_model(sparse_matrix: sp.csc_matrix, generator_seed: int):
-    """
-    Function to generate the underlying control model, obtained by turning
-    the graph into a DAG (by making it undirected and using the GIDs to give
-    directions) and adding bidirectional connections.
-
-    :param sparse_matrix: Sparse input matrix.
-    :type: sp.csc_matrix
-    :param generator_seed: Numpy generator seed.
-    :type: int
-
-    :return und_matrix: Underlying model.
-    :rtype: sp.csc_matrix
-    """
-    from .resources.randomization import bidrectional_edges, add_bidirectional_connections
-    generator = np.random.default_rng(generator_seed)
-    target_bedges = int(bidirectional_edges(sparse_matrix).count_nonzero() / 2)
-    ut_matrix = sp.triu(sparse_matrix + sparse_matrix.T)
-    return add_bidirectional_connections(ut_matrix, target_bedges, generator)
-
-
-def bishuffled_model(sparse_matrix: sp.csc_matrix, generator_seed: int) -> sp.csc_matrix:
-    """
-    Function to generate the bishuffled control model, obtained by removing
-    bidirectional edges by assigning a direction (according to GID order)
-    to exactly half of them and the other direction to the other half.
-    Probability-based direction assignment (original thesis) was not implemented
-    to make the algorithm more performant, maybe to be used for SSCX.
-
-    :param sparse_matrix: Sparse input matrix.
-    :type: sp.csc_matrix
-    :param generator_seed: Numpy generator seed.
-    :type: int
-
-    :return und_matrix: Bishuffled model.
-    :rtype: sp.csc_matrix
-    """
-    from .resources.randomization import bidrectional_edges, add_bidirectional_connections, half_matrix
-    generator = np.random.default_rng(generator_seed)
-    ut_bedges = sp.triu(bidirectional_edges(sparse_matrix))
-    target_bedges = ut_bedges.count_nonzero()
-    bedges1, bedges2 = half_matrix(ut_bedges, generator)
-    return add_bidirectional_connections(sparse_matrix - bedges1 - bedges2.T, target_bedges, generator)
-
 
 def configuration_model(sparse_matrix: sp.coo_matrix, generator_seed: int):
     """

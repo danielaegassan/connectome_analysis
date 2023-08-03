@@ -537,10 +537,48 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
         simplices[1] = np.stack([coom.row[mask], coom.col[mask]]).T
     return simplices
 
-#TODO: OUTDEGREE
+def in_degree_from_pop(adj, source_pop, max_simplices=False,threads=1, max_dim=-1, ** kwargs):
+    # TODO: DO THE OUTDEGREE VERSION
+    # TODO: Get participation directly from flagsercount via vertices to do?
+    """Compute generalized in-degree of nodes source_pop onto the rest of the nodes in adj.
+    Parameters
+    ----------
+    adj: 2d (N,N)-array or sparse matrix
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    source_pop: list of indices of the source population, must be a subset of ``np.arange(0, adj.shape[0])``
+    max_simplices : bool
+        If False counts all simplices.
+        If True counts only maximal simplices.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.
+        Particularly useful for large or dense graphs.
+
+    Returns
+    -------
+    Data frame
+        Table of k-in-degrees from source_pop indexed by the target population.
+
+    Raises
+    ------
+    AssertionError
+        If adj restricted to source_pop has non-zero entries in the diagonal which can produce errors.
+    """
+    adj=adj.tocsr()
+    source_pop = np.sort(source_pop)
+    target_pop = np.setdiff1d(np.arange(adj.shape[0]), source_pop)
+    adj_source = adj[np.ix_(source_pop, source_pop)]
+    adj_cross = adj[np.ix_(source_pop, target_pop)]
+    degs=cross_col_k_in_degree(adj_cross, adj_source,
+                                 max_simplices=max_simplices,threads=threads, max_dim=max_dim, **kwargs)
+    degs.index=target_pop
+    return degs
+
 def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
                           threads=1,max_dim=-1,**kwargs):
-    #TODO DO THE OUTDEGREE VERSION maybe one where populations are defined within a matrix?
+    #TODO: DO THE OUTDEGREE VERSION
+    #TODO: Get participation directly from flagsercount via vertices to do?
     """Compute generalized in-degree of nodes in adj_target from nodes in adj_source.
     The k-in-degree of a node v is the number of k-simplices in adj_source with all its nodes mapping to v
     through edges in adj_cross.
@@ -572,10 +610,6 @@ def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
     ------
     AssertionError
         If adj_source has non-zero entries in the diagonal which can produce errors.
-
-    Notes
-    -----
-    We should probably write some notes here
     """
     adj_source=sp.csr_matrix(adj_source).astype('bool')
     adj_cross=sp.csr_matrix(adj_cross).astype('bool')
@@ -1063,9 +1097,9 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
 
     if (simplex_list is None):  # Compute simplex lists if not provided
         simplex_list = list_simplices_by_dimension(adj, node_properties=None,
-                                                   max_simplices=max_simplices, max_dim=max_dim,
-                                                   simplex_type='directed',
-                                                   nodes=None, verbose=False, **kwargs)
+                                                            max_simplices=max_simplices, max_dim=max_dim,
+                                                            simplex_type='directed',
+                                                            nodes=None, verbose=False, **kwargs)
         N = adj.shape[0]
     else:
         assert N > np.nanmax(simplex_list.explode().explode()), \
@@ -1076,21 +1110,22 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
     edge_counts = pd.DataFrame(index=dims, columns=["number_of_edges", "number_of_rc_edges", "rc/edges_percent"])
     if return_mats == True:
         skeleton_mats = {f'dimension_{dim}': None for dim in dims}
+    print(dims)
     for dim in dims:
-        edges, rc_edges, mat = count_rc_edges_k_skeleton(simplex_list[dim], N,
-                                                         position=position, return_mat=True)
-        edge_counts["number_of_edges"].loc[dim] = edges
-        edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
-        edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
+        if simplex_list[dim].size > 0:
+            edges, rc_edges, mat = count_rc_edges_k_skeleton(simplex_list[dim], N,
+                                                                      position=position, return_mat=True)
+            edge_counts["number_of_edges"].loc[dim] = edges
+            edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
+            edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
+        else:
+            edge_counts["number_of_edges"].loc[dim] = 0
         if return_mats == True:
             skeleton_mats[f'dimension_{dim}'] = mat
     if return_mats == True:
         return edge_counts, skeleton_mats
     else:
         return edge_counts
-
-
-
 
 
 def bedge_counts(adjacency, simplices=None,

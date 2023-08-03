@@ -162,6 +162,49 @@ def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
     else:
         return gm.DD2(n,a,b,xyz,threads,seed[0],seed[1])
 
+def run_DD3(n,a,b,xyz,threads=8, seed=(None,None)):
+    """Creates a random digraph using the 2nd-order probability model.
+
+    Parameters
+    ----------
+    n : int
+        Number of vertices
+    a : float
+        Coefficient of probability function
+    b : float
+        Absolute value of power of exponent in probability function
+    xyz : (n,3)-numpy array of floats
+        Co-ordinates of vertices in $\mathbb{R}^3$
+    threads : int
+        Number of parallel threads to be used
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
+
+    Returns
+    -------
+    dict
+        The edge list of the new digraph as a dictionary
+        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
+        of the digraph, for all i.
+
+    Examples
+    --------
+    TODO
+
+    See Also
+    --------
+    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) : A variant of this function for neurons
+
+    References
+    ----------
+    [1] TODO
+
+    """
+    if seed[0]==None or seed[1]==None:
+        return gm.DD3(n,a,b,xyz,threads)
+    else:
+        return gm.DD3(n,a,b,xyz,threads,seed[0],seed[1])
+
 def run_DD2_model(adj, node_properties,
                   model_params_dd2=None, #an analysis that could be loaded from the pipeline
                   coord_names= ['x', 'y', 'z'],

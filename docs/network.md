@@ -1,6 +1,7 @@
 # Functions for working with networks
 
-This page describes functions contained in the `network` module. The functions are arranged by motivation, either from classic graph and network theory, or from topology.
+This page describes functions contained in the `network` module. 
+The functions are arranged by motivation, either from classic graph and network theory, or from topology.
 
 ## Graph theory
 

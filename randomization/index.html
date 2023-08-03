@@ -355,29 +355,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle" class="md-nav__link">
-    ER_shuffle()
+  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
+    configuration_model()
   </a>
   
-    <nav class="md-nav" aria-label="ER_shuffle()">
+    <nav class="md-nav" aria-label="configuration_model()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj" class="md-nav__link">
-    Creates an ER control by shuffling entries away from the diagonal in adj
+  <a href="#src.connalysis.randomization.randomization.configuration_model--see-also" class="md-nav__link">
+    See Also
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
-    configuration_model()
-  </a>
   
 </li>
       
@@ -392,13 +385,6 @@
           <li class="md-nav__item">
   <a href="#src.connalysis.randomization.randomization.run_DD2--see-also" class="md-nav__link">
     See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.run_DD2--references" class="md-nav__link">
-    References
   </a>
   
 </li>
@@ -470,13 +456,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.run_DD3--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -506,13 +485,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.seed_random_state" class="md-nav__link">
-    seed_random_state()
-  </a>
   
 </li>
       
@@ -580,29 +552,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle" class="md-nav__link">
-    ER_shuffle()
+  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
+    configuration_model()
   </a>
   
-    <nav class="md-nav" aria-label="ER_shuffle()">
+    <nav class="md-nav" aria-label="configuration_model()">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj" class="md-nav__link">
-    Creates an ER control by shuffling entries away from the diagonal in adj
+  <a href="#src.connalysis.randomization.randomization.configuration_model--see-also" class="md-nav__link">
+    See Also
   </a>
   
 </li>
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.configuration_model" class="md-nav__link">
-    configuration_model()
-  </a>
   
 </li>
       
@@ -617,13 +582,6 @@
           <li class="md-nav__item">
   <a href="#src.connalysis.randomization.randomization.run_DD2--see-also" class="md-nav__link">
     See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.run_DD2--references" class="md-nav__link">
-    References
   </a>
   
 </li>
@@ -695,13 +653,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.run_DD3--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -731,13 +682,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#src.connalysis.randomization.randomization.seed_random_state" class="md-nav__link">
-    seed_random_state()
-  </a>
   
 </li>
       
@@ -786,20 +730,89 @@ generate of randomized controls of connectomes.</p>
 
 
 
-<h2 id="src.connalysis.randomization.randomization.ER_shuffle" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">ER_shuffle</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span> <span class="o">=</span> <span class="p">[])</span></code>
+<h2 id="src.connalysis.randomization.randomization.configuration_model" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span></code>
 
 </h2>
 
 
   <div class="doc doc-contents ">
   
-      <h3 id="src.connalysis.randomization.randomization.ER_shuffle--creates-an-er-control-by-shuffling-entries-away-from-the-diagonal-in-adj">Creates an ER control by shuffling entries away from the diagonal in adj</h3>
-<p>TODO: Re-implement this using only sparse matrices</p>
+      <p>Function to generate the configuration control model, obtained by
+shuffling the row and column of coo format independently, to create
+new coo matrix, then removing any multiple edges and loops.</p>
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>adj</code></td>
+          <td>
+                <code><span title="scipy.sparse">sp</span>.<span title="scipy.sparse.coo_matrix">coo_matrix</span></code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Adjacency matrix of a directed network.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>seed</code></td>
+          <td>
+                <code>int</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Random seed to be used</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>csr matrix</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Configuration model control of adj</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+      <h4 id="src.connalysis.randomization.randomization.configuration_model--see-also">See Also</h4>
+<p>run_SBM: Function which runs the stochastic block model</p>
+<p>run_DD2 : Function which runs the 2nd distance dependent model</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">388</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">387</span>
+<span class="normal">388</span>
 <span class="normal">389</span>
 <span class="normal">390</span>
 <span class="normal">391</span>
@@ -815,54 +828,9 @@ generate of randomized controls of connectomes.</p>
 <span class="normal">401</span>
 <span class="normal">402</span>
 <span class="normal">403</span>
-<span class="normal">404</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@seed_random_state</span>
-<span class="k">def</span> <span class="nf">ER_shuffle</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="o">=</span><span class="p">[]):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    #Creates an ER control by shuffling entries away from the diagonal in adj</span>
-<span class="sd">    TODO: Re-implement this using only sparse matrices</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">adj</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
-    <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Shuffle </span><span class="si">%s</span><span class="s2"> edges following Erdos-Renyi&quot;</span><span class="p">,</span> <span class="n">adj</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
-    <span class="n">above_diagonal</span> <span class="o">=</span> <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span>
-    <span class="n">below_diagonal</span> <span class="o">=</span> <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span>
-    <span class="n">off_diagonal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">above_diagonal</span><span class="p">,</span> <span class="n">below_diagonal</span><span class="p">])</span>
-
-    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">off_diagonal</span><span class="p">)</span>
-    <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">triu_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">k</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">off_diagonal</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">]</span>
-    <span class="n">adj</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">tril_indices</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">k</span><span class="o">=-</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">off_diagonal</span><span class="p">[</span><span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">n</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">//</span><span class="mi">2</span><span class="p">:]</span>
-    <span class="k">return</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">adj</span><span class="p">)</span>
-</code></pre></div></td></tr></table></div>
-      </details>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h2 id="src.connalysis.randomization.randomization.configuration_model" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">configuration_model</span><span class="p">(</span><span class="n">sparse_matrix</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span></code>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Function to generate the configuration control model, obtained by
-shuffling the row and column of coo format independently, to create
-new coo matrix, then removing any multiple edges and loops.</p>
-<p>:param sparse_matrix: Sparse input matrix.
-:type: sp.coo_matrix
-:param generator_seed: Numpy generator seed.
-:type: int</p>
-<p>:return CM_matrix: Configuration model.
-:rtype: sp.csr_matrix</p>
-
-      <details class="quote">
-        <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">406</span>
+<span class="normal">404</span>
+<span class="normal">405</span>
+<span class="normal">406</span>
 <span class="normal">407</span>
 <span class="normal">408</span>
 <span class="normal">409</span>
@@ -874,36 +842,35 @@ new coo matrix, then removing any multiple edges and loops.</p>
 <span class="normal">415</span>
 <span class="normal">416</span>
 <span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
-<span class="normal">423</span>
-<span class="normal">424</span>
-<span class="normal">425</span>
-<span class="normal">426</span>
-<span class="normal">427</span>
-<span class="normal">428</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">sparse_matrix</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">generator_seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Function to generate the configuration control model, obtained by</span>
+<span class="normal">418</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">:</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate the configuration control model, obtained by</span>
 <span class="sd">    shuffling the row and column of coo format independently, to create</span>
 <span class="sd">    new coo matrix, then removing any multiple edges and loops.</span>
 
-<span class="sd">    :param sparse_matrix: Sparse input matrix.</span>
-<span class="sd">    :type: sp.coo_matrix</span>
-<span class="sd">    :param generator_seed: Numpy generator seed.</span>
-<span class="sd">    :type: int</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    adj: coo-matrix</span>
+<span class="sd">        Adjacency matrix of a directed network.</span>
+<span class="sd">    seed: int</span>
+<span class="sd">        Random seed to be used</span>
 
-<span class="sd">    :return CM_matrix: Configuration model.</span>
-<span class="sd">    :rtype: sp.csr_matrix</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    csr matrix</span>
+<span class="sd">        Configuration model control of adj</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    run_SBM: Function which runs the stochastic block model</span>
+
+<span class="sd">    run_DD2 : Function which runs the 2nd distance dependent model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">generator_seed</span><span class="p">)</span>
-    <span class="n">R</span> <span class="o">=</span> <span class="n">sparse_matrix</span><span class="o">.</span><span class="n">row</span>
-    <span class="n">C</span> <span class="o">=</span> <span class="n">sparse_matrix</span><span class="o">.</span><span class="n">col</span>
+    <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+    <span class="n">R</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">row</span>
+    <span class="n">C</span> <span class="o">=</span> <span class="n">adj</span><span class="o">.</span><span class="n">col</span>
     <span class="n">generator</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">R</span><span class="p">)</span>
     <span class="n">generator</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">C</span><span class="p">)</span>
-    <span class="n">CM_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">(([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">),(</span><span class="n">R</span><span class="p">,</span><span class="n">C</span><span class="p">)),</span><span class="n">shape</span><span class="o">=</span><span class="n">sparse_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
+    <span class="n">CM_matrix</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">coo_matrix</span><span class="p">(([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">R</span><span class="p">),(</span><span class="n">R</span><span class="p">,</span><span class="n">C</span><span class="p">)),</span><span class="n">shape</span><span class="o">=</span><span class="n">adj</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">tocsr</span><span class="p">()</span>
     <span class="n">CM_matrix</span><span class="o">.</span><span class="n">setdiag</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">CM_matrix</span><span class="o">.</span><span class="n">eliminate_zeros</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">CM_matrix</span>
@@ -1048,13 +1015,9 @@ of the digraph, for all i.</p>
         </tr>
     </tbody>
   </table>
-
-<p><strong>Examples:</strong></p>
-    <p>TODO</p>
       <h4 id="src.connalysis.randomization.randomization.run_DD2--see-also">See Also</h4>
-<p><a href="../modelling/#src.connalysis.modelling.modelling.conn_prob_2nd_order_model">conn_prob_2nd_order_model</a> : A variant of this function for neurons</p>
-<h4 id="src.connalysis.randomization.randomization.run_DD2--references">References</h4>
-<p>[1] TODO</p>
+<p><a href="../modelling/#src.connalysis.modelling.modelling.conn_prob_2nd_order_model">conn_prob_2nd_order_model</a> :
+The modelling function from which the parameters <code>a</code> and <code>b</code>can be obtained.</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
@@ -1093,13 +1056,7 @@ of the digraph, for all i.</p>
 <span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
-<span class="normal">157</span>
-<span class="normal">158</span>
-<span class="normal">159</span>
-<span class="normal">160</span>
-<span class="normal">161</span>
-<span class="normal">162</span>
-<span class="normal">163</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">xyz</span><span class="p">,</span><span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">157</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">,</span><span class="n">xyz</span><span class="p">,</span><span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using the 2nd-order probability model.</span>
 
 <span class="sd">    Parameters</span>
@@ -1124,17 +1081,11 @@ of the digraph, for all i.</p>
 <span class="sd">        with keys &#39;row&#39; and &#39;col&#39;. Where (row[i],col[i]) is a directed edge</span>
 <span class="sd">        of the digraph, for all i.</span>
 
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    TODO</span>
-
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) : A variant of this function for neurons</span>
+<span class="sd">    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) :</span>
+<span class="sd">    The modelling function from which the parameters ``a`` and ``b``can be obtained.</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    [1] TODO</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">seed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span> <span class="ow">or</span> <span class="n">seed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
@@ -1288,9 +1239,6 @@ of the digraph, for all i.</p>
     </tbody>
   </table>
 
-<p><strong>Examples:</strong></p>
-    <p>TODO</p>
-
   <p><strong>Raises:</strong></p>
   <table>
     <thead>
@@ -1319,7 +1267,22 @@ of the digraph, for all i.</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">333</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">318</span>
+<span class="normal">319</span>
+<span class="normal">320</span>
+<span class="normal">321</span>
+<span class="normal">322</span>
+<span class="normal">323</span>
+<span class="normal">324</span>
+<span class="normal">325</span>
+<span class="normal">326</span>
+<span class="normal">327</span>
+<span class="normal">328</span>
+<span class="normal">329</span>
+<span class="normal">330</span>
+<span class="normal">331</span>
+<span class="normal">332</span>
+<span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
 <span class="normal">336</span>
@@ -1352,26 +1315,7 @@ of the digraph, for all i.</p>
 <span class="normal">363</span>
 <span class="normal">364</span>
 <span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span>
-<span class="normal">368</span>
-<span class="normal">369</span>
-<span class="normal">370</span>
-<span class="normal">371</span>
-<span class="normal">372</span>
-<span class="normal">373</span>
-<span class="normal">374</span>
-<span class="normal">375</span>
-<span class="normal">376</span>
-<span class="normal">377</span>
-<span class="normal">378</span>
-<span class="normal">379</span>
-<span class="normal">380</span>
-<span class="normal">381</span>
-<span class="normal">382</span>
-<span class="normal">383</span>
-<span class="normal">384</span>
-<span class="normal">385</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">366</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using a combination of the stochastic block model</span>
 <span class="sd">       and the 2nd order distance dependent model. Such that the probability of an edge</span>
 <span class="sd">       is given by the distance dependent equation, but the parameters of that equation</span>
@@ -1400,10 +1344,6 @@ of the digraph, for all i.</p>
 <span class="sd">        The edge list of the new digraph as a dictionary</span>
 <span class="sd">        with keys &#39;row&#39; and &#39;col&#39;. Where (row[i],col[i]) is a directed edge</span>
 <span class="sd">        of the digraph, for all i.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    TODO</span>
 
 
 <span class="sd">    Raises</span>
@@ -1445,8 +1385,7 @@ of the digraph, for all i.</p>
       <p>Creates a random digraph using a combination of the stochastic block model
    and the 2nd order distance dependent model. Such that the probability of an edge
    is given by the distance dependent equation, but the parameters of that equation
-   vary depending on the block of the source of the edge.
-   # TODO:  Add this to tutorials</p>
+   vary depending on the block of the source of the edge.</p>
 
   <p><strong>Parameters:</strong></p>
   <table>
@@ -1572,9 +1511,6 @@ of the digraph, for all i.</p>
     </tbody>
   </table>
 
-<p><strong>Examples:</strong></p>
-    <p>TODO</p>
-
   <p><strong>Raises:</strong></p>
   <table>
     <thead>
@@ -1603,7 +1539,17 @@ of the digraph, for all i.</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">276</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">266</span>
+<span class="normal">267</span>
+<span class="normal">268</span>
+<span class="normal">269</span>
+<span class="normal">270</span>
+<span class="normal">271</span>
+<span class="normal">272</span>
+<span class="normal">273</span>
+<span class="normal">274</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
 <span class="normal">277</span>
 <span class="normal">278</span>
 <span class="normal">279</span>
@@ -1642,27 +1588,11 @@ of the digraph, for all i.</p>
 <span class="normal">312</span>
 <span class="normal">313</span>
 <span class="normal">314</span>
-<span class="normal">315</span>
-<span class="normal">316</span>
-<span class="normal">317</span>
-<span class="normal">318</span>
-<span class="normal">319</span>
-<span class="normal">320</span>
-<span class="normal">321</span>
-<span class="normal">322</span>
-<span class="normal">323</span>
-<span class="normal">324</span>
-<span class="normal">325</span>
-<span class="normal">326</span>
-<span class="normal">327</span>
-<span class="normal">328</span>
-<span class="normal">329</span>
-<span class="normal">330</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block_pre</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">315</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block_pre</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using a combination of the stochastic block model</span>
 <span class="sd">       and the 2nd order distance dependent model. Such that the probability of an edge</span>
 <span class="sd">       is given by the distance dependent equation, but the parameters of that equation</span>
 <span class="sd">       vary depending on the block of the source of the edge.</span>
-<span class="sd">       # TODO:  Add this to tutorials</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1687,10 +1617,6 @@ of the digraph, for all i.</p>
 <span class="sd">        The edge list of the new digraph as a dictionary</span>
 <span class="sd">        with keys &#39;row&#39; and &#39;col&#39;. Where (row[i],col[i]) is a directed edge</span>
 <span class="sd">        of the digraph, for all i.</span>
-
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    TODO</span>
 
 
 <span class="sd">    Raises</span>
@@ -1743,7 +1669,13 @@ exp_model_scale and exp_model_exponent for the model parameters.  See modelling.
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">165</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
 <span class="normal">166</span>
 <span class="normal">167</span>
 <span class="normal">168</span>
@@ -1776,13 +1708,7 @@ exp_model_scale and exp_model_exponent for the model parameters.  See modelling.
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
-<span class="normal">198</span>
-<span class="normal">199</span>
-<span class="normal">200</span>
-<span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span>
+<span class="normal">198</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span>
                   <span class="n">model_params_dd2</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1">#an analysis that could be loaded from the pipeline</span>
                   <span class="n">coord_names</span><span class="o">=</span> <span class="p">[</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">],</span>
                   <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">return_params</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">config_dict</span><span class="p">):</span>
@@ -1991,17 +1917,19 @@ of the digraph, for all i.</p>
         </tr>
     </tbody>
   </table>
-
-<p><strong>Examples:</strong></p>
-    <p>TODO</p>
       <h4 id="src.connalysis.randomization.randomization.run_DD3--see-also">See Also</h4>
-<p><a href="../modelling/#src.connalysis.modelling.modelling.conn_prob_3rd_order_model">conn_prob_3rd_order_model</a> : A variant of this function for neurons</p>
-<h4 id="src.connalysis.randomization.randomization.run_DD3--references">References</h4>
-<p>[1] TODO</p>
+<p><a href="../modelling/#src.connalysis.modelling.modelling.conn_prob_3rd_order_model">conn_prob_3rd_order_model</a> :
+The modelling function from which the parameters <code>a1/a2</code> and <code>b1/b2</code>can be obtained.</p>
 
       <details class="quote">
         <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">207</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
 <span class="normal">208</span>
 <span class="normal">209</span>
 <span class="normal">210</span>
@@ -2036,17 +1964,7 @@ of the digraph, for all i.</p>
 <span class="normal">239</span>
 <span class="normal">240</span>
 <span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span>
-<span class="normal">246</span>
-<span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD3</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">a1</span><span class="p">,</span><span class="n">b1</span><span class="p">,</span><span class="n">a2</span><span class="p">,</span><span class="n">b2</span><span class="p">,</span><span class="n">xyz</span><span class="p">,</span><span class="n">depths</span><span class="p">,</span><span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">242</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD3</span><span class="p">(</span><span class="n">n</span><span class="p">,</span><span class="n">a1</span><span class="p">,</span><span class="n">b1</span><span class="p">,</span><span class="n">a2</span><span class="p">,</span><span class="n">b2</span><span class="p">,</span><span class="n">xyz</span><span class="p">,</span><span class="n">depths</span><span class="p">,</span><span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using the 2nd-order probability model.</span>
 
 <span class="sd">    Parameters</span>
@@ -2075,17 +1993,13 @@ of the digraph, for all i.</p>
 <span class="sd">        with keys &#39;row&#39; and &#39;col&#39;. Where (row[i],col[i]) is a directed edge</span>
 <span class="sd">        of the digraph, for all i.</span>
 
-<span class="sd">    Examples</span>
-<span class="sd">    --------</span>
-<span class="sd">    TODO</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    [conn_prob_3rd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_3rd_order_model) : A variant of this function for neurons</span>
+<span class="sd">    [conn_prob_3rd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_3rd_order_model) :</span>
+<span class="sd">    The modelling function from which the parameters ``a1/a2`` and ``b1/b2``can be obtained.</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    [1] TODO</span>
+
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">seed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span> <span class="ow">or</span> <span class="n">seed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
@@ -2575,62 +2489,6 @@ Soc Networks, 5-2, pp. 109-137, 1982</p>
         <span class="k">return</span> <span class="n">gm</span><span class="o">.</span><span class="n">SBM</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">threads</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">gm</span><span class="o">.</span><span class="n">SBM</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">seed</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-</code></pre></div></td></tr></table></div>
-      </details>
-  </div>
-
-</div>
-
-<div class="doc doc-object doc-function">
-
-
-
-<h2 id="src.connalysis.randomization.randomization.seed_random_state" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">seed_random_state</span><span class="p">(</span><span class="n">shuffler</span><span class="p">,</span> <span class="n">seeder</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span></code>
-
-</h2>
-
-
-  <div class="doc doc-contents ">
-  
-      <p>Decorate a connectivity shuffler to seed it's random-state before execution.</p>
-<p>It is expected that the generator can be seeded calling <code>seeder(seed)</code>.</p>
-
-      <details class="quote">
-        <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
-<span class="normal">258</span>
-<span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
-<span class="normal">270</span>
-<span class="normal">271</span>
-<span class="normal">272</span>
-<span class="normal">273</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">seed_random_state</span><span class="p">(</span><span class="n">shuffler</span><span class="p">,</span> <span class="n">seeder</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorate a connectivity shuffler to seed it&#39;s random-state before execution.</span>
-
-<span class="sd">    It is expected that the generator can be seeded calling `seeder(seed)`.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">seed_and_run_method</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="o">=</span><span class="p">[],</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reinitialize numpy random state using the value of seed among `kwargs`.</span>
-<span class="sd">        doing nothing if no `seed` provided --- expecting an external initialization.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">seed</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;No seed among keyword arguments&quot;</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">seeder</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">shuffler</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">seed_and_run_method</span>
 </code></pre></div></td></tr></table></div>
       </details>
   </div>

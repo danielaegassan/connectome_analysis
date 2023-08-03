@@ -1,0 +1,89 @@
+[tool.poetry]
+name = "connectome_analysis"
+version = "0.0.1"
+description = "Functions for network analysis of graphs coming brain models and activity on them"
+authors = [
+    "Daniela Egas Santander <daniela.egassantander@epfl.ch>",
+    "Christoph Pokorny <christoph.pokorny@epfl.ch>",
+    "Michael Wolfgang Reimann <michael.reimann@epfl.ch>",
+    "Jason Smith <jason.smith@ntu.ac.uk>", #TODO: I make the list alpabhetical, am I missing someone?
+]
+license = "TO BE DECIDED"
+readme = "README.md"
+
+documentation = "https://danielaegassan.github.io/connectome_analysis"
+homepage = "https://danielaegassan.github.io/connectome_analysis"
+repository = "https://github.com/danielaegassan/connectome_analysis"
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
+
+packages = [
+    { include = "connalysis", from = "src" },
+    #{ include = "generate_model", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = ">=3.8.3, <4"
+numpy = "*"
+pandas = "*"
+tables = "*"
+scipy = "*"
+matplotlib = "*"
+progressbar ="2.5"
+tqdm="*"
+pyflagsercount = ">=0.2.41"
+pyflagser ="*"
+
+[tool.poetry.dev-dependencies]
+black = "*"
+mkdocstrings = {version = ">=0.18", extras = ["python"]}
+mkdocs-material = "*"
+pytest = "*"
+pytest-github-actions-annotate-failures = "*"
+pytest-cov = "*"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = "^1.0.0"
+seaborn = "*"
+networkx = "*"
+
+[build-system]
+requires = ["poetry-core>=1.2.0","setuptools"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.build]
+script = "build.py"
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+
+[tool.black]
+target-version = ["py37", "py38", "py39"]
+include = '\.pyi?$'
+
+[tool.pytest.ini_options]
+addopts = """\
+    --cov template \
+    --cov tests \
+    --cov-report term-missing \
+    --no-cov-on-fail \
+"""
+
+[tool.coverage.report]
+fail_under = 100
+exclude_lines = [
+    'if TYPE_CHECKING:',
+    'pragma: no cover'
+]

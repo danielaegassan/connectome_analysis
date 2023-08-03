@@ -1,0 +1,54 @@
+site_name: connalysis
+repo_url: https://github.com/danielaegassan/connectome_analysis
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+
+nav:
+  - Introduction: 'index.md'
+  - Functions:
+    - Modelling: 'modelling.md'
+    - Network: 'network.md'
+    - Randomization: 'randomization.md'
+  - About: 'about.md'
+
+markdown_extensions:
+  #- toc:
+  #    permalink: True
+  - admonition:
+  - pymdownx.snippets:
+      check_paths: true
+  #- mdx_math:
+  #    enable_dollar_delimiter: True
+  - pymdownx.arithmatex:
+      generic: true
+
+
+plugins:
+  - search:
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_signature_annotations: true
+            show_source: true
+            show_submodules: true
+
+extra_javascript:
+  #- javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+
+watch:
+  - src/connalysis

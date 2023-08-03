@@ -537,7 +537,7 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
         simplices[1] = np.stack([coom.row[mask], coom.col[mask]]).T
     return simplices
 
-
+#TODO: OUTDEGREE
 def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
                           threads=1,max_dim=-1,**kwargs):
     #TODO DO THE OUTDEGREE VERSION maybe one where populations are defined within a matrix?

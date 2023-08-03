@@ -61,7 +61,6 @@ pytest tests
 
 ### Documentation
 
-#### TODO: Make this happen
 The documentation is automatically generated from the content of the [docs directory](./docs) and from the docstrings
  of the public signatures of the source code. The documentation is updated and published as a [Github project page
  ](https://pages.github.com/) automatically as part each release.

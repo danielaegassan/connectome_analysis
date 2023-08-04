@@ -30,7 +30,7 @@ classifiers = [
 
 packages = [
     { include = "connalysis", from = "src" },
-    #{ include = "generate_model", from = "src" },
+    { include = "generate_model", from = "src" },
 ]
 
 [tool.poetry.dependencies]

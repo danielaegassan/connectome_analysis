@@ -56,7 +56,7 @@ poetry shell
 ### Testing
 
 ```sh
-pytest tests
+poetry run pytest tests
 ```
 
 ### Documentation

@@ -28,60 +28,6 @@ MODEL_COLOR = 'tab:red'
 MODEL_COLOR2 = 'tab:olive'
 
 ###################################################################################################
-# Test function for mkdocs documentation
-###################################################################################################
-
-def aa_test_func(adj_matrix, size, **kwargs):
-    """General probability model building, optionally for multiple random subsets of neurons.
-    
-    Parameters
-    ----------
-    adj_matrix : array_like
-        Adjacency matrix of the circuit
-    size : int
-        number of neurons
-    **kwargs : dict, optional
-        Extra arguments to pass to function
-    
-    Returns
-    -------
-    array_like
-        A new adjacency matrix
-    
-    Examples
-    --------
-    A comment explaining this example.
-    > adj = np.array([0,1,1],[0,0,1],[0,0,0])
-    > test_func(adj, 3)
-    np.array([[0,0,0],[1,0,0],[1,1,0]])
-
-    Raises
-    ------
-    KeyError
-        If the dataframe is missing information about neurons
-
-    Notes
-    -----
-    Math comments are not working yet.  This is working now.
-    Still references are not linking to each other from notes to references. [1]_
-
-    $$
-    X(e^{j\\omega } ) = x(n)e^{ - j\\omega n}
-    $$
-
-    See Also
-    --------
-    test_newfunc : A variant of this function
-
-    References
-    ----------
-    .. [1] Author A, Author B, "Title," Journal, volume, pages, year.
-
-
-    """
-
-
-###################################################################################################
 # Wrapper function for running model building from a SLURM batch script (optionally, on different data splits)
 ###################################################################################################
 

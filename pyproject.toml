@@ -30,7 +30,6 @@ classifiers = [
 
 packages = [
     { include = "connalysis", from = "src" },
-    { include = "generate_model", from = "src" },
 ]
 
 [tool.poetry.dependencies]
@@ -44,6 +43,7 @@ progressbar ="2.5"
 tqdm="*"
 pyflagsercount = ">=0.2.41"
 pyflagser ="*"
+bigrandomgraphs = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 black = "*"
@@ -61,9 +61,6 @@ networkx = "*"
 [build-system]
 requires = ["poetry-core>=1.2.0", "setuptools"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.poetry.build]
-script = "build.py"
 
 [tool.isort]
 profile = "black"

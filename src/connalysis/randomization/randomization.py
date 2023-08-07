@@ -19,7 +19,7 @@ import logging
 import numpy as np
 import scipy.sparse as sp
 
-import generate_model as gm
+import bigrandomgraphs as gm
 
 LOG = logging.getLogger("connectome-analysis-randomization")
 LOG.setLevel("INFO")

@@ -1,7 +1,7 @@
 def test_imports():
     import connalysis
-    import generate_model
-    from generate_model import ER
+    import bigrandomgraphs
+    from bigrandomgraphs import ER
     from connalysis import modelling
     from connalysis import randomization
     from connalysis.randomization import run_ER

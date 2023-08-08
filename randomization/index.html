@@ -904,13 +904,7 @@ generate of randomized controls of connectomes.</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">361</span>
-<span class="normal">362</span>
-<span class="normal">363</span>
-<span class="normal">364</span>
-<span class="normal">365</span>
-<span class="normal">366</span>
-<span class="normal">367</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">367</span>
 <span class="normal">368</span>
 <span class="normal">369</span>
 <span class="normal">370</span>
@@ -920,7 +914,13 @@ generate of randomized controls of connectomes.</p>
 <span class="normal">374</span>
 <span class="normal">375</span>
 <span class="normal">376</span>
-<span class="normal">377</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_seed_random_state</span>
+<span class="normal">377</span>
+<span class="normal">378</span>
+<span class="normal">379</span>
+<span class="normal">380</span>
+<span class="normal">381</span>
+<span class="normal">382</span>
+<span class="normal">383</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@_seed_random_state</span>
 <span class="k">def</span> <span class="nf">ER_shuffle</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">neuron_properties</span><span class="o">=</span><span class="p">[]):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    #Creates an ER control by shuffling entries away from the diagonal in adj</span>
@@ -1027,21 +1027,15 @@ to match the number of reciprocal connections of the original matrix.</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.adjusted_ER--see-also">See Also</h4>
-<p>underlying_model: Function which returns a digraph with the same  underlying undirected graph
+<p><a href="./#src.connalysis.randomization.randomization.underlying_model">underlying_model</a> :
+Function which returns a digraph with the same  underlying undirected graph
 and same number of reciprocal connections</p>
-<p>bishuffled_model: Function which returns a digraph with shuffled reciprocal connections</p>
+<p><a href="./#src.connalysis.randomization.randomization.bishuffled_model">bishuffled_model</a> :
+Function which returns a digraph with shuffled reciprocal connections</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">414</span>
-<span class="normal">415</span>
-<span class="normal">416</span>
-<span class="normal">417</span>
-<span class="normal">418</span>
-<span class="normal">419</span>
-<span class="normal">420</span>
-<span class="normal">421</span>
-<span class="normal">422</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">422</span>
 <span class="normal">423</span>
 <span class="normal">424</span>
 <span class="normal">425</span>
@@ -1065,7 +1059,17 @@ and same number of reciprocal connections</p>
 <span class="normal">443</span>
 <span class="normal">444</span>
 <span class="normal">445</span>
-<span class="normal">446</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">adjusted_ER</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">446</span>
+<span class="normal">447</span>
+<span class="normal">448</span>
+<span class="normal">449</span>
+<span class="normal">450</span>
+<span class="normal">451</span>
+<span class="normal">452</span>
+<span class="normal">453</span>
+<span class="normal">454</span>
+<span class="normal">455</span>
+<span class="normal">456</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">adjusted_ER</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate an Erdos  Renyi model with adjusted bidirectional connections.</span>
 
 <span class="sd">    Parameters</span>
@@ -1083,10 +1087,12 @@ and same number of reciprocal connections</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    underlying_model: Function which returns a digraph with the same  underlying undirected graph</span>
+<span class="sd">    [underlying_model](randomization.md#src.connalysis.randomization.randomization.underlying_model) :</span>
+<span class="sd">    Function which returns a digraph with the same  underlying undirected graph</span>
 <span class="sd">    and same number of reciprocal connections</span>
 
-<span class="sd">    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections</span>
+<span class="sd">    [bishuffled_model](randomization.md#src.connalysis.randomization.randomization.bishuffled_model) :</span>
+<span class="sd">    Function which returns a digraph with shuffled reciprocal connections</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">connalysis.network.topology</span> <span class="kn">import</span> <span class="n">rc_submatrix</span>
     <span class="kn">from</span> <span class="nn">.rand_utils</span> <span class="kn">import</span> <span class="n">adjust_bidirectional_connections</span>
@@ -1187,25 +1193,15 @@ and same number of reciprocal connections</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.bishuffled_model--see-also">See Also</h4>
-<p>adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections</p>
-<p>underlying_model: Function which returns a digraph with the same  underlying undirected graph
+<p><a href="./#src.connalysis.randomization.randomization.adjusted_ER">adjusted_ER</a> :
+Function to generate an Erdos  Renyi model with adjusted bidirectional connections</p>
+<p><a href="./#src.connalysis.randomization.randomization.underlying_model">underlying_model</a> :
+Function which returns a digraph with the same  underlying undirected graph
 and same number of reciprocal connections</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">477</span>
-<span class="normal">478</span>
-<span class="normal">479</span>
-<span class="normal">480</span>
-<span class="normal">481</span>
-<span class="normal">482</span>
-<span class="normal">483</span>
-<span class="normal">484</span>
-<span class="normal">485</span>
-<span class="normal">486</span>
-<span class="normal">487</span>
-<span class="normal">488</span>
-<span class="normal">489</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">489</span>
 <span class="normal">490</span>
 <span class="normal">491</span>
 <span class="normal">492</span>
@@ -1221,7 +1217,21 @@ and same number of reciprocal connections</p>
 <span class="normal">502</span>
 <span class="normal">503</span>
 <span class="normal">504</span>
-<span class="normal">505</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bishuffled_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="normal">505</span>
+<span class="normal">506</span>
+<span class="normal">507</span>
+<span class="normal">508</span>
+<span class="normal">509</span>
+<span class="normal">510</span>
+<span class="normal">511</span>
+<span class="normal">512</span>
+<span class="normal">513</span>
+<span class="normal">514</span>
+<span class="normal">515</span>
+<span class="normal">516</span>
+<span class="normal">517</span>
+<span class="normal">518</span>
+<span class="normal">519</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">bishuffled_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate a digraph with shuffled reciprocal connections</span>
 
 <span class="sd">    Parameters</span>
@@ -1238,9 +1248,11 @@ and same number of reciprocal connections</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections</span>
+<span class="sd">    [adjusted_ER](randomization.md#src.connalysis.randomization.randomization.adjusted_ER) :</span>
+<span class="sd">    Function to generate an Erdos  Renyi model with adjusted bidirectional connections</span>
 
-<span class="sd">    underlying_model: Function which returns a digraph with the same  underlying undirected graph</span>
+<span class="sd">    [underlying_model](randomization.md#src.connalysis.randomization.randomization.underlying_model) :</span>
+<span class="sd">    Function which returns a digraph with the same  underlying undirected graph</span>
 <span class="sd">    and same number of reciprocal connections</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">connalysis.network.topology</span> <span class="kn">import</span> <span class="n">rc_submatrix</span>
@@ -1341,18 +1353,14 @@ new coo matrix, then removing any multiple edges and loops.</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.configuration_model--see-also">See Also</h4>
-<p>run_SBM: Function which runs the stochastic block model</p>
-<p>run_DD2 : Function which runs the 2nd distance dependent model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_SBM">run_SBM</a> :
+Function which runs the stochastic block model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_DD2">run_DD2</a> :
+Function which runs the 2nd distance dependent model</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">380</span>
-<span class="normal">381</span>
-<span class="normal">382</span>
-<span class="normal">383</span>
-<span class="normal">384</span>
-<span class="normal">385</span>
-<span class="normal">386</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">386</span>
 <span class="normal">387</span>
 <span class="normal">388</span>
 <span class="normal">389</span>
@@ -1378,7 +1386,15 @@ new coo matrix, then removing any multiple edges and loops.</p>
 <span class="normal">409</span>
 <span class="normal">410</span>
 <span class="normal">411</span>
-<span class="normal">412</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="normal">412</span>
+<span class="normal">413</span>
+<span class="normal">414</span>
+<span class="normal">415</span>
+<span class="normal">416</span>
+<span class="normal">417</span>
+<span class="normal">418</span>
+<span class="normal">419</span>
+<span class="normal">420</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">configuration_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate the configuration control model, obtained by</span>
 <span class="sd">    shuffling the row and column of coo format independently, to create</span>
 <span class="sd">    new coo matrix, then removing any multiple edges and loops.</span>
@@ -1397,9 +1413,11 @@ new coo matrix, then removing any multiple edges and loops.</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    run_SBM: Function which runs the stochastic block model</span>
+<span class="sd">    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM) :</span>
+<span class="sd">    Function which runs the stochastic block model</span>
 
-<span class="sd">    run_DD2 : Function which runs the 2nd distance dependent model</span>
+<span class="sd">    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :</span>
+<span class="sd">    Function which runs the 2nd distance dependent model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">adj</span><span class="o">=</span><span class="n">adj</span><span class="o">.</span><span class="n">tocoo</span><span class="p">()</span>
     <span class="n">generator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
@@ -1810,16 +1828,16 @@ of the digraph, for all i.</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.run_DD2_block--see-also">See Also</h4>
-<p>run_DD2 : Function which runs the 2nd distance dependent model</p>
-<p>run_SBM: Function which runs the stochastic block model</p>
-<p>run_DD2_block_pre : Similar function that only accounts for the block of the source vertex</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_DD2">run_DD2</a> :
+Function which runs the 2nd distance dependent model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_SBM">run_SBM</a> :
+Function which runs the stochastic block model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_DD2_block_pre">run_DD2_block_pre</a> :
+Similar function that only accounts for the block of the source vertex</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
-<span class="normal">288</span>
-<span class="normal">289</span>
-<span class="normal">290</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">290</span>
 <span class="normal">291</span>
 <span class="normal">292</span>
 <span class="normal">293</span>
@@ -1864,7 +1882,13 @@ of the digraph, for all i.</p>
 <span class="normal">332</span>
 <span class="normal">333</span>
 <span class="normal">334</span>
-<span class="normal">335</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">335</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span>
+<span class="normal">341</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using a combination of the stochastic block model</span>
 <span class="sd">       and the 2nd order distance dependent model. Such that the probability of an edge</span>
 <span class="sd">       is given by the distance dependent equation, but the parameters of that equation</span>
@@ -1902,11 +1926,14 @@ of the digraph, for all i.</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    run_DD2 : Function which runs the 2nd distance dependent model</span>
+<span class="sd">    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :</span>
+<span class="sd">    Function which runs the 2nd distance dependent model</span>
 
-<span class="sd">    run_SBM: Function which runs the stochastic block model</span>
+<span class="sd">    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM) :</span>
+<span class="sd">    Function which runs the stochastic block model</span>
 
-<span class="sd">    run_DD2_block_pre : Similar function that only accounts for the block of the source vertex</span>
+<span class="sd">    [run_DD2_block_pre](randomization.md#src.connalysis.randomization.randomization.run_DD2_block_pre) :</span>
+<span class="sd">    Similar function that only accounts for the block of the source vertex</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">seed</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span> <span class="ow">or</span> <span class="n">seed</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
@@ -2089,9 +2116,12 @@ of the digraph, for all i.</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.run_DD2_block_pre--see-also">See Also</h4>
-<p>run_SBM: Function which runs the stochastic block model</p>
-<p>run_DD2 : Function which runs the 2nd distance dependent model</p>
-<p>run_DD2_block : Similar function that also accounts for the block of the target vertex</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_SBM">run_SBM</a>:
+Function which runs the stochastic block model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_DD2">run_DD2</a> :
+Function which runs the 2nd distance dependent model</p>
+<p><a href="./#src.connalysis.randomization.randomization.run_DD2_block">run_DD2_block</a> :
+Similar function that also accounts for the block of the target vertex</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
@@ -2144,7 +2174,10 @@ of the digraph, for all i.</p>
 <span class="normal">281</span>
 <span class="normal">282</span>
 <span class="normal">283</span>
-<span class="normal">284</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block_pre</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
+<span class="normal">284</span>
+<span class="normal">285</span>
+<span class="normal">286</span>
+<span class="normal">287</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_DD2_block_pre</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">probs</span><span class="p">,</span> <span class="n">blocks</span><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">threads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span><span class="kc">None</span><span class="p">)):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a random digraph using a combination of the stochastic block model</span>
 <span class="sd">       and the 2nd order distance dependent model. Such that the probability of an edge</span>
 <span class="sd">       is given by the distance dependent equation, but the parameters of that equation</span>
@@ -2182,11 +2215,14 @@ of the digraph, for all i.</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    run_SBM: Function which runs the stochastic block model</span>
+<span class="sd">    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM):</span>
+<span class="sd">    Function which runs the stochastic block model</span>
 
-<span class="sd">    run_DD2 : Function which runs the 2nd distance dependent model</span>
+<span class="sd">    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :</span>
+<span class="sd">    Function which runs the 2nd distance dependent model</span>
 
-<span class="sd">    run_DD2_block : Similar function that also accounts for the block of the target vertex</span>
+<span class="sd">    [run_DD2_block](randomization.md#src.connalysis.randomization.randomization.run_DD2_block) :</span>
+<span class="sd">    Similar function that also accounts for the block of the target vertex</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -3159,22 +3195,14 @@ Soc Networks, 5-2, pp. 109-137, 1982</p>
     </tbody>
   </table>
       <h4 id="src.connalysis.randomization.randomization.underlying_model--see-also">See Also</h4>
-<p>adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections</p>
-<p>bishuffled_model: Function which returns a digraph with shuffled reciprocal connections</p>
+<p><a href="./#src.connalysis.randomization.randomization.adjusted_ER">adjusted_ER</a> :
+Function to generate an Erdos  Renyi model with adjusted bidirectional connections</p>
+<p><a href="./#src.connalysis.randomization.randomization.bishuffled_model">bishuffled_model</a> :
+Function which returns a digraph with shuffled reciprocal connections</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/randomization/randomization.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">448</span>
-<span class="normal">449</span>
-<span class="normal">450</span>
-<span class="normal">451</span>
-<span class="normal">452</span>
-<span class="normal">453</span>
-<span class="normal">454</span>
-<span class="normal">455</span>
-<span class="normal">456</span>
-<span class="normal">457</span>
-<span class="normal">458</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">458</span>
 <span class="normal">459</span>
 <span class="normal">460</span>
 <span class="normal">461</span>
@@ -3191,7 +3219,19 @@ Soc Networks, 5-2, pp. 109-137, 1982</p>
 <span class="normal">472</span>
 <span class="normal">473</span>
 <span class="normal">474</span>
-<span class="normal">475</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">underlying_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">475</span>
+<span class="normal">476</span>
+<span class="normal">477</span>
+<span class="normal">478</span>
+<span class="normal">479</span>
+<span class="normal">480</span>
+<span class="normal">481</span>
+<span class="normal">482</span>
+<span class="normal">483</span>
+<span class="normal">484</span>
+<span class="normal">485</span>
+<span class="normal">486</span>
+<span class="normal">487</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">underlying_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Function to generate a digraph with the same  underlying undirected graph as adj</span>
 <span class="sd">        and the same number of reciprocal connections</span>
 
@@ -3209,9 +3249,11 @@ Soc Networks, 5-2, pp. 109-137, 1982</p>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
-<span class="sd">    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections</span>
+<span class="sd">    [adjusted_ER](randomization.md#src.connalysis.randomization.randomization.adjusted_ER) :</span>
+<span class="sd">    Function to generate an Erdos  Renyi model with adjusted bidirectional connections</span>
 
-<span class="sd">    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections</span>
+<span class="sd">    [bishuffled_model](randomization.md#src.connalysis.randomization.randomization.bishuffled_model) :</span>
+<span class="sd">    Function which returns a digraph with shuffled reciprocal connections</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">connalysis.network.topology</span> <span class="kn">import</span> <span class="n">rc_submatrix</span>
     <span class="kn">from</span> <span class="nn">.rand_utils</span> <span class="kn">import</span>  <span class="n">add_bidirectional_connections</span>

@@ -1,32 +1,22 @@
-# Functions that implement random controls of a network.  Three class of models
+# Functions that implement random controls of a network.  There are two general types of models
 
-# Shuffle: Random controls implementing by shuffling edges.  Number of edges remain constant.
 # Probability: Random controls implemented by assigning a probability for each edge to be part of the control.
-# Other:  Different kind of control model e.g. for reciprocal connections
+# Shuffle: Random controls implementing by shuffling edges according to certain rules.
 
-#Models to implement:
-
-#- Erdos Renyi
-#- Erdos Renyi corrected reciprocal connections
-#- DAG plus reciprocal connections
-#- Stochastic block model
-#- Distance dependent
-#- Distance dependent with depth dependence
-
-####### IMPORTS #######################
+# IMPORTS #
 import logging
-
 import numpy as np
 import scipy.sparse as sp
-
 import bigrandomgraphs as gm
-
 LOG = logging.getLogger("connectome-analysis-randomization")
 LOG.setLevel("INFO")
 logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
                     level=logging.INFO,
                     datefmt="%Y-%m-%d %H:%M:%S")
-######generate_model versions###########
+
+#######################################################
+################# PROBABILITY MODELS  #################
+#######################################################
 def run_ER(n, p, threads=8, seed=(None,None)):
     """Creates an Erdos Renyi digraph.
 
@@ -242,27 +232,6 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
         return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads,seed[0],seed[1])
 
 
-#######_ SHUFFLE #######################
-
-def _seed_random_state(shuffler, seeder=np.random.seed):
-    """Decorate a connectivity shuffler to seed it's random-state before execution.
-
-    It is expected that the generator can be seeded calling `seeder(seed)`.
-    """
-    def seed_and_run_method(adj, neuron_properties=[], seed=None, **kwargs):
-        """Reinitialize numpy random state using the value of seed among `kwargs`.
-        doing nothing if no `seed` provided --- expecting an external initialization.
-        """
-        if seed is None:
-            LOG.warning("No seed among keyword arguments")
-        else:
-            seeder(seed)
-
-        return shuffler(adj, neuron_properties, **kwargs)
-
-    return seed_and_run_method
-
-
 def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
     """Creates a random digraph using a combination of the stochastic block model
        and the 2nd order distance dependent model. Such that the probability of an edge
@@ -365,9 +334,32 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
     else:
         return gm.DD2_block(n, probs, blocks, xyz, threads, seed[0], seed[1])
 
+
+#######################################################
+################### SHUFFLE MODELS  ###################
+#######################################################
+def _seed_random_state(shuffler, seeder=np.random.seed):
+    """Decorate a connectivity shuffler to seed it's random-state before execution.
+
+    It is expected that the generator can be seeded calling `seeder(seed)`.
+    """
+    def seed_and_run_method(adj, neuron_properties=[], seed=None, **kwargs):
+        """Reinitialize numpy random state using the value of seed among `kwargs`.
+        doing nothing if no `seed` provided --- expecting an external initialization.
+        """
+        if seed is None:
+            LOG.warning("No seed among keyword arguments")
+        else:
+            seeder(seed)
+
+        return shuffler(adj, neuron_properties, **kwargs)
+
+    return seed_and_run_method
+
+
 ####### SHUFFLE #######################
 @_seed_random_state
-def _ER_shuffle(adj, neuron_properties=[]):
+def ER_shuffle(adj, neuron_properties=[]):
     """
     #Creates an ER control by shuffling entries away from the diagonal in adj
     TODO: Re-implement this using only sparse matrices
@@ -384,16 +376,17 @@ def _ER_shuffle(adj, neuron_properties=[]):
     adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
     return sp.csr_matrix(adj)
 
-def configuration_model(adj: sp.coo_matrix, seed: int):
+
+def configuration_model(adj, seed = None):
     """Function to generate the configuration control model, obtained by
     shuffling the row and column of coo format independently, to create
     new coo matrix, then removing any multiple edges and loops.
 
     Parameters
     ----------
-    adj: coo-matrix
+    adj : coo-matrix
         Adjacency matrix of a directed network.
-    seed: int
+    seed : int
         Random seed to be used
 
     Returns
@@ -407,6 +400,7 @@ def configuration_model(adj: sp.coo_matrix, seed: int):
 
     run_DD2 : Function which runs the 2nd distance dependent model
     """
+    adj=adj.tocoo()
     generator = np.random.default_rng(seed)
     R = adj.row
     C = adj.col
@@ -416,3 +410,96 @@ def configuration_model(adj: sp.coo_matrix, seed: int):
     CM_matrix.setdiag(0)
     CM_matrix.eliminate_zeros()
     return CM_matrix
+
+def adjusted_ER(adj, seed=None):
+    """Function to generate an Erdos  Renyi model with adjusted bidirectional connections.
+
+    Parameters
+    ----------
+    adj :  csc_matrix
+        Adjacency matrix of a directed network.
+    seed : int
+        Random seed to be used
+
+    Returns
+    -------
+    csc_matrix
+        Erdos Renyi shuffled control with additional reciprocal connections added at random
+        to match the number of reciprocal connections of the original matrix.
+
+    See Also
+    --------
+    underlying_model: Function which returns a digraph with the same  underlying undirected graph
+    and same number of reciprocal connections
+
+    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections
+    """
+    from connalysis.network.topology import rc_submatrix
+    from .rand_utils import adjust_bidirectional_connections
+    generator = np.random.default_rng(seed)
+    ER_matrix = ER_shuffle(adj, seed=seed).tocsc()
+    bedges_to_add = int(rc_submatrix(adj).count_nonzero() -rc_submatrix(ER_matrix).count_nonzero())//2
+    if bedges_to_add >= 0:
+        return adjust_bidirectional_connections(ER_matrix, bedges_to_add, generator)
+    else:
+        LOG.info("Erdos-Renyi control has more reciprocal connections than original, so they are not adjusted.")
+        return ER_matrix
+
+def underlying_model(adj, seed: int=None):
+    """Function to generate a digraph with the same  underlying undirected graph as adj
+        and the same number of reciprocal connections
+
+    Parameters
+    ----------
+    adj : csc_matrix
+        Adjacency matrix of a directed network.
+    seed : int
+        Random seed to be used
+
+    Returns
+    -------
+    csc_matrix
+        Digraph with the same  underlying undirected graph as adj and the same number of reciprocal connections
+
+    See Also
+    --------
+    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections
+
+    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections
+    """
+    from connalysis.network.topology import rc_submatrix
+    from .rand_utils import  add_bidirectional_connections
+    generator = np.random.default_rng(seed)
+    target_bedges = int(rc_submatrix(adj).count_nonzero() / 2)
+    ut_matrix = sp.triu(adj + adj.T)
+    return add_bidirectional_connections(ut_matrix, target_bedges, generator)
+
+def bishuffled_model(adj, seed = None):
+    """Function to generate a digraph with shuffled reciprocal connections
+
+    Parameters
+    ----------
+    adj : csc_matrix
+        Adjacency matrix of a directed network.
+    seed : int
+        Random seed to be used
+
+    Returns
+    -------
+    csc_matrix
+        Digraph with shuffled reciprocal connections
+
+    See Also
+    --------
+    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections
+
+    underlying_model: Function which returns a digraph with the same  underlying undirected graph
+    and same number of reciprocal connections
+    """
+    from connalysis.network.topology import rc_submatrix
+    from .rand_utils import  add_bidirectional_connections, half_matrix
+    generator = np.random.default_rng(seed)
+    ut_bedges = sp.triu(rc_submatrix(adj))
+    target_bedges = ut_bedges.count_nonzero()
+    bedges1, bedges2 = half_matrix(ut_bedges, generator)
+    return add_bidirectional_connections(adj - bedges1 - bedges2.T, target_bedges, generator)

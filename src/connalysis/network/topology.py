@@ -1130,7 +1130,9 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
 
 def bedge_counts(adjacency, simplices=None,
                  max_simplices = False, max_dim = -1, simplex_type = 'directed', ** kwargs):
-    """Count the sum number of edges per position on the subgraphs defined by the nodes of the simplices in simplices.
+    """Counts the total number of edges in each position on the subgraphs defined by the nodes
+    of the simplices listed in simplices.  If a simplex list is not passed, simplices are computed on
+    the adjacency matrix.
 
         Parameters
         ----------

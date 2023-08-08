@@ -20,7 +20,7 @@ Library of general functions to analyze connectoms.
 ## Installation
 
 ```sh
-pip install connectome_analysis
+pip install git+https://github.com/danielaegassan/connectome_analysis.git
 ```
 
 ## Development
@@ -28,7 +28,7 @@ pip install connectome_analysis
 * Clone this repository
 * Requirements:
   * [Poetry](https://python-poetry.org/)
-  * [gcc](https://gcc.gnu.org/) 9
+  * [gcc](https://gcc.gnu.org/) 9+
   * [CMake](https://cmake.org/)
   * Python 3.8+
 

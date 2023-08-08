@@ -43,7 +43,7 @@ progressbar ="2.5"
 tqdm="*"
 pyflagsercount = ">=0.2.41"
 pyflagser ="*"
-bigrandomgraphs = "^0.0.1"
+bigrandomgraphs = ">=0.0.2"
 
 [tool.poetry.dev-dependencies]
 black = "*"

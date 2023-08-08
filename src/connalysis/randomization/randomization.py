@@ -270,11 +270,14 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
 
     See Also
     --------
-    run_SBM: Function which runs the stochastic block model
+    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM):
+    Function which runs the stochastic block model
 
-    run_DD2 : Function which runs the 2nd distance dependent model
+    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :
+    Function which runs the 2nd distance dependent model
 
-    run_DD2_block : Similar function that also accounts for the block of the target vertex
+    [run_DD2_block](randomization.md#src.connalysis.randomization.randomization.run_DD2_block) :
+    Similar function that also accounts for the block of the target vertex
 
     """
 
@@ -322,11 +325,14 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
 
     See Also
     --------
-    run_DD2 : Function which runs the 2nd distance dependent model
+    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :
+    Function which runs the 2nd distance dependent model
 
-    run_SBM: Function which runs the stochastic block model
+    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM) :
+    Function which runs the stochastic block model
 
-    run_DD2_block_pre : Similar function that only accounts for the block of the source vertex
+    [run_DD2_block_pre](randomization.md#src.connalysis.randomization.randomization.run_DD2_block_pre) :
+    Similar function that only accounts for the block of the source vertex
 
     """
     if seed[0]==None or seed[1]==None:
@@ -396,9 +402,11 @@ def configuration_model(adj, seed = None):
 
     See Also
     --------
-    run_SBM: Function which runs the stochastic block model
+    [run_SBM](randomization.md#src.connalysis.randomization.randomization.run_SBM) :
+    Function which runs the stochastic block model
 
-    run_DD2 : Function which runs the 2nd distance dependent model
+    [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :
+    Function which runs the 2nd distance dependent model
     """
     adj=adj.tocoo()
     generator = np.random.default_rng(seed)
@@ -429,10 +437,12 @@ def adjusted_ER(adj, seed=None):
 
     See Also
     --------
-    underlying_model: Function which returns a digraph with the same  underlying undirected graph
+    [underlying_model](randomization.md#src.connalysis.randomization.randomization.underlying_model) :
+    Function which returns a digraph with the same  underlying undirected graph
     and same number of reciprocal connections
 
-    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections
+    [bishuffled_model](randomization.md#src.connalysis.randomization.randomization.bishuffled_model) :
+    Function which returns a digraph with shuffled reciprocal connections
     """
     from connalysis.network.topology import rc_submatrix
     from .rand_utils import adjust_bidirectional_connections
@@ -463,9 +473,11 @@ def underlying_model(adj, seed: int=None):
 
     See Also
     --------
-    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections
+    [adjusted_ER](randomization.md#src.connalysis.randomization.randomization.adjusted_ER) :
+    Function to generate an Erdos  Renyi model with adjusted bidirectional connections
 
-    bishuffled_model: Function which returns a digraph with shuffled reciprocal connections
+    [bishuffled_model](randomization.md#src.connalysis.randomization.randomization.bishuffled_model) :
+    Function which returns a digraph with shuffled reciprocal connections
     """
     from connalysis.network.topology import rc_submatrix
     from .rand_utils import  add_bidirectional_connections
@@ -491,9 +503,11 @@ def bishuffled_model(adj, seed = None):
 
     See Also
     --------
-    adjusted_ER: Function to generate an Erdos  Renyi model with adjusted bidirectional connections
+    [adjusted_ER](randomization.md#src.connalysis.randomization.randomization.adjusted_ER) :
+    Function to generate an Erdos  Renyi model with adjusted bidirectional connections
 
-    underlying_model: Function which returns a digraph with the same  underlying undirected graph
+    [underlying_model](randomization.md#src.connalysis.randomization.randomization.underlying_model) :
+    Function which returns a digraph with the same  underlying undirected graph
     and same number of reciprocal connections
     """
     from connalysis.network.topology import rc_submatrix

@@ -1134,40 +1134,40 @@ def bedge_counts(adjacency, simplices=None,
     of the simplices listed in simplices.  If a simplex list is not passed, simplices are computed on
     the adjacency matrix.
 
-        Parameters
-        ----------
-        adjacency : (N,N)-array or sparse matrix
-            Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
-            The matrix can be asymmetric, but must have 0 in the diagonal.
-        simplices : series
-            Series  of 2d-arrays indexed by dimension.
-            Each array is of dimension (no. of simplices, dimension).
-            Each row corresponds to a list of nodes on a simplex.
-        max_simplices : bool
-            If False counts all simplices in adj.
-            If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
-        max_dim : int
-            Maximal dimension up to which simplex motifs are counted.
-            The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
-        simplex_type: str
-            See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
+    Parameters
+    ----------
+    adjacency : (N,N)-array or sparse matrix
+        Adjacency matrix of a directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    simplices : series
+        Series  of 2d-arrays indexed by dimension.
+        Each array is of dimension (no. of simplices, dimension).
+        Each row corresponds to a list of nodes on a simplex.
+    max_simplices : bool
+        If False counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex_type: str
+        See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
 
-        Returns
-        -------
-        series
-            pandas series with index dimensions values (dim+1, dim+1) arrays.  The (i,j) entry counts the number of edges
-            from node i to node j on all the subgraphs of adjacency on the nodes of the simplices listed.  See notes.
+    Returns
+    -------
+    series
+        pandas series with index dimensions values (dim+1, dim+1) arrays.  The (i,j) entry counts the number of edges
+        from node i to node j on all the subgraphs of adjacency on the nodes of the simplices listed.  See notes.
 
-        Notes
-        -------
-        Every directed $k$-simplex $[v_o, v_1, \\ldots, v_k]$ defines as subgraph of the adjacency matrix, with edges
-        $v_i \\to v_j$ whenever $i\leq j$, but also possibly with ''reverse'' edges.  One can represent this structure
-        with a non-symmetric $(k+1, k+1)$-matrix with `1`'s for every edge in the subgraph.  The output of this function
-        gives for each dimension the sum of all these matrices over all the simplices provided in `simplices` or over
-        all the simplices in the adjacency matrix if none is provided.  The lower triangular part of these matrices is
-        therefore a metric of recurrence within simplices, or "higher dimensional recurrence".
-        In particular, in dimension 1 it is the number of reciprocal edges in the network.
-        """
+    Notes
+    -------
+    Every directed $k$-simplex $[v_o, v_1, \\ldots, v_k]$ defines as subgraph of the adjacency matrix, with edges
+    $v_i \\to v_j$ whenever $i\leq j$, but also possibly with ''reverse'' edges.  One can represent this structure
+    with a non-symmetric $(k+1, k+1)$-matrix with `1`'s for every edge in the subgraph.  The output of this function
+    gives for each dimension the sum of all these matrices over all the simplices provided in `simplices` or over
+    all the simplices in the adjacency matrix if none is provided.  The lower triangular part of these matrices is
+    therefore a metric of recurrence within simplices, or "higher dimensional recurrence".
+    In particular, in dimension 1 it is the number of reciprocal edges in the network.
+    """
 
     adj = adjacency
 

@@ -1,4 +1,12 @@
-
+import networkx as nx
+import numpy as np
+import pandas as pd
+from scipy.stats import hypergeom
+from scipy.stats import binom
+from scipy.linalg import eigvals
+import pyflagsercount
+import pyflagser
+import math
 #TODO: MODIFY THE IMPORTS TO EXTERNAL IMPORTS
 
 
@@ -21,7 +29,6 @@ def closeness_connected_components(adj, neuron_properties=[], directed=False, re
         A single array( if `return_sum=True`) or a list of arrays of shape `n`, containting closeness of vertices in that component, or 0 if the vertex is not in the component. Closeness cannot be zero otherwise.
 
     """
-    import numpy as np
     from sknetwork.ranking import Closeness
     from scipy.sparse.csgraph import connected_components
 
@@ -67,8 +74,6 @@ def centrality(self, sub_gids, kind="closeness", directed=False):
 def connected_components(adj,neuron_properties=[]):
     """Returns a list of the size of the connected components of the underlying undirected graph on sub_gids,
     if None, compute on the whole graph"""
-    import networkx as nx
-    import numpy as np
 
     matrix=adj.toarray()
     matrix_und = np.where((matrix+matrix.T) >= 1, 1, 0)
@@ -79,7 +84,6 @@ def connected_components(adj,neuron_properties=[]):
 def core_number(adj, neuron_properties=[]):
     """Returns k core of directed graph, where degree of a vertex is the sum of in degree and out degree"""
     # TODO: Implement directed (k,l) core and k-core of underlying undirected graph (very similar to this)
-    import networkx
     G = networkx.from_numpy_matrix(adj.toarray())
     # Very inefficient (returns a dictionary!). TODO: Look for different implementation
     return networkx.algorithms.core.core_number(G)
@@ -90,11 +94,10 @@ def core_number(adj, neuron_properties=[]):
 def density(adj, neuron_properties=[]):
     #Todo: Add #cells/volume as as possible spatial density
     adj=adj.astype('bool').astype('int')
-    return m.sum() / np.prod(m.shape)
+    return adj.sum() / np.prod(adj.shape)
 
 def __make_expected_distribution_model_first_order__(adj, direction="efferent"):
     #TODO: Document, utility function used in COMMON NEIGHBOURS ANALYSIS
-    from scipy.stats import hypergeom
     if direction == "efferent":
         N = adj.sum(axis=1).mean()
         M = adj.shape[1]
@@ -225,12 +228,6 @@ def connection_probability(adj, neuron_properties):
 #TODO: Checked up to here ... clean the code below
 # ##Degree based analyses
 #TODO UPDATE THE RICH CLUB IMPLEMENTATION
-import numpy as np
-import pandas as pd
-from scipy.stats import hypergeom
-from scipy.stats import binom
-from scipy import sparse
-
 
 def gini_curve(m, nrn, direction='efferent'):
     m = m.tocsc()
@@ -453,3 +450,509 @@ def normalized_rich_club_curve(m, direction='efferent', normalize='std',
 def rich_club_coefficient(m, **kwargs):
     Bn = normalized_rich_club_curve(m, normalize='std', **kwargs).values
     return np.nanmean(Bn)
+
+
+#*************************************************************************#
+#Code taken from TriDy
+
+##
+## HELPER FUNCTIONS (STRUCTURAL)
+##
+
+
+def neighbourhood(v, matrix):
+    """Computes the neighbours of v in graph with adjacency matrix matrix
+    ----------
+    v : int
+        the index of the vertex 
+    matrix : matrix
+        the adjacency matrix of the graph
+
+    Returns
+    -------
+    list
+        the list of neighbours of v in matrix
+    """
+    neighbours = np.unique(np.concatenate((np.nonzero(matrix[v])[0],np.nonzero(np.transpose(matrix)[v])[0])))
+    neighbours.sort(kind='mergesort')
+    return np.concatenate((np.array([v]),neighbours))
+
+
+def tribe(v, matrix):
+    """Computes the neighbourhood of v in graph with adjacency matrix matrix
+    ----------
+    v : int
+        the index of the vertex 
+    matrix : matrix
+        the adjacency matrix of the graph
+
+    Returns
+    -------
+    matrix
+        the adjaceny matrix of the neighbourhood of v in matrix
+    """
+    nhbd = neighbourhood(v, matrix)
+    return matrix[np.ix_(nhbd,nhbd)]
+
+#TODO: Make this work without using the dataframe
+# def top_chiefs(parameter, number=50, order_by_ascending=False):
+# #  In: string, integer, boolean
+# # Out: list of integers
+#     return df.sort_values(by=[parameter],ascending=order_by_ascending)[:number].index.values
+
+# def top_nbhds(parameter, number=50, order_by_ascending=False, matrix=adj):
+# #  In: string, integer, boolean, matrix
+# # Out: list of matrices
+#     top_chief_list = top_chiefs(parameter, number=number, order_by_ascending=order_by_ascending)
+#     return [neighbourhood(i, matrix=matrix) for i in top_chief_list]
+
+
+
+def new_nbhds(nbhd_list, index_range):
+#  In: list of list of integers
+# Out: list of list of integers
+    new_list = []
+    choice_vector = range(index_range)
+    for nbhd in nbhd_list:
+        new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
+        while nbhd[0] in new_neighbours:
+            new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
+        new_list.append(np.hstack((nbhd[0], new_neighbours)))
+    return new_list
+
+
+
+def nx_to_np(directed_graph):
+#  In: networkx directed graph
+# Out: numpy array
+    return nx.to_numpy_array(directed_graph,dtype=int)
+
+
+
+def np_to_nx(adjacency_matrix):
+#  In: numpy array
+# Out: networkx directed graph
+    return nx.from_numpy_array(adjacency_matrix,create_using=nx.DiGraph)
+
+
+
+def largest_strongly_connected_component(adjacency_matrix):
+#  In: numpy array
+# Out: numpy array
+    current_tribe_nx = np_to_nx(adjacency_matrix)
+    largest_comp = max(nx.strongly_connected_components(current_tribe_nx), key=len)
+    current_tribe_strong_nx = current_tribe_nx.subgraph(largest_comp)
+    current_tribe_strong = nx_to_np(current_tribe_strong_nx)
+    return current_tribe_strong
+
+
+
+def cell_count_at_v0(matrix):
+#  In: adjacency matrix
+# Out: list of integers
+    simplexcontainment = pyflagsercount.flagser_count(np.transpose(np.array(np.nonzero(matrix))),containment=True)['contain_counts']
+    return simplexcontainment[0]
+
+
+
+def euler_characteristic_chief(chief, matrix):
+#  In: index
+# Out: integer
+    return euler_characteristic(tribe(chief, matrix))
+
+
+
+def euler_characteristic(matrix):
+#  In: adjacency matrix
+# Out: integer
+    flagser_out = pyflagser.flagser_count_unweighted(matrix, directed=True)
+    return sum([((-1)**i)*flagser_out[i] for i in range(len(flagser_out))])
+
+
+
+
+##
+## HELPER FUNCTIONS (SPECTRAL)
+##
+
+
+
+def spectral_gap(matrix, thresh=10, param='low'):
+#  In: matrix
+# Out: float
+    current_spectrum = spectrum_make(matrix)
+    current_spectrum = spectrum_trim_and_sort(current_spectrum, threshold_decimal=thresh)
+    return spectrum_param(current_spectrum, parameter=param)
+
+
+
+def spectrum_make(matrix):
+#  In: matrix
+# Out: list of complex floats
+    assert np.any(matrix) , 'Error (eigenvalues): matrix is empty'
+    eigenvalues = eigvals(matrix)
+    return eigenvalues
+
+
+
+def spectrum_trim_and_sort(spectrum, modulus=True, threshold_decimal=10):
+#  In: list of complex floats
+# Out: list of unique (real or complex) floats, sorted by modulus
+    if modulus:
+        return np.sort(np.unique(abs(spectrum).round(decimals=threshold_decimal)))
+    else:
+        return np.sort(np.unique(spectrum.round(decimals=threshold_decimal)))
+
+
+
+def spectrum_param(spectrum, parameter):
+#  In: list of complex floats
+# Out: float
+    assert len(spectrum) != 0 , 'Error (eigenvalues): no eigenvalues (spectrum is empty)'
+    if parameter == 'low':
+        if spectrum[0]:
+            return spectrum[0]
+        else:
+            assert len(spectrum) > 1 , 'Error (low spectral gap): spectrum has only zeros, cannot return nonzero eigval'
+            return spectrum[1]
+    elif parameter == 'high':
+        assert len(spectrum) > 1 , 'Error (high spectral gap): spectrum has one eigval, cannot return difference of top two'
+        return spectrum[-1]-spectrum[-2]
+    elif parameter == 'radius':
+        return spectrum[-1]
+
+
+##
+## NONSPECTRAL PARAMETER FUNCTIONS
+##
+
+
+# transitive clustering coefficient
+# source: manuscript
+
+def tcc(chief_index, matrix):
+    current_tribe = tribe(chief_index, matrix)
+    return tcc_adjacency(current_tribe)
+
+def tcc_adjacency(matrix):
+    outdeg = np.count_nonzero(matrix[0])
+    indeg = np.count_nonzero(np.transpose(matrix)[0])
+    repdeg = reciprocal_connections_adjacency(matrix, chief_only=True)
+    totdeg = indeg+outdeg
+    chief_containment = cell_count_at_v0(matrix)
+    numerator = 0 if len(chief_containment) < 3 else chief_containment[2]
+    denominator = (totdeg*(totdeg-1)-(indeg*outdeg+repdeg))
+    if denominator == 0:
+        return 0
+    return numerator/denominator
+
+
+# classical clustering coefficient
+# source: Clustering in Complex Directed Networks (Giorgio Fagiolo, 2006)
+
+def ccc(chief_index, matrix):
+    current_tribe = tribe(chief_index, matrix)
+    return ccc_adjacency(current_tribe)
+
+
+def ccc_adjacency(matrix):
+    deg = degree_adjacency(matrix)
+    numerator = np.linalg.matrix_power(matrix+np.transpose(matrix),3)[0][0]
+    denominator = 2*(deg*(deg-1)-2*reciprocal_connections_adjacency(matrix, chief_only=True))
+    if denominator == 0:
+        return 0
+    return numerator/denominator
+
+
+# density coefficient
+# source: manuscript
+
+def dc(chief_index, matrix, coeff_index=2):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return dc_adjacency(current_tribe, coeff_index=coeff_index)
+
+
+
+def dc_adjacency(matrix, coeff_index=2):
+#  in: tribe matrix
+# out: float
+    assert coeff_index >= 2, 'Assertion error: Density coefficient must be at least 2'
+    flagser_output = cell_count_at_v0(matrix)
+    if len(flagser_output) <= coeff_index:
+        density_coeff = 0
+    elif flagser_output[coeff_index] == 0:
+        density_coeff = 0
+    else:
+        numerator = coeff_index*flagser_output[coeff_index]
+        denominator = (coeff_index+1)*(len(matrix)-coeff_index)*flagser_output[coeff_index-1]
+        if denominator == 0:
+            density_coeff = 0
+        else:
+            density_coeff = numerator/denominator
+    return density_coeff
+
+
+
+
+def normalised_simplex_count(chief_index, matrix, dim=2):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return normalised_simplex_count_adjacency(current_tribe, dim=dim)
+
+
+
+def normalised_simplex_count_adjacency(matrix, dim=2):
+#  in: tribe matrix
+# out: float
+    assert dim >= 1, 'Assertion error: Dim value must be at least 1'
+    directed_cell_count = pyflagser.flagser_unweighted(matrix, directed=True)['cell_count']
+    undirected_cell_count =  pyflagser.flagser_unweighted(matrix, directed=False)['cell_count']
+    if len(directed_cell_count) <= dim:
+        return 0
+    if undirected_cell_count[dim] == 0:
+        #return 0
+        return np.nan
+    return directed_cell_count[dim]/(undirected_cell_count[dim]*math.factorial(dim))
+
+
+# normalized betti coefficient
+# source: manuscript
+
+
+def nbc(chief_index, matrix):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return nbc_adjacency(current_tribe)
+
+
+
+def nbc_adjacency(matrix):
+#  in: tribe matrix
+# out: float
+    flagser_output = pyflagser.flagser_unweighted(matrix, directed=True)
+    cells = flagser_output['cell_count']
+    bettis = flagser_output['betti']
+    while (cells[-1] == 0) and (len(cells) > 1):
+        cells = cells[:-1]
+    while (bettis[-1] == 0) and (len(bettis) > 1):
+        bettis = bettis[:-1]
+    normalized_betti_list = [(i+1)*bettis[i]/cells[i] for i in range(min(len(bettis),len(cells)))]
+    return sum(normalized_betti_list)
+
+
+# degree type parameters
+
+# tribe size
+
+def tribe_size(chief_index, matrix):
+    current_tribe = tribe(chief_index, matrix)
+    return tribe_size_adjacency(current_tribe)
+
+
+def tribe_size_adjacency(matrix):
+    return len(matrix)
+
+
+# degree
+def degree(chief_index, matrix, vertex_index=0):
+    current_tribe = tribe(chief_index, matrix)
+    return degree_adjacency(matrix, vertex_index=vertex_index)
+
+def degree_adjacency(matrix, vertex_index=0):
+    return in_degree_adjacency(matrix, vertex_index=vertex_index)+out_degree_adjacency(matrix, vertex_index=vertex_index)
+
+
+# in-degree
+def in_degree(chief_index, matrix, vertex_index=0):
+    current_tribe = tribe(chief_index, matrix)
+    return in_degree_adjacency(current_tribe, vertex_index=vertex_index)
+
+def in_degree_adjacency(matrix, vertex_index=0):
+    return np.count_nonzero(np.transpose(matrix)[vertex_index])
+
+
+# out-degree
+def out_degree(chief_index, matrix, vertex_index=0):
+    current_tribe = tribe(chief_index, matrix)
+    return out_degree_adjacency(current_tribe, vertex_index=vertex_index)
+
+
+
+def out_degree_adjacency(matrix, vertex_index=0):
+    return np.count_nonzero(matrix[vertex_index])
+
+
+# reciprocal connections
+
+def reciprocal_connections(chief_index, matrix, chief_only=False):
+    current_tribe = tribe(chief_index, matrix)
+    return reciprocal_connections_adjacency(current_tribe, chief_only=chief_only)
+
+
+
+def reciprocal_connections_adjacency(matrix, chief_only=False):
+    if chief_only:
+        rc_count = np.count_nonzero(np.multiply(matrix[0],np.transpose(matrix)[0]))
+    else:
+        rc_count = np.count_nonzero(np.multiply(matrix,np.transpose(matrix)))//2
+    return rc_count
+
+
+##
+## SPECTRAL PARAMETER FUNCTIONS
+##
+
+# adjacency spectrum
+
+
+def asg(chief_index, matrix, gap='high'):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return asg_adjacency(current_tribe, gap=gap)
+
+
+def asg_radius(index, matrix):
+#  in: index
+# out: float
+    return spectral_gap(tribe(index, matrix),param='radius')
+
+
+
+def asg_adjacency(matrix, gap='high'):
+    return spectral_gap(matrix, param=gap)
+
+
+# transition probability spectrum
+
+
+def tpsg(chief_index, matrix, in_deg=False, gap='high'):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return tpsg_adjacency(current_tribe, in_deg=in_deg, gap=gap)
+
+
+
+def tpsg_radius(index, matrix, in_deg=False):
+#  in: index
+# out: float
+    return spectral_gap(tps_matrix(tribe(index, matrix), in_deg=in_deg),param='radius')
+
+
+
+
+def tpsg_adjacency(matrix, in_deg=False, gap='high'):
+#  in: tribe matrix
+# out: float
+    current_matrix = tps_matrix(matrix, in_deg=in_deg)
+    return spectral_gap(current_matrix, param=gap)
+
+
+
+def tps_matrix(matrix, in_deg=False):
+#  in: tribe matrix
+# out: transition probability matrix
+    current_size = len(matrix)
+    if in_deg:
+        degree_vector = [in_degree_adjacency(matrix,vertex_index=i) for i in range(current_size)]
+    else:
+        degree_vector = [out_degree_adjacency(matrix,vertex_index=i) for i in range(current_size)]
+    inverted_degree_vector = [0 if not d else 1/d for d in degree_vector]
+    return np.matmul(np.diagflat(inverted_degree_vector),matrix)
+
+
+# chung laplacian spectrum
+# source 1: Laplacians and the Cheeger inequality for directed graph (Fan Chung, 2005)
+# source 2: https://networkx.org/documentation/stable/reference/generated/networkx.linalg.laplacianmatrix.directed_laplacian_matrix.html
+
+
+def clsg(chief_index, matrix, gap='low'):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return clsg_adjacency(current_tribe, is_strongly_conn=False, gap=gap)
+
+
+
+def clsg_radius(index, matrix):
+#  in: index
+# out: float
+    return spectral_gap(cls_matrix_fromadjacency(tribe(index, matrix)),param='radius')
+
+
+
+def clsg_adjacency(matrix, is_strongly_conn=False, gap='low'):
+#  in: tribe matrix
+# out: float
+    chung_laplacian_matrix = cls_matrix_fromadjacency(matrix, is_strongly_conn=is_strongly_conn)
+    return spectral_gap(chung_laplacian_matrix, param=gap)
+
+
+
+def cls_matrix_fromadjacency(matrix, is_strongly_conn=False):
+#  in: numpy array
+# out: numpy array
+    matrix_nx = np_to_nx(matrix)
+    return cls_matrix_fromdigraph(matrix_nx, matrix=matrix, matrix_given=True, is_strongly_conn=is_strongly_conn)
+
+
+def cls_matrix_fromdigraph(digraph, matrix=np.array([]), matrix_given=False, is_strongly_conn=False):
+#  in: networkx digraph
+# out: numpy array
+    digraph_sc = digraph
+    matrix_sc = matrix
+    # Make sure is strongly connected
+    if not is_strongly_conn:
+        largest_comp = max(nx.strongly_connected_components(digraph), key=len)
+        digraph_sc = digraph.subgraph(largest_comp)
+        matrix_sc = nx_to_np(digraph_sc)
+    elif not matrix_given:
+        matrix_sc = nx_to_np(digraph_sc)
+    # Degeneracy: scc has size 1
+    if not np.any(matrix_sc):
+        return np.array([[0]])
+    # Degeneracy: scc has size 2
+    elif np.array_equal(matrix_sc,np.array([[0,1],[1,0]],dtype=int)):
+        return np.array([[1,-0.5],[-0.5,1]])
+    # No degeneracy
+    else:
+        return nx.directed_laplacian_matrix(digraph_sc)
+
+
+# bauer laplacian spectrum
+# source: Normalized graph Laplacians for directed graphs (Frank Bauer, 2012)
+
+def blsg(chief_index, matrix, reverse_flow=False, gap='high'):
+#  in: index
+# out: float
+    current_tribe = tribe(chief_index, matrix)
+    return blsg_adjacency(current_tribe, reverse_flow=reverse_flow, gap=gap)
+
+
+def blsg_radius(index, matrix, reverse_flow=False):
+#  in: index
+# out: float
+    return spectral_gap(bls_matrix(tribe(index, matrix),reverse_flow=reverse_flow),param='radius')
+
+
+def blsg_adjacency(matrix, reverse_flow=False, gap='high'):
+#  in: tribe matrix
+# out: float
+    bauer_laplacian_matrix = bls_matrix(matrix, reverse_flow=reverse_flow)
+    return spectral_gap(bauer_laplacian_matrix, param=gap)
+
+
+def bls_matrix(matrix, reverse_flow=False):
+#  in: tribe matrix
+# out: bauer laplacian matrix
+    #non_quasi_isolated = [i for i in range(len(matrix)) if matrix[i].any()]
+    #matrix_D = np.diagflat([np.count_nonzero(matrix[nqi]) for nqi in non_quasi_isolated])
+    #matrix_W = np.diagflat([np.count_nonzero(np.transpose(matrix)[nqi]) for nqi in non_quasi_isolated])
+    #return np.subtract(np.eye(len(non_quasi_isolated),dtype=int),np.matmul(inv(matrix_D),matrix_W))
+    current_size = len(matrix)
+    return np.subtract(np.eye(current_size,dtype='float64'),tps_matrix(matrix, in_deg=(not reverse_flow)))

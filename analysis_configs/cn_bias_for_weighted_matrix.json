@@ -1,0 +1,56 @@
+{
+    "analyses": {
+        "weight_bias_cn_eff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "efferent"},
+            "method": "common_neighbor_weight_bias",
+            "output": "Series"
+        },
+        "weight_bias_cn_aff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "afferent"},
+            "method": "common_neighbor_weight_bias",
+            "output": "Series"
+        },
+        "con_prob_bias_ci_eff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "efferent", "cols_location": ["x", "y", "z"], "fit_log": 0.1},
+            "method": "common_neighbor_connectivity_bias",
+            "output": "Series"
+        },
+        "con_prob_bias_ci_aff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "afferent", "cols_location": ["x", "y", "z"], "fit_log": 0.1},
+            "method": "common_neighbor_connectivity_bias",
+            "output": "Series"
+        },
+        "con_prob_bias_cn_eff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "efferent", "cols_location": ["x", "y", "z"], "fit_log": 0.1},
+            "method": "common_neighbor_connectivity_bias",
+            "decorators": [
+                {
+                    "name": "for_binarized_connectivity"
+                }
+            ],
+            "output": "Series"
+        },
+        "con_prob_bias_cn_aff": {
+            "source":"../library/common_neighbors.py",
+            "args": [],
+            "kwargs": {"direction": "afferent", "cols_location": ["x", "y", "z"], "fit_log": 0.1},
+            "method": "common_neighbor_connectivity_bias",
+            "decorators": [
+                {
+                    "name": "for_binarized_connectivity"
+                }
+            ],
+            "output": "Series"
+        }
+    }
+}

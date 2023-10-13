@@ -4,9 +4,6 @@ import pandas as pd
 from scipy.stats import hypergeom
 from scipy.stats import binom
 from scipy.linalg import eigvals
-import pyflagsercount
-import pyflagser
-import math
 #TODO: MODIFY THE IMPORTS TO EXTERNAL IMPORTS
 
 
@@ -84,9 +81,9 @@ def connected_components(adj,neuron_properties=[]):
 def core_number(adj, neuron_properties=[]):
     """Returns k core of directed graph, where degree of a vertex is the sum of in degree and out degree"""
     # TODO: Implement directed (k,l) core and k-core of underlying undirected graph (very similar to this)
-    G = networkx.from_numpy_matrix(adj.toarray())
+    G = nx.from_numpy_matrix(adj.toarray())
     # Very inefficient (returns a dictionary!). TODO: Look for different implementation
-    return networkx.algorithms.core.core_number(G)
+    return nx.algorithms.core.core_number(G)
 
     # TODO: Filtered simplex counts with different weights on vertices (coreness, intersection)
     #  or on edges (strength of connection).
@@ -459,9 +456,10 @@ def rich_club_coefficient(m, **kwargs):
 ## HELPER FUNCTIONS (STRUCTURAL)
 ##
 
-
 def neighbourhood(v, matrix):
     """Computes the neighbours of v in graph with adjacency matrix matrix
+
+    Parameters
     ----------
     v : int
         the index of the vertex 
@@ -479,7 +477,9 @@ def neighbourhood(v, matrix):
 
 
 def tribe(v, matrix):
-    """Computes the neighbourhood of v in graph with adjacency matrix matrix
+    """Computes the matrix induced by the neighbours of v in graph with adjacency matrix matrix
+
+    Parameters
     ----------
     v : int
         the index of the vertex 
@@ -508,37 +508,73 @@ def tribe(v, matrix):
 
 
 
-def new_nbhds(nbhd_list, index_range):
-#  In: list of list of integers
-# Out: list of list of integers
-    new_list = []
-    choice_vector = range(index_range)
-    for nbhd in nbhd_list:
-        new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
-        while nbhd[0] in new_neighbours:
-            new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
-        new_list.append(np.hstack((nbhd[0], new_neighbours)))
-    return new_list
+#TODO: Not sure what this does, and it's not used. Should we include it?
+# def new_nbhds(nbhd_list, index_range):
+# #  In: list of list of integers
+# # Out: list of list of integers
+#     new_list = []
+#     choice_vector = range(index_range)
+#     for nbhd in nbhd_list:
+#         new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
+#         while nbhd[0] in new_neighbours:
+#             new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
+#         new_list.append(np.hstack((nbhd[0], new_neighbours)))
+#     return new_list
 
 
 
 def nx_to_np(directed_graph):
-#  In: networkx directed graph
-# Out: numpy array
+    """Converts networkx digraph to numpy array of the adjacency matrix 
+
+    Parameters
+    ----------
+    directed_graph : networkx DiGraph
+        a directed graph
+
+    Returns
+    -------
+    numpy array
+        the adjaceny matrix of the DiGraph as a numpy array
+    """
     return nx.to_numpy_array(directed_graph,dtype=int)
 
 
 
 def np_to_nx(adjacency_matrix):
-#  In: numpy array
-# Out: networkx directed graph
+    """Converts numpy array of an adjacency matrix to a networkx digraph
+
+    Parameters
+    ----------
+    adjacency_matrix : numpy array
+        the adjaceny matrix of the DiGraph as a numpy array
+
+
+    Returns
+    -------
+    networkx DiGraph
+            a directed graph
+
+    """
     return nx.from_numpy_array(adjacency_matrix,create_using=nx.DiGraph)
 
 
 
 def largest_strongly_connected_component(adjacency_matrix):
-#  In: numpy array
-# Out: numpy array
+    """Computes the largest strongly connected component of the graph with adjacency matrix adjacency_matrix,
+        and returns the adjacency matrix of said component
+
+    Parameters
+    ----------
+    adjacency_matrix : numpy array
+        the adjaceny matrix of the DiGraph as a numpy array
+
+
+    Returns
+    -------
+    numpy array
+        The adjacency matrix of the largest strongly connected component
+
+    """
     current_tribe_nx = np_to_nx(adjacency_matrix)
     largest_comp = max(nx.strongly_connected_components(current_tribe_nx), key=len)
     current_tribe_strong_nx = current_tribe_nx.subgraph(largest_comp)
@@ -547,35 +583,10 @@ def largest_strongly_connected_component(adjacency_matrix):
 
 
 
-def cell_count_at_v0(matrix):
-#  In: adjacency matrix
-# Out: list of integers
-    simplexcontainment = pyflagsercount.flagser_count(np.transpose(np.array(np.nonzero(matrix))),containment=True)['contain_counts']
-    return simplexcontainment[0]
-
-
-
-def euler_characteristic_chief(chief, matrix):
-#  In: index
-# Out: integer
-    return euler_characteristic(tribe(chief, matrix))
-
-
-
-def euler_characteristic(matrix):
-#  In: adjacency matrix
-# Out: integer
-    flagser_out = pyflagser.flagser_count_unweighted(matrix, directed=True)
-    return sum([((-1)**i)*flagser_out[i] for i in range(len(flagser_out))])
-
-
-
 
 ##
 ## HELPER FUNCTIONS (SPECTRAL)
 ##
-
-
 
 def spectral_gap(matrix, thresh=10, param='low'):
 #  In: matrix
@@ -627,26 +638,6 @@ def spectrum_param(spectrum, parameter):
 ##
 
 
-# transitive clustering coefficient
-# source: manuscript
-
-def tcc(chief_index, matrix):
-    current_tribe = tribe(chief_index, matrix)
-    return tcc_adjacency(current_tribe)
-
-def tcc_adjacency(matrix):
-    outdeg = np.count_nonzero(matrix[0])
-    indeg = np.count_nonzero(np.transpose(matrix)[0])
-    repdeg = reciprocal_connections_adjacency(matrix, chief_only=True)
-    totdeg = indeg+outdeg
-    chief_containment = cell_count_at_v0(matrix)
-    numerator = 0 if len(chief_containment) < 3 else chief_containment[2]
-    denominator = (totdeg*(totdeg-1)-(indeg*outdeg+repdeg))
-    if denominator == 0:
-        return 0
-    return numerator/denominator
-
-
 # classical clustering coefficient
 # source: Clustering in Complex Directed Networks (Giorgio Fagiolo, 2006)
 
@@ -664,84 +655,8 @@ def ccc_adjacency(matrix):
     return numerator/denominator
 
 
-# density coefficient
-# source: manuscript
-
-def dc(chief_index, matrix, coeff_index=2):
-#  in: index
-# out: float
-    current_tribe = tribe(chief_index, matrix)
-    return dc_adjacency(current_tribe, coeff_index=coeff_index)
 
 
-
-def dc_adjacency(matrix, coeff_index=2):
-#  in: tribe matrix
-# out: float
-    assert coeff_index >= 2, 'Assertion error: Density coefficient must be at least 2'
-    flagser_output = cell_count_at_v0(matrix)
-    if len(flagser_output) <= coeff_index:
-        density_coeff = 0
-    elif flagser_output[coeff_index] == 0:
-        density_coeff = 0
-    else:
-        numerator = coeff_index*flagser_output[coeff_index]
-        denominator = (coeff_index+1)*(len(matrix)-coeff_index)*flagser_output[coeff_index-1]
-        if denominator == 0:
-            density_coeff = 0
-        else:
-            density_coeff = numerator/denominator
-    return density_coeff
-
-
-
-
-def normalised_simplex_count(chief_index, matrix, dim=2):
-#  in: index
-# out: float
-    current_tribe = tribe(chief_index, matrix)
-    return normalised_simplex_count_adjacency(current_tribe, dim=dim)
-
-
-
-def normalised_simplex_count_adjacency(matrix, dim=2):
-#  in: tribe matrix
-# out: float
-    assert dim >= 1, 'Assertion error: Dim value must be at least 1'
-    directed_cell_count = pyflagser.flagser_unweighted(matrix, directed=True)['cell_count']
-    undirected_cell_count =  pyflagser.flagser_unweighted(matrix, directed=False)['cell_count']
-    if len(directed_cell_count) <= dim:
-        return 0
-    if undirected_cell_count[dim] == 0:
-        #return 0
-        return np.nan
-    return directed_cell_count[dim]/(undirected_cell_count[dim]*math.factorial(dim))
-
-
-# normalized betti coefficient
-# source: manuscript
-
-
-def nbc(chief_index, matrix):
-#  in: index
-# out: float
-    current_tribe = tribe(chief_index, matrix)
-    return nbc_adjacency(current_tribe)
-
-
-
-def nbc_adjacency(matrix):
-#  in: tribe matrix
-# out: float
-    flagser_output = pyflagser.flagser_unweighted(matrix, directed=True)
-    cells = flagser_output['cell_count']
-    bettis = flagser_output['betti']
-    while (cells[-1] == 0) and (len(cells) > 1):
-        cells = cells[:-1]
-    while (bettis[-1] == 0) and (len(bettis) > 1):
-        bettis = bettis[:-1]
-    normalized_betti_list = [(i+1)*bettis[i]/cells[i] for i in range(min(len(bettis),len(cells)))]
-    return sum(normalized_betti_list)
 
 
 # degree type parameters
@@ -760,7 +675,7 @@ def tribe_size_adjacency(matrix):
 # degree
 def degree(chief_index, matrix, vertex_index=0):
     current_tribe = tribe(chief_index, matrix)
-    return degree_adjacency(matrix, vertex_index=vertex_index)
+    return degree_adjacency(current_tribe, vertex_index=vertex_index)
 
 def degree_adjacency(matrix, vertex_index=0):
     return in_degree_adjacency(matrix, vertex_index=vertex_index)+out_degree_adjacency(matrix, vertex_index=vertex_index)

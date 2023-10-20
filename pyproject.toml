@@ -41,9 +41,11 @@ scipy = "*"
 matplotlib = "*"
 progressbar ="2.5"
 tqdm="*"
-pyflagsercount = ">=0.2.41"
 pyflagser ="*"
 bigrandomgraphs = ">=0.0.2"
+pyflagsercount = ">=0.2.41"
+networkx="*"
+
 
 [tool.poetry.dev-dependencies]
 black = "*"
@@ -56,7 +58,7 @@ pytest-cov = "*"
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
 seaborn = "*"
-networkx = "*"
+#networkx = "*"
 
 [build-system]
 requires = ["poetry-core>=1.2.0", "setuptools"]

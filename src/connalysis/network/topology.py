@@ -445,7 +445,7 @@ def node_participation(adj, node_properties=None, max_simplices=False,
     return flagser_counts["node_participation"]
 
 def edge_participation(adj, node_properties=None, max_simplices=False,
-                       threads=1,max_dim=-1,simplex_type='directed', **kwargs):
+                       threads=1,max_dim=-1,simplex_type='directed', return_simplex_counts=False, **kwargs):
     """Compute the number of simplex motifs in the network adj each edge is part of.
     See simplex_counts for details.
     Parameters
@@ -499,8 +499,10 @@ def edge_participation(adj, node_properties=None, max_simplices=False,
                                      max_simplices=max_simplices, max_dim=max_dim)
     print("Done running flagser")
     e_contain = pd.DataFrame.from_dict(flagser_out['edge_contain_counts'], orient="index").fillna(0).astype(int)
-
-    return e_contain
+    if return_simplex_counts:
+        return e_contain, flagser_out["cell_counts"]
+    else:
+        return e_contain
 
 def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,max_dim=-1,nodes=None,
                                 verbose=False, simplex_type='directed', **kwargs):

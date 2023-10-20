@@ -2,13 +2,11 @@
 
 # TODO: Import all functions that the user might need
 from .topology import (
-    simplex_counts,_flagser_counts,
+    simplex_counts,_flagser_counts, edge_participation
 )
 
 from .classic import (
     efficient_rich_club_curve
 )
 
-__all__ = [
-    "simplex_counts","_flagser_counts","efficient_rich_club_curve"
-]
+__all__ = ["simplex_counts","_flagser_counts","efficient_rich_club_curve", "edge_participation"]

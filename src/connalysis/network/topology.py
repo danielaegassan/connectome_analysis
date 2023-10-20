@@ -16,7 +16,7 @@ import pyflagsercount
 import pyflagser
 import math
 
-from .classic import tribe, reciprocal_connections_adjacency
+from .classic import tribe, reciprocal_connections_adjacency #TODO: REMOVE THIS FROM HERE!
 
 #Imports not used as global imports, check what can be removed.
 # import sys
@@ -110,7 +110,7 @@ def _flagser_counts(adjacency,
                     max_simplices=False,
                     count_node_participation=False,
                     list_simplices=False,
-                    threads=1,max_dim=-1):
+                    threads=1,max_dim=-1, edge_containment=False):
     """Call package `pyflagsercount's flagser_count` method that can be used to compute
     some analyses, getting counts of quantities such as simplices,
     or node-participation (a.k.a. `containment`)
@@ -125,7 +125,8 @@ def _flagser_counts(adjacency,
                                                   max_simplices=max_simplices,
                                                   containment=count_node_participation,
                                                   return_simplices=list_simplices,
-                                                  threads=threads,max_dim=max_dim)
+                                                  threads=threads,max_dim=max_dim,
+                                                  edge_containment=edge_containment)
 
     counts =  {"euler": flagser_counts.pop("euler"),
                "simplex_counts": _series_by_dim(flagser_counts.pop("cell_counts"),
@@ -442,6 +443,64 @@ def node_participation(adj, node_properties=None, max_simplices=False,
     flagser_counts = _flagser_counts(adj, count_node_participation=True, threads=threads,
                                      max_simplices=max_simplices, max_dim=max_dim)
     return flagser_counts["node_participation"]
+
+def edge_participation(adj, node_properties=None, max_simplices=False,
+                       threads=1,max_dim=-1,simplex_type='directed', **kwargs):
+    """Compute the number of simplex motifs in the network adj each edge is part of.
+    See simplex_counts for details.
+    Parameters
+    ----------
+    adj : 2d array or sparse matrix
+        Adjacency matrix of the directed network.  A non-zero entry adj[i,j] implies there is an edge from i to j.
+        The matrix can be asymmetric, but must have 0 in the diagonal.
+    node_properties : dataframe
+        Data frame of neuron properties in adj.  Only necessary if used in conjunction with TAP or connectome utilities.
+    max_simplices : bool
+        If False (default) counts all simplices in adj.
+        If True counts only maximal simplices i.e., simplex motifs that are not contained in higher dimensional ones.
+    max_dim : int
+        Maximal dimension up to which simplex motifs are counted.
+        The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
+    simplex_type : string
+        Type of simplex to consider:
+
+        ’directed’ - directed simplices
+
+        ’undirected’ - simplices in the underlying undirected graph
+
+        ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+
+    Returns
+    -------
+    data frame
+        Indexed by the edges in adj and with columns de dimension for which node participation is counted
+
+    Raises
+    -------
+    AssertionError
+        If adj has non-zero entries in the diagonal which can produce errors.
+    AssertionError
+        If adj is not square.
+    """
+
+    adj=sp.csr_matrix(adj).astype('bool')
+    assert np.count_nonzero(adj.diagonal()) == 0, 'The diagonal of the matrix is non-zero and this may lead to errors!'
+    N, M = adj.shape
+    assert N == M, 'Dimension mismatch. The matrix must be square.'
+
+
+    #Symmetrize matrix if simplex_type is not 'directed'
+    if simplex_type=='undirected':
+        adj=sp.triu(underlying_undirected_matrix(adj)) #symmtrize and keep upper triangular only
+    elif simplex_type=="reciprocal":
+        adj=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
+
+    flagser_out = pyflagsercount.flagser_count(adj, edge_containment=True, threads=threads,
+                                     max_simplices=max_simplices, max_dim=max_dim)
+    print("Done running flagser")
+    e_contain = pd.DataFrame.from_dict(flagser_out['edge_contain_counts'], orient="index").fillna(0).astype(int)
+
+    return e_contain
 
 def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,max_dim=-1,nodes=None,
                                 verbose=False, simplex_type='directed', **kwargs):

@@ -16,7 +16,7 @@ import pyflagsercount
 import pyflagser
 import math
 
-from .classic import tribe, reciprocal_connections_adjacency #TODO: REMOVE THIS FROM HERE!
+from .classic import reciprocal_connections_adjacency#, tribe #TODO: REMOVE THIS FROM HERE!
 
 #Imports not used as global imports, check what can be removed.
 # import sys

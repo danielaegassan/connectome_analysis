@@ -456,71 +456,6 @@ def rich_club_coefficient(m, **kwargs):
 ## HELPER FUNCTIONS (STRUCTURAL)
 ##
 
-def neighbourhood(v, matrix):
-    """Computes the neighbours of v in graph with adjacency matrix matrix
-
-    Parameters
-    ----------
-    v : int
-        the index of the vertex 
-    matrix : matrix
-        the adjacency matrix of the graph
-
-    Returns
-    -------
-    list
-        the list of neighbours of v in matrix
-    """
-    neighbours = np.unique(np.concatenate((np.nonzero(matrix[v])[0],np.nonzero(np.transpose(matrix)[v])[0])))
-    neighbours.sort(kind='mergesort')
-    return np.concatenate((np.array([v]),neighbours))
-
-
-def tribe(v, matrix):
-    """Computes the matrix induced by the neighbours of v in graph with adjacency matrix matrix
-
-    Parameters
-    ----------
-    v : int
-        the index of the vertex 
-    matrix : matrix
-        the adjacency matrix of the graph
-
-    Returns
-    -------
-    matrix
-        the adjaceny matrix of the neighbourhood of v in matrix
-    """
-    nhbd = neighbourhood(v, matrix)
-    return matrix[np.ix_(nhbd,nhbd)]
-
-#TODO: Make this work without using the dataframe
-# def top_chiefs(parameter, number=50, order_by_ascending=False):
-# #  In: string, integer, boolean
-# # Out: list of integers
-#     return df.sort_values(by=[parameter],ascending=order_by_ascending)[:number].index.values
-
-# def top_nbhds(parameter, number=50, order_by_ascending=False, matrix=adj):
-# #  In: string, integer, boolean, matrix
-# # Out: list of matrices
-#     top_chief_list = top_chiefs(parameter, number=number, order_by_ascending=order_by_ascending)
-#     return [neighbourhood(i, matrix=matrix) for i in top_chief_list]
-
-
-
-#TODO: Not sure what this does, and it's not used. Should we include it?
-# def new_nbhds(nbhd_list, index_range):
-# #  In: list of list of integers
-# # Out: list of list of integers
-#     new_list = []
-#     choice_vector = range(index_range)
-#     for nbhd in nbhd_list:
-#         new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
-#         while nbhd[0] in new_neighbours:
-#             new_neighbours = np.random.choice(choice_vector, size=len(nbhd)-1, replace=False)
-#         new_list.append(np.hstack((nbhd[0], new_neighbours)))
-#     return new_list
-
 
 
 def nx_to_np(directed_graph):
@@ -710,6 +645,7 @@ def reciprocal_connections(chief_index, matrix, chief_only=False):
 
 
 def reciprocal_connections_adjacency(matrix, chief_only=False):
+    #TODO: MERGE THIS WITH RC FUNCTION
     if chief_only:
         rc_count = np.count_nonzero(np.multiply(matrix[0],np.transpose(matrix)[0]))
     else:

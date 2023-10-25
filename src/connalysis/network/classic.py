@@ -60,7 +60,7 @@ def closeness(adj, neuron_properties, directed=False):
     component (if directed==True)"""
     return closeness_connected_components(adj, directed=directed)
 
-def centrality(self, sub_gids, kind="closeness", directed=False):
+def centrality(self, sub_gids, kind="closenesgit rebases", directed=False):
     """Compute a centrality of the graph. `kind` can be 'betweeness' or 'closeness'"""
     if kind == "closeness":
         return self.closeness(sub_gids, directed)
@@ -572,16 +572,27 @@ def spectrum_param(spectrum, parameter):
 ## NONSPECTRAL PARAMETER FUNCTIONS
 ##
 
+def ccc(matrix):
+    """Computes the classical clustering coefficient of a directed graph
 
-# classical clustering coefficient
-# source: Clustering in Complex Directed Networks (Giorgio Fagiolo, 2006)
+    Parameters
+    ----------
+    matrix : numpy array
+        the adjaceny matrix of a directed graph
 
-def ccc(chief_index, matrix):
-    current_tribe = tribe(chief_index, matrix)
-    return ccc_adjacency(current_tribe)
+    Returns
+    -------
+    float
+        the clustering coefficient
 
+    References
+    ----------
+    The formula is taken from the following paper.
 
-def ccc_adjacency(matrix):
+    ..[1] G. Fagiolo, "Clustering in complex directed networks", 2006;
+           [DOI: 10.1103/PhysRevE.76.026107](https://doi.org/10.1103/PhysRevE.76.026107).
+
+    """
     deg = degree_adjacency(matrix)
     numerator = np.linalg.matrix_power(matrix+np.transpose(matrix),3)[0][0]
     denominator = 2*(deg*(deg-1)-2*reciprocal_connections_adjacency(matrix, chief_only=True))

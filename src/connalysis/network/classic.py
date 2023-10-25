@@ -572,27 +572,21 @@ def spectrum_param(spectrum, parameter):
 ## NONSPECTRAL PARAMETER FUNCTIONS
 ##
 
-
-# classical clustering coefficient
-# source: Clustering in Complex Directed Networks (Giorgio Fagiolo, 2006)
-
 def ccc(chief_index, matrix):
+    """Computes the clustering coefficient of a directed graph
+
+    References
+    ----------
+    Clustering in Complex Directed Networks (Giorgio Fagiolo, 2006)
+
+    """
     current_tribe = tribe(chief_index, matrix)
-    return ccc_adjacency(current_tribe)
-
-
-def ccc_adjacency(matrix):
     deg = degree_adjacency(matrix)
     numerator = np.linalg.matrix_power(matrix+np.transpose(matrix),3)[0][0]
     denominator = 2*(deg*(deg-1)-2*reciprocal_connections_adjacency(matrix, chief_only=True))
     if denominator == 0:
         return 0
     return numerator/denominator
-
-
-
-
-
 
 # degree type parameters
 
@@ -609,43 +603,22 @@ def tribe_size_adjacency(matrix):
 
 # degree
 def degree(chief_index, matrix, vertex_index=0):
-    current_tribe = tribe(chief_index, matrix)
-    return degree_adjacency(current_tribe, vertex_index=vertex_index)
-
-def degree_adjacency(matrix, vertex_index=0):
-    return in_degree_adjacency(matrix, vertex_index=vertex_index)+out_degree_adjacency(matrix, vertex_index=vertex_index)
-
+    return in_degree(chief_index, matrix, vertex_index=vertex_index) + out_degree(chief_index, matrix, vertex_index=vertex_index)
 
 # in-degree
 def in_degree(chief_index, matrix, vertex_index=0):
     current_tribe = tribe(chief_index, matrix)
-    return in_degree_adjacency(current_tribe, vertex_index=vertex_index)
-
-def in_degree_adjacency(matrix, vertex_index=0):
-    return np.count_nonzero(np.transpose(matrix)[vertex_index])
-
+    return np.count_nonzero(np.transpose(current_tribe)[vertex_index])
 
 # out-degree
 def out_degree(chief_index, matrix, vertex_index=0):
     current_tribe = tribe(chief_index, matrix)
-    return out_degree_adjacency(current_tribe, vertex_index=vertex_index)
-
-
-
-def out_degree_adjacency(matrix, vertex_index=0):
-    return np.count_nonzero(matrix[vertex_index])
-
+    return np.count_nonzero(current_tribe[vertex_index])
 
 # reciprocal connections
-
 def reciprocal_connections(chief_index, matrix, chief_only=False):
-    current_tribe = tribe(chief_index, matrix)
-    return reciprocal_connections_adjacency(current_tribe, chief_only=chief_only)
-
-
-
-def reciprocal_connections_adjacency(matrix, chief_only=False):
     #TODO: MERGE THIS WITH RC FUNCTION
+    current_tribe = tribe(chief_index, matrix)
     if chief_only:
         rc_count = np.count_nonzero(np.multiply(matrix[0],np.transpose(matrix)[0]))
     else:
@@ -664,7 +637,7 @@ def asg(chief_index, matrix, gap='high'):
 #  in: index
 # out: float
     current_tribe = tribe(chief_index, matrix)
-    return asg_adjacency(current_tribe, gap=gap)
+    return spectral_gap(matrix, param=gap)
 
 
 def asg_radius(index, matrix):
@@ -672,37 +645,19 @@ def asg_radius(index, matrix):
 # out: float
     return spectral_gap(tribe(index, matrix),param='radius')
 
-
-
-def asg_adjacency(matrix, gap='high'):
-    return spectral_gap(matrix, param=gap)
-
-
 # transition probability spectrum
-
 
 def tpsg(chief_index, matrix, in_deg=False, gap='high'):
 #  in: index
 # out: float
     current_tribe = tribe(chief_index, matrix)
-    return tpsg_adjacency(current_tribe, in_deg=in_deg, gap=gap)
-
-
+    current_matrix = tps_matrix(matrix, in_deg=in_deg)
+    return spectral_gap(current_matrix, param=gap)
 
 def tpsg_radius(index, matrix, in_deg=False):
 #  in: index
 # out: float
     return spectral_gap(tps_matrix(tribe(index, matrix), in_deg=in_deg),param='radius')
-
-
-
-
-def tpsg_adjacency(matrix, in_deg=False, gap='high'):
-#  in: tribe matrix
-# out: float
-    current_matrix = tps_matrix(matrix, in_deg=in_deg)
-    return spectral_gap(current_matrix, param=gap)
-
 
 
 def tps_matrix(matrix, in_deg=False):
@@ -726,23 +681,14 @@ def clsg(chief_index, matrix, gap='low'):
 #  in: index
 # out: float
     current_tribe = tribe(chief_index, matrix)
-    return clsg_adjacency(current_tribe, is_strongly_conn=False, gap=gap)
-
+    chung_laplacian_matrix = cls_matrix_fromadjacency(matrix, is_strongly_conn=False)
+    return spectral_gap(chung_laplacian_matrix, param=gap)
 
 
 def clsg_radius(index, matrix):
 #  in: index
 # out: float
     return spectral_gap(cls_matrix_fromadjacency(tribe(index, matrix)),param='radius')
-
-
-
-def clsg_adjacency(matrix, is_strongly_conn=False, gap='low'):
-#  in: tribe matrix
-# out: float
-    chung_laplacian_matrix = cls_matrix_fromadjacency(matrix, is_strongly_conn=is_strongly_conn)
-    return spectral_gap(chung_laplacian_matrix, param=gap)
-
 
 
 def cls_matrix_fromadjacency(matrix, is_strongly_conn=False):
@@ -782,20 +728,13 @@ def blsg(chief_index, matrix, reverse_flow=False, gap='high'):
 #  in: index
 # out: float
     current_tribe = tribe(chief_index, matrix)
-    return blsg_adjacency(current_tribe, reverse_flow=reverse_flow, gap=gap)
-
+    bauer_laplacian_matrix = bls_matrix(matrix, reverse_flow=reverse_flow)
+    return spectral_gap(bauer_laplacian_matrix, param=gap)
 
 def blsg_radius(index, matrix, reverse_flow=False):
 #  in: index
 # out: float
     return spectral_gap(bls_matrix(tribe(index, matrix),reverse_flow=reverse_flow),param='radius')
-
-
-def blsg_adjacency(matrix, reverse_flow=False, gap='high'):
-#  in: tribe matrix
-# out: float
-    bauer_laplacian_matrix = bls_matrix(matrix, reverse_flow=reverse_flow)
-    return spectral_gap(bauer_laplacian_matrix, param=gap)
 
 
 def bls_matrix(matrix, reverse_flow=False):

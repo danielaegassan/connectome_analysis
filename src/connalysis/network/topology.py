@@ -16,7 +16,8 @@ import pyflagsercount
 import pyflagser
 import math
 
-from .classic import reciprocal_connections_adjacency#, tribe #TODO: REMOVE THIS FROM HERE!
+from .classic import reciprocal_connections_adjacency
+from .local import neighbourhood
 
 #Imports not used as global imports, check what can be removed.
 # import sys
@@ -1457,6 +1458,7 @@ def get_all_simplices_from_max(max_simplices):
 
     return simplices
 
+
 def simplicial_rich_club_curve(M, maximal=False, sparse_bin_set=False):
     """Computes the simplicial rich club curve of a network.
            Where the i'th entry is the density of the subnetwork induced by the vertices that are contained in
@@ -1490,48 +1492,6 @@ def simplicial_rich_club_curve(M, maximal=False, sparse_bin_set=False):
 #######################################################
 
 
-def cell_count_at_v0(matrix):
-    """Computes the number of simplices which each vertex is contained within, in each dimension
-           Where the i,j'th entry is the number of j-dimensional simplices which contain vertex i
-
-        Parameters
-        ----------
-        matrix : 2d-array
-            Adjacency matrix of a directed network.
-
-        Returns
-        -------
-        list of lists of ints
-            The i'th entry is a list corresponding to the vertex i, the j'th entry of said list
-            is the the number of j-dimensional simplices which contain vertex i
-
-    """
-    simplexcontainment = pyflagsercount.flagser_count(matrix,containment=True)['contain_counts']
-    return simplexcontainment[0]
-
-
-
-def euler_characteristic_chief(chief, matrix):
-    """Computes the Euler characteristic of the flag complex of the graph induced by the neighbourhood
-            of chief in matrix
-
-        Parameters
-        ----------
-        chief : int
-            The index of the vertex to be considered
-        matrix : 2d-array
-            Adjacency matrix of a directed network.
-
-        Returns
-        -------
-        integer
-            The Euler characteristic of the tribe of chief in matrix
-
-    """
-    return euler_characteristic(tribe(chief, matrix))
-
-
-
 def euler_characteristic(matrix):
     """Computes the Euler characteristic of the flag complex of the graph with adjacency matrix matrix
 
@@ -1546,18 +1506,17 @@ def euler_characteristic(matrix):
             The Euler characteristic of the flag complex of matrix
 
     """
-    flagser_out = pyflagser.flagser_count_unweighted(matrix, directed=True)
-    return sum([((-1)**i)*flagser_out[i] for i in range(len(flagser_out))])
+    return pyflagsercount.flagser_count(M)['euler']
 
 
 
-def tcc(chief, matrix):
+def tcc(center, matrix):
     """Computes the transitive clustering coefficient of the graph induced by 
-            the neighbourhood of chief in matrix
+            the neighbourhood of center in matrix
 
         Parameters
         ----------
-        chief : int
+        center : int
             The index of the vertex to be considered
         matrix : 2d-array
             Adjacency matrix of a directed network.
@@ -1565,11 +1524,12 @@ def tcc(chief, matrix):
         Returns
         -------
         float
-            The transitive cluster coefficient of the tribe of chief
+            The transitive cluster coefficient of the neighbourhood of center
 
     """
-    current_tribe = tribe(chief, matrix)
-    return tcc_adjacency(current_tribe)
+    current_nhbd = neighbourhood(center, matrix)
+    return tcc_adjacency(current_nhbd)
+
 
 def tcc_adjacency(matrix):
     """Computes the transitive clustering coefficient of matrix
@@ -1589,7 +1549,7 @@ def tcc_adjacency(matrix):
     indeg = np.count_nonzero(np.transpose(matrix)[0])
     repdeg = reciprocal_connections_adjacency(matrix, chief_only=True)
     totdeg = indeg+outdeg
-    chief_containment = cell_count_at_v0(matrix)
+    chief_containment = node_participation(matrix,max_dim=2).iloc[0]
     numerator = 0 if len(chief_containment) < 3 else chief_containment[2]
     denominator = (totdeg*(totdeg-1)-(indeg*outdeg+repdeg))
     if denominator == 0:
@@ -1597,13 +1557,13 @@ def tcc_adjacency(matrix):
     return numerator/denominator
 
 
-def dc(chief, matrix, coeff_index=2):
+def dc(center, matrix, coeff_index=2):
     """Computes the density coefficient of the graph induced by 
-            the neighbourhood of chief in matrix
+            the neighbourhood of center in matrix
 
         Parameters
         ----------
-        chief : int
+        center : int
             The index of the vertex to be considered
         matrix : 2d-array
             Adjacency matrix of a directed network.
@@ -1613,11 +1573,11 @@ def dc(chief, matrix, coeff_index=2):
         Returns
         -------
         float
-            The density coefficient of the tribe of chief
+            The density coefficient of the neighbourhood of center
 
     """
-    current_tribe = tribe(chief, matrix)
-    return dc_adjacency(current_tribe, coeff_index=coeff_index)
+    current_nhbd = neighbourhood(center, matrix)
+    return dc_adjacency(current_nhbd, coeff_index=coeff_index)
 
 
 
@@ -1637,7 +1597,7 @@ def dc_adjacency(matrix, coeff_index=2):
             The density coefficient of the flag complex of the graph with adjacency matrix matrix
     """
     assert coeff_index >= 2, 'Assertion error: Density coefficient must be at least 2'
-    flagser_output = cell_count_at_v0(matrix)
+    flagser_output = node_participation(matrix,max_dim=coeff_index).iloc[0]
     if len(flagser_output) <= coeff_index:
         density_coeff = 0
     elif flagser_output[coeff_index] == 0:
@@ -1654,31 +1614,8 @@ def dc_adjacency(matrix, coeff_index=2):
 
 
 
-def normalised_simplex_count(chief_index, matrix, dim=2):
-    """Computes the normalised simplex count of the graph induced by 
-            the neighbourhood of chief in matrix
-
-        Parameters
-        ----------
-        chief : int
-            The index of the vertex to be considered
-        matrix : 2d-array
-            Adjacency matrix of a directed network.
-        dim : int
-             The dimension to be computed, default=2
-
-        Returns
-        -------
-        float
-            The normalised simplex count of dimension dim of the tribe of chief
-
-    """
-    current_tribe = tribe(chief_index, matrix)
-    return normalised_simplex_count_adjacency(current_tribe, dim=dim)
-
-
-
-def normalised_simplex_count_adjacency(matrix, dim=2):
+#I have kept this for now for backwards compatability, in case it is used anywhere in existing code
+def normalised_simplex_count(matrix, dim=2):
     """Computes the normalised simplex count of the flag complex of the graph with adjacency matrix matrix
 
         Parameters
@@ -1694,40 +1631,11 @@ def normalised_simplex_count_adjacency(matrix, dim=2):
             The normalised simplex count of dimension dim of the flag complex of matrix
 
     """
-    assert dim >= 1, 'Assertion error: Dim value must be at least 1'
-    directed_cell_count = pyflagser.flagser_unweighted(matrix, directed=True)['cell_count']
-    undirected_cell_count =  pyflagser.flagser_unweighted(matrix, directed=False)['cell_count']
-    if len(directed_cell_count) <= dim:
-        return 0
-    if undirected_cell_count[dim] == 0:
-        #return 0
-        return np.nan
-    return directed_cell_count[dim]/(undirected_cell_count[dim]*math.factorial(dim))
-
-
-def nbc(chief, matrix):
-    """Computes the normalised Betti coefficient of the graph induced by 
-            the neighbourhood of chief in matrix
-
-        Parameters
-        ----------
-        chief : int
-            The index of the vertex to be considered
-        matrix : 2d-array
-            Adjacency matrix of a directed network.
-
-        Returns
-        -------
-        float
-            The normalised Betti coefficient of the tribe of chief
-
-    """
-    current_tribe = tribe(chief, matrix)
-    return nbc_adjacency(current_tribe)
+    return normalized_simplex_counts(matrix)[dim]
 
 
 
-def nbc_adjacency(matrix):
+def nbc(matrix):
     """Computes the normalised Betti coefficient of the graph with adjacency matrix matrix
 
         Parameters

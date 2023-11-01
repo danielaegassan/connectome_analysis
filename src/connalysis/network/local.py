@@ -123,7 +123,7 @@ def neighborhood(adj, v, pre=True, post=True, include_center=True, return_neighb
         return submat_at_ind(adj, nb_ind)
 
 
-def property_at_neighbhoords(adj, func, pre=True, post=True,include_center=True,
+def property_at_neighborhoods(adj, func, pre=True, post=True,include_center=True,
                              all_nodes=True, centers=None, **kwargs):
     """Computes the property func on the neighborhoods of the centers within adj
 
@@ -165,6 +165,52 @@ def property_at_neighbhoords(adj, func, pre=True, post=True,include_center=True,
         nbhd_values[center]=func(nbhd, **kwargs)
     return nbhd_values
 
+
+def properties_at_neighborhoods(adj, func_config, pre=True, post=True, include_center=True,
+                                all_nodes=True, centers=None):
+    """Computes the properties in func_config on the neighborhoods of the centers within adj
+
+            Parameters
+            ----------
+            adj : sparse matrix or 2d array
+                The adjacency matrix of the graph
+            func_config : dict
+                Configuration dictionary of functions to be computed on neihgborhoods
+            pre : bool
+                If ``True`` include the nodes mapping to the nodes in centers
+            post : bool
+                If ``True`` include the nodes that the centers map to
+            include_center : bool
+                If ``True`` include the centers
+            all_nodes : bool
+                If ``True`` compute func on the neighborhoods of all nodes in adj,
+
+                If ``False`` compute it only the neighborhoods of the nodes listed in centers
+            centers : 1d-array
+                The indices of the nodes to consider.  This entry is ignored if
+                all_nodes is ``True`` and required if all_nodes is ``False``.
+
+            Returns
+            -------
+            dict
+                keys: keys of func_config
+
+                values: dict with
+
+                    keys: range from 0 to ``M.shape[0]`` if all_nodes is set to ``True``, otherwise centers
+
+                    values: the output of ``func`` in each neighborhood of the nodes in centers
+    """
+    nb_df = neighborhood_indices(adj, pre=pre, post=post, all_nodes=all_nodes, centers=centers)
+    if sp.issparse(adj): adj = adj.tocsr()  # TODO: Add warning of format?
+    nbhd_values = {key: {} for key in func_config.keys()}
+    for center in nb_df.index:
+        nb_ind = nb_df.loc[center]
+        if include_center: nb_ind = np.append(center, nb_ind)
+        nbhd = submat_at_ind(adj, nb_ind)
+        for key in func_config.keys():
+            nbhd_values[key][center] = func_config[key]['function'](nbhd, **func_config[key]['kwargs'])
+    return nbhd_values
 
 #### OLD CODE BELOW
 

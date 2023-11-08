@@ -16,7 +16,6 @@ import pyflagsercount
 import pyflagser
 import math
 
-from .classic import reciprocal_connections_adjacency
 from .local import neighbourhood
 
 #Imports not used as global imports, check what can be removed.

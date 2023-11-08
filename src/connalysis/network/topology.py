@@ -276,6 +276,7 @@ def node_k_degree(adj, node_properties=None, direction=("IN", "OUT"), max_dim=-1
 
 def simplex_counts(adj, node_properties=None,max_simplices=False,
                    threads=1,max_dim=-1, simplex_type='directed', **kwargs):
+    # TODO: ADD TRANSPOSE
     """Compute the number of simplex motifs in the network adj.
     Parameters
     ----------
@@ -446,7 +447,7 @@ def node_participation(adj, node_properties=None, max_simplices=False,
     return flagser_counts["node_participation"]
 
 def edge_participation(adj, node_properties=None, max_simplices=False,
-                       threads=1,max_dim=-1,simplex_type='directed', return_simplex_counts=False, **kwargs):
+                       threads=1,max_dim=-1,simplex_type='directed', return_simplex_counts=False, verbose=False, **kwargs):
     """Compute the number of simplex motifs in the network adj each edge is part of.
     See simplex_counts for details.
     Parameters
@@ -498,7 +499,7 @@ def edge_participation(adj, node_properties=None, max_simplices=False,
 
     flagser_out = pyflagsercount.flagser_count(adj, edge_containment=True, threads=threads,
                                      max_simplices=max_simplices, max_dim=max_dim)
-    print("Done running flagser")
+    logging.info("Done running flagser")
     e_contain = pd.DataFrame.from_dict(flagser_out['edge_contain_counts'], orient="index").fillna(0).astype(int)
     if return_simplex_counts:
         return e_contain, flagser_out["cell_counts"]
@@ -930,7 +931,8 @@ def _generate_abstract_edges_in_simplices(dim, position="all"):
     return edges_abstract
 
 
-def extract_submatrix_of_simplices(simplex_list, N, position="all"):
+#def extract_submatrix_of_simplices(simplex_list, N, position="all"):
+def extract_submatrix_from_simplex_list(simplex_list, N, position="spine"):
     """Generate binary submatrix of NxN matrix of edges in simplex list.
 
     Parameters
@@ -944,16 +946,18 @@ def extract_submatrix_of_simplices(simplex_list, N, position="all"):
     position: str
         Position of the edges to extract
 
-        'all': all edges of the simplex
+        'all': all edges of the simplex (it is more efficient to do this with ``extract_submatrix_from_edge_par``)
 
         'spine': edges along the spine of the simplex
         (only makes sense for directed simplices)
 
     Returns
     -------
-    csr bool matrix
+    coo bool matrix
         Matrix with of shape (N,N) with entries `True` corresponding to edges in simplices.
     """
+    if position=="all":
+        logging.warning("For edges in any position it is more efficient to use extract_submatrices_from_edge_participation")
     if simplex_list.shape[0] == 0:
         return sp.csr_matrix((N, N), dtype=bool)  # no simplices in this dimension
     else:
@@ -961,12 +965,51 @@ def extract_submatrix_of_simplices(simplex_list, N, position="all"):
         edges_abstract = _generate_abstract_edges_in_simplices(dim,
                                                                position=position)  # abstract list of edges to extract from each simplex
         edges = np.unique(np.concatenate([simplex_list[:, edge] for edge in edges_abstract]), axis=0)
-        return (sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])), shape=(N, N))).tocsr().astype(bool)
+        return (sp.coo_matrix((np.ones(edges.shape[0]), (edges[:, 0], edges[:, 1])), shape=(N, N))).astype(bool)
 
+
+def extract_submatrices_from_edge_participation(edge_par, N, dims=None, thresh=1):
+    """Generate binary submatrix of an NxN matrix of edges with edge participation greater than thresh.
+
+    Parameters
+    ----------
+    edge_par: DataFrame
+        DataFrame with edge participation values formatted as the output of ``edge_participation`` i.e.,
+        indexed by the edges in adj and with columns de dimension for which edge participation is counted
+    dims: list of ints
+        dimensions of the simplices to consider, if ``None`` all positive dimensions are considered
+    N: int
+        Number of nodes in original graph defining the NxN matrix.
+        The indices of edge_par must be smaller than N
+    thresh: int
+        Threshold value at which to consider an edge.  If thresh=1 all edges that
+        elong to at least one simplex are considered.
+
+    Returns
+    -------
+    dict
+        keys: dimensions
+        values: sparse binary matrices in coo format of shape (N,N) with entries `True` corresponding to edges
+        that belong to at least thresh simplices of the dimension in its corresponding key.
+    """
+
+    if dims is None: dims = edge_par.columns
+    dims = np.array(dims)
+    assert np.isin(dims,
+                   edge_par.columns).all(), "The array dims shoulds be a subset of the columns of edge participation"
+    mats = {}
+    # Reformat edge_participation (Maybe already do this in the output of edge_participation?)
+    df = edge_par.set_index(keys=pd.MultiIndex.from_tuples(edge_par.index)).reset_index(names=["row", "col"])
+    for dim in dims:
+        edges = df[df[dim] >= thresh]
+        mats[f'dimension_{dim}'] = sp.coo_matrix((np.ones(len(edges)), (edges.row, edges.col)), shape=(N, N)).astype(
+            bool)
+    return mats
 
 def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_type='directed',
                         simplex_list=None, N=None, position="all",
                         **kwargs):
+    # TODO: Deprecate or update to use edge_participation
     # Choose only some dimensions???
     # check max dim is consistent with simplex_list only used if adj is given and must be >0
     # adj only used is simplex list is none
@@ -1065,56 +1108,12 @@ def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_
     return skeleton_mats
 
 
-def count_rc_edges_k_skeleton(simplex_list_at_dim, N, position="all", return_mat=False):
-    """Count the edges and reciprocal edges in the simplex list provided.
-    If the list is all the k (maximal)simplices of a directed flag complex, it is counting the number of
-    edges and reciprocal edges of the its k-skeleton.
-
-    Parameters
-    ----------
-    simplex_list_at_dim: 2d-array
-        Array of dimension (no. of simplices, dimension).
-        Each row corresponds to a list of nodes on a simplex indexed by the
-        ordering given for all nodes in the graph
-    N: int
-        Number of nodes in original graph
-    position: str
-        Position of the edges to extract
-
-        'all': all edges of the simplex
-
-        'spine': edges along the spine of the simplex
-        (only makes sense for directed simplices)
-
-    Returns
-    -------
-    tuple of ints
-        Counts of (edges, reciprocal edges) in the simplex list
-
-    Raises
-    ------
-    AssertionError
-        If N <= than an entry in the simplex list
-    """
-
-    assert N > np.max(simplex_list_at_dim), \
-        "N must be larger than all the entries in the simplex list"
-
-    mat = extract_submatrix_of_simplices(simplex_list_at_dim, N, position=position)
-    edge_counts = mat.sum()
-    rc_edge_counts = rc_submatrix(mat).sum()
-    # Return mats?
-    if return_mat == True:
-        return edge_counts, rc_edge_counts, mat
-    else:
-        return edge_counts, rc_edge_counts
-
 
 def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
-                           simplex_list=None, N=None,
-                           position="all", return_mats=False, **kwargs):
-    # check max dim is consistent with simplex_list only used if adj is given and must be >0
-    """Count the edges and reciprocal edges in the k-skeleta of the directed flag complex of adj for all
+                            N=None, simplex_list=None, edge_par=None,
+                           simplex_type='directed',position="all",
+                           return_mats=False,threads=8, **kwargs):
+    """Count the edges and reciprocal edges in the k-``skeleta`` of the directed flag complex of adj for all
     k<= max_dim. If simplex list are provided, it will compute the skeleta directly from these and not use adj.
 
     Parameters
@@ -1133,8 +1132,13 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
         Each array is of dimension (no. of simplices, dimension).
         Each row corresponds to a list of nodes on a simplex.
         If provided adj will be ignored but N will be required.
+    edge_par: DataFrame
+        DataFrame with edge participation values formatted as the output of ``edge_participation`` i.e.,
+        indexed by the edges in adj and with columns de dimension for which edge participation is counted
     N: int
         Number of nodes in original graph.
+    simple_type: str
+        See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
     position: str
         Position of the edges to extract
 
@@ -1144,7 +1148,9 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
         (only makes sense if simplices are directed)
     return_mats : bool
         If True return the matrices of the underlying graphs of the k-skeleta as in
-        get_k_skeleta_graph.
+        get_k_skeleta_graph
+    threads: int
+        Number of threads into which to parallelize the computation
 
     Returns
     -------
@@ -1155,40 +1161,86 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
     Raises
     ------
     AssertionError
-        If neither adj nor simplex_list are provided
+        If neither adj nor precomputed simplex_list or edge_par values are provided
     AssertionError
         If N <= than an entry in the simplex list
+
+    See Also
+    --------
+    [edge_participation](network.md#src.connalysis.network.topology.edge_participation) :
+    A function that counts the number of times an edge is part of a simplex.
+
+    [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts) :
+    A function that counts the simplices forming the complex from which bettis are count,
+    where simplex types are described in detail.
     """
 
-    assert not (adj is None and simplex_list is None), "Either adj or simplex_list need to be provided"
-
-    if (simplex_list is None):  # Compute simplex lists if not provided
-        simplex_list = list_simplices_by_dimension(adj, node_properties=None,
-                                                            max_simplices=max_simplices, max_dim=max_dim,
-                                                            simplex_type='directed',
-                                                            nodes=None, verbose=False, **kwargs)
-        N = adj.shape[0]
+    # Check if enough inputs are provided
+    if (position == 'spine') and (simplex_list is not None):
+        not_precomputed = False
+    elif (position == 'all') and (edge_par is not None):
+        not_precomputed = False
     else:
-        assert N > np.nanmax(simplex_list.explode().explode()), \
-            "N must be larger than all the entries in the simplex list"
+        not_precomputed = True
+
+    assert not (adj is None and not_precomputed), "Either adj or simplex_list/edge_participation need to be provided"
+
+    if not_precomputed:
+        N = adj.shape[0]
+        if position == "spine":  # Compute simplex since they are not provided
+            simplex_list = list_simplices_by_dimension(adj, node_properties=None,
+                                                       max_simplices=max_simplices, max_dim=max_dim,
+                                                       simplex_type='directed',
+                                                       nodes=None, verbose=False, **kwargs)
+        elif position == "all":  # More efficient than going from simplex lists if the position is not important
+            edge_par, simplex_counts = edge_participation(adj, node_properties=None, max_simplices=max_simplices,
+                                                          threads=threads, max_dim=max_dim, simplex_type=simplex_type,
+                                                          return_simplex_counts=True)
+
+    else:
+        if position == "spine":
+            assert N > np.nanmax(simplex_list.explode().explode()), \
+                "N must be larger than all the entries in the simplex list"
 
     # Extract 'k'-skeleton and count (rc-)edges
-    dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    if position == "spine":
+        dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    elif position == "all":
+        dims = pd.Index(edge_par.drop(0, axis=1, errors="ignore").columns, name="dim")
+    print(dims)
     edge_counts = pd.DataFrame(index=dims, columns=["number_of_edges", "number_of_rc_edges", "rc/edges_percent"])
     if return_mats == True:
         skeleton_mats = {f'dimension_{dim}': None for dim in dims}
-    print(dims)
-    for dim in dims:
-        if simplex_list[dim].size > 0:
-            edges, rc_edges, mat = count_rc_edges_k_skeleton(simplex_list[dim], N,
-                                                                      position=position, return_mat=True)
+    print(dims)  # Delete me?
+
+    if position == "spine":
+        for dim in dims:
+            if simplex_list[dim].size > 0:
+                assert N > np.max(simplex_list[dim]), \
+                    "N must be larger than all the entries in the simplex list"
+                mat = extract_submatrix_from_simplex_list(simplex_list[dim], N, position=position)
+                edges = mat.sum();
+                rc_edges = rc_submatrix(mat).sum()
+                edge_counts["number_of_edges"].loc[dim] = edges
+                edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
+                edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
+            else:
+                edge_counts["number_of_edges"].loc[dim] = 0
+            if return_mats == True:
+                skeleton_mats[f'dimension_{dim}'] = mat
+    elif position == "all":
+        skeleton_mats = extract_submatrices_from_edge_participation(edge_par, N, dims=dims, thresh=1)
+        for dim in dims:
+            edges = skeleton_mats[f'dimension_{dim}'].sum()
             edge_counts["number_of_edges"].loc[dim] = edges
-            edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
-            edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
-        else:
-            edge_counts["number_of_edges"].loc[dim] = 0
-        if return_mats == True:
-            skeleton_mats[f'dimension_{dim}'] = mat
+            if edges > 0:
+                rc_edges = rc_submatrix(skeleton_mats[f'dimension_{dim}']).sum()
+                edge_counts["number_of_rc_edges"].loc[dim] = rc_edges
+                edge_counts["rc/edges_percent"].loc[dim] = (rc_edges * 100) / edges
+            else:
+                edge_counts["number_of_rc_edges"].loc[dim] = 0
+                edge_counts["rc/edges_percent"].loc[dim] = 0
+
     if return_mats == True:
         return edge_counts, skeleton_mats
     else:

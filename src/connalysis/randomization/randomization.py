@@ -517,3 +517,67 @@ def bishuffled_model(adj, seed = None):
     target_bedges = ut_bedges.count_nonzero()
     bedges1, bedges2 = half_matrix(ut_bedges, generator)
     return add_bidirectional_connections(adj - bedges1 - bedges2.T, target_bedges, generator)
+
+#######################################################
+################ GRAPH MODIFICATIONS  #################
+#######################################################
+def add_rc_connections_skeleta(adj,factors,dimensions=None, skeleta=None, threads=8, seed=0, return_skeleta=False):
+    """Function to add reciprocal connections at random to adj on the skeleta of maximal simplices of adj
+
+    Parameters
+    ----------
+    adj : sparse matrix
+        Adjacency matrix of a directed network
+    factors: int or dict
+        Factor by which to multiply the reciprocal connections on the ``k``-skeleta of adj.  If factors is an int
+        the same factor is used on all dimensions.  Otherwise, factors can be a dictionary with keys dimensions
+        and values the factor by which to multiply the number of reciprocal connections on that dimensions.
+    dimensions: array
+        The dimensions at which to increase the number of reciprocal connections.  If ``None`` then all dimensions
+        will be used
+    skeleta: dict
+        Dictionary with keys f'dimension_{dim}' for dim in dimensions and values binary sparse sub-matrices of adj
+        on which reciprocal connections will be added.
+    threads: int
+        Number of threads on which to parallelize the skeleta computation if not pre-computed
+    seed : int
+        Random seed to be used to selecte edges that will become reciprocal
+
+    Returns
+    -------
+    csc_matrix, dict
+        Digraph with add reciprocal connections
+        If return_skeleta=True it also returns the skeleta of maximal simplices of adj in the dimensions selected
+
+    """
+    adj=adj.tocsr()
+    from connalysis.network.topology import rc_submatrix
+    from .rand_utils import add_bidirectional_connections
+    # Compute skeleton graphs if not precomputed
+    if skeleta is None:
+        from connalysis.network.topology import get_k_skeleta_graph
+        max_simplices=True # Add option for all simplices?
+        skeleta=get_k_skeleta_graph(adj, max_simplices=max_simplices, dimensions=dimensions, threads=threads)
+    # Restrict to dimensions that contain simplices
+    if dimensions is None:
+        dimensions = np.array([int(key[10:]) for key in skeleta.keys()])
+    else:
+        dimensions = np.intersect1d(np.array([int(key[10:]) for key in skeleta.keys()]), dimensions)
+    # Generate mapping between factors and dimensions or check the one provided
+    if isinstance(factors,int):
+        factors={dim:factors for dim in dimensions}
+    else:
+        assert isinstance(factors, dict), "factors must be int or dictionary"
+        assert np.isin(dimensions, np.array(list(factors.keys()))).all(), "all dimensions must be a key in factors"
+
+    # Add bidirectional connections
+    generator=np.random.default_rng(seed)
+    rc_add={dim:((factors[dim]-1)*(rc_submatrix(skeleta[f'dimension_{dim}']).sum()))//2 for dim in dimensions}
+    print("Number of reciprocal connections added per dimension"); display(rc_add) # Remove or add verbose option
+    M=adj.copy()
+    for dim in dimensions:
+        M+=add_bidirectional_connections(skeleta[f'dimension_{dim}'], rc_add[dim], generator).astype(bool)
+    if return_skeleta:
+        return M, skeleta
+    else:
+        return M

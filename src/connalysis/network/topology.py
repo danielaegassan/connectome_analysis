@@ -1005,14 +1005,11 @@ def extract_submatrices_from_edge_participation(edge_par, N, dims=None, thresh=1
             bool)
     return mats
 
-def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_type='directed',
-                        simplex_list=None, N=None, position="all",
-                        **kwargs):
-    # TODO: Deprecate or update to use edge_participation
-    # Choose only some dimensions???
-    # check max dim is consistent with simplex_list only used if adj is given and must be >0
-    # adj only used is simplex list is none
-    # Add requirement to give adj is direction is undirected and multiply adj by mat!!!
+
+def get_k_skeleta_graph(adj=None, dimensions=None, max_simplices=False,
+                        N=None, simplex_list=None, edge_par=None,
+                        simplex_type='directed', position="all",
+                        threads=8, **kwargs):
     """Return the edges of the (maximal) k-skeleton of the flag complex of adj for all k<= max_dim in the position determined
     by position.
     If simplex list are provided, it will compute the edges directly from these and not use adj,
@@ -1052,6 +1049,8 @@ def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_
 
         'spine': edges along the spine of the simplex
         (only makes sense if simplices are directed)
+    threads: int
+        Number of threads into which the computation should be parallelized
 
     Returns
     -------
@@ -1075,37 +1074,54 @@ def get_k_skeleta_graph(adj=None, max_simplices=False, dimensions=None, simplex_
 
     """
 
-    assert not (adj is None and simplex_list is None), "Either adj or simplex_list need to be provided"
+    # Check if enough inputs are provided
+    if (position == 'spine') and (simplex_list is not None):
+        not_precomputed = False
+    elif (position == 'all') and (edge_par is not None):
+        not_precomputed = False
+    else:
+        not_precomputed = True
+    assert not (adj is None and not_precomputed), "Either adj or simplex_list/edge_participation need to be provided"
 
+    # Determine dimensions
     if dimensions == None:
         max_dim = -1
     else:
         max_dim = np.max(np.array(dimensions))
-
-    if (simplex_list is None):  # Compute simplex lists if not provided
-        simplex_list = list_simplices_by_dimension(adj, node_properties=None,
-                                                   max_simplices=max_simplices, max_dim=max_dim,
-                                                   simplex_type=simplex_type,
-                                                   nodes=None, verbose=False, **kwargs)
+    # Compute simplex list or edge particiption if not precomputed
+    if not_precomputed:
         N = adj.shape[0]
+        if position == "spine":  # Compute simplex since they are not provided
+            simplex_list = list_simplices_by_dimension(adj, node_properties=None,
+                                                       max_simplices=max_simplices, max_dim=max_dim,
+                                                       simplex_type='directed',
+                                                       nodes=None, verbose=False, **kwargs)
+        elif position == "all":  # More efficient than going from simplex lists if the position is not important
+            edge_par, simplex_counts = edge_participation(adj, node_properties=None, max_simplices=max_simplices,
+                                                          threads=threads, max_dim=max_dim, simplex_type=simplex_type,
+                                                          return_simplex_counts=True)
     else:
-        assert isinstance(N, int), 'If simplex list are provide N must be provided'
-        assert N > np.nanmax(simplex_list.explode().explode()), \
-            "N must be larger than all the entries in the simplex list"
-        assert (dimensions == None) or np.isin(dimensions, simplex_list.index).all(), \
-            f'Some requested dimensions={dimensions} are not in the simplex lists index={simplex_list.index.to_numpy()}'
+        if position == "spine":
+            assert N > np.nanmax(simplex_list.explode().explode()), \
+                "N must be larger than all the entries in the simplex list"
     # Extract 'k'-skeleton
-    dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    if position == "spine":
+        dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
+    elif position == "all":
+        dims = pd.Index(edge_par.drop(0, axis=1, errors="ignore").columns, name="dim")
     if dimensions != None:
         dims = dims[np.isin(dims, dimensions)]
     skeleton_mats = {f'dimension_{dim}': None for dim in dims}
-    for dim in dims:
-        mat = extract_submatrix_of_simplices(simplex_list[dim], N, position=position)
-        if simplex_type in ('undirected', 'reciprocal'):
-            mat = (mat + mat.T).astype(bool)
-        skeleton_mats[f'dimension_{dim}'] = mat
+    if position == "spine":
+        for dim in dims:
+            if simplex_list[dim].size > 0:
+                assert N > np.max(simplex_list[dim]), \
+                    "N must be larger than all the entries in the simplex list"
+                skeleton_mats[f'dimension_{dim}'] = extract_submatrix_from_simplex_list(simplex_list[dim], N,
+                                                                                        position=position)
+    elif position == "all":
+        skeleton_mats = extract_submatrices_from_edge_participation(edge_par, N, dims=dims, thresh=1)
     return skeleton_mats
-
 
 
 def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
@@ -1206,11 +1222,9 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
         dims = simplex_list.index[simplex_list.index != 0]  # Doesn't make sense to look at the 0-skeleton
     elif position == "all":
         dims = pd.Index(edge_par.drop(0, axis=1, errors="ignore").columns, name="dim")
-    print(dims)
     edge_counts = pd.DataFrame(index=dims, columns=["number_of_edges", "number_of_rc_edges", "rc/edges_percent"])
     if return_mats == True:
         skeleton_mats = {f'dimension_{dim}': None for dim in dims}
-    print(dims)  # Delete me?
 
     if position == "spine":
         for dim in dims:

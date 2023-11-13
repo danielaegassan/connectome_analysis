@@ -581,3 +581,68 @@ def add_rc_connections_skeleta(adj,factors,dimensions=None, skeleta=None, thread
         return M, skeleta
     else:
         return M
+
+def add_rc_connections(adj,n_rc, seed=0):
+    """Function to turn a fixed amount of unidirectional connections of adj into reciprocal connections.
+
+    Parameters
+    ----------
+    adj : sparse matrix
+        Adjacency matrix of a directed network
+    n_rc : Number of reciprocal connections to be added
+    seed : int
+        Random seed to be used to selecte edges that will become reciprocal
+
+    Returns
+    -------
+    matrix
+        Digraph with n_rc more edges than adj, all of which form reciprocal connections
+    """
+    # TODO: Move this function from utils and change dependencies
+    from .rand_utils import add_bidirectional_connections
+    # Add bidirectional connections
+    generator=np.random.default_rng(seed)
+    return add_bidirectional_connections(adj, n_rc, generator).astype(bool)
+
+def add_connections(adj,nc, seed=0,sparse_mode=True, max_iter=30):
+    """Function add connections at random
+
+    Parameters
+    ----------
+    adj : matrix
+        Adjacency matrix of a directed network
+    nc : Number of connections to be added
+    seed : int
+        Random seed to be used to selecte edges that will become reciprocal
+    sparse_mode: bool
+        If sparse_mode is ``True`` the matrix is generated iteratively restricting to a sparse format.
+        If ``False`` adj is converted to dense and edges are added in a single step
+
+    Returns
+    -------
+    bool matrix
+        Digraph with nc more edges than adj
+    """
+    adj=adj.astype(bool)
+    # Add bidirectional connections
+    if sparse_mode:
+        # TODO: Search for more efficient way to do this
+        N=adj.shape[0]; E=adj.sum(); k=0 # Number nodes, target edges and iteration counter
+        while adj.sum()< E +nc: #target number of edges
+            if k>max_iter:
+                print("More than max_it iterations tried, increase number of iterations or try sparse_mode =False")
+                break
+            den=(E+nc-adj.sum())/(N*N) #density of matrix added
+            generator = np.random.default_rng(seed)
+            A=sp.random(*adj.shape, density=den, format='csr', dtype = 'bool', random_state = generator)
+            A.setdiag(0)
+            adj=adj+A; k+=1
+        adj.eliminate_zeros()
+    else:
+        if sp.issparse(adj): adj=adj.toarray()
+        ul_ind = np.where(np.eye(*adj.shape) == 0) # non-diagonal indices
+        zero_ind=np.where(adj[ul_ind]==0)
+        generator = np.random.default_rng(seed)
+        selection=zero_ind[0][generator.choice(zero_ind[0].shape[0], replace=False, size=nc)]
+        adj[(ul_ind[0][selection],ul_ind[1][selection])]=1
+    return adj

@@ -17,6 +17,12 @@ logging.basicConfig(format="%(asctime)s %(levelname)-8s %(message)s",
 #######################################################
 ################# PROBABILITY MODELS  #################
 #######################################################
+
+def _dict_to_coo(adj, N):
+    # Utility function to format dict into scipy.sparse.coo
+    return sp.coo_matrix((np.ones(len(adj['row'])), (adj['row'], adj['col'])), shape=(N, N))
+
+
 def run_ER(n, p, threads=8, seed=(None,None)):
     """Creates an Erdos Renyi digraph.
 
@@ -52,9 +58,11 @@ def run_ER(n, p, threads=8, seed=(None,None)):
     """
     assert (p >= 0 and p <= 1), "p must be between 0 and 1"
     if seed[0]==None or seed[1]==None:
-        return gm.ER(n,p,threads)
+        adj = gm.ER(n,p,threads)
     else:
-        return gm.ER(n,p,threads,seed[0],seed[1])
+        adj = gm.ER(n,p,threads,seed[0],seed[1])
+    return _dict_to_coo(adj,n)
+
 
 
 def run_SBM(n, probs, blocks, threads=8, seed=(None,None)):
@@ -104,9 +112,10 @@ def run_SBM(n, probs, blocks, threads=8, seed=(None,None)):
     """
 
     if seed[0]==None or seed[1]==None:
-        return gm.SBM(n, probs, blocks, threads)
+        adj = gm.SBM(n, probs, blocks, threads)
     else:
-        return gm.SBM(n, probs, blocks, threads, seed[0], seed[1])
+        adj = gm.SBM(n, probs, blocks, threads, seed[0], seed[1])
+    return _dict_to_coo(adj, n)
 
 
 def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
@@ -142,9 +151,10 @@ def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
 
     """
     if seed[0]==None or seed[1]==None:
-        return gm.DD2(n,a,b,xyz,threads)
+        adj = gm.DD2(n,a,b,xyz,threads)
     else:
-        return gm.DD2(n,a,b,xyz,threads,seed[0],seed[1])
+        adj = gm.DD2(n,a,b,xyz,threads,seed[0],seed[1])
+    return _dict_to_coo(adj,n)
 
 def run_DD2_model(adj, node_properties,
                   model_params_dd2=None, #an analysis that could be loaded from the pipeline
@@ -227,9 +237,10 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
 
     """
     if seed[0]==None or seed[1]==None:
-        return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
+        adj = gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads)
     else:
-        return gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads,seed[0],seed[1])
+        adj = gm.DD3(n,a1,b1,a2,b2,xyz,depths,threads,seed[0],seed[1])
+    return _dict_to_coo(adj,n)
 
 
 def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
@@ -282,9 +293,10 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
     """
 
     if seed[0]==None or seed[1]==None:
-        return gm.DD2_block_pre(n, probs, blocks, xyz, threads)
+        adj = gm.DD2_block_pre(n, probs, blocks, xyz, threads)
     else:
-        gm.DD2_block_pre(n, probs, blocks, xyz, threads, seed[0], seed[1])
+        adj = gm.DD2_block_pre(n, probs, blocks, xyz, threads, seed[0], seed[1])
+    return _dict_to_coo(adj,n)
 
 
 def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
@@ -336,9 +348,10 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
 
     """
     if seed[0]==None or seed[1]==None:
-        return gm.DD2_block(n, probs, blocks, xyz, threads)
+        adj = gm.DD2_block(n, probs, blocks, xyz, threads)
     else:
-        return gm.DD2_block(n, probs, blocks, xyz, threads, seed[0], seed[1])
+        adj = gm.DD2_block(n, probs, blocks, xyz, threads, seed[0], seed[1])
+    return _dict_to_coo(adj,n)
 
 
 #######################################################

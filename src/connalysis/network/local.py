@@ -122,6 +122,69 @@ def neighborhood(adj, v, pre=True, post=True, include_center=True, return_neighb
     else:
         return submat_at_ind(adj, nb_ind)
 
+def neighborhood_of_set_indices(M, node_set, pre=True, post=True):
+    """Computes the indices of the neighbors of the nodes in node_set
+
+            Parameters
+            ----------
+            M : sparse matrix or 2d array
+                The adjacency matrix of the graph
+            pre : bool
+                If ``True`` compute the nodes mapping to the nodes in node_set (the in-neighbors of the node_set)
+            post : bool
+                If ``True`` compute the nodes that the centers map to node_set (the out-neighbors of the node_set)
+            node_set : 1d-array
+                The indices of the nodes for which the neighbors need to be computed.
+
+            Returns
+            -------
+            array
+                indices of the neighbhors of node_set
+
+            Raises
+            ------
+            AssertionError
+                If both pre and post are ``False``
+    """
+    assert np.logical_or(pre, post), "At least one of the pre/post parameters must be True"
+    return np.unique(np.concatenate(neighborhood_indices(M,pre=pre,post=post,all_nodes=False,centers=node_set).values))
+
+def neighborhood_of_set(M, node_set, pre=True, post=True, include_centers=True, return_neighbors=False):
+    """Gets the neighborhood of the nodes in node_set
+            Parameters
+            ----------
+            M : sparse matrix or 2d array
+                The adjacency matrix of the graph
+            node_set : array
+                The indices of the nodes of which the neighborhood will be computed
+            pre : bool
+                If ``True`` compute the submatrix on the nodes mapping to node_set (the in-neighbors of node_set)
+            post : bool
+                If ``True`` compute the submatrix on the nodes that node_set maps to (the out-neighbors of node_set)
+            include_center : bool
+                If ``True`` include node_set in the graph
+            return_neighbors : bool
+                If ``True`` also return the indices in M of the neighbors of node_set
+
+            Returns
+            -------
+            matrix (sparse if M is sparse)
+                If pre = post = ``True`` it returns the full neighbohood of node_set
+
+                If pre = ``True`` and post = ``False``it returns the in-neighborhood of node_set
+
+                If pre = ``False`` and post = ``True``it returns the out-neighborhood of node_set
+    """
+    nodes=neighborhood_of_set_indices(M, node_set, pre, post)
+    if include_centers:
+        nodes=np.unique(np.concatenate([node_set, nodesA]))
+    if isinstance(M, sp.coo_matrix): M=M.tocsr()
+    # Slicing in different ways depending on matrix type
+    if isinstance(M, np.ndarray): nbd= M[np.ix_(nodes, nodes)]
+    if isinstance(M, sp.csr_matrix): nbd= M[nodes].tocsc()[:, nodes]
+    if isinstance(M, sp.csc_matrix): nbd= M[:,nodes].tocsr()[nodes]
+    if return_neighbors: return nbd, nodes
+    else: return nbd
 
 def property_at_neighborhoods(adj, func, pre=True, post=True,include_center=True,
                              all_nodes=True, centers=None, **kwargs):

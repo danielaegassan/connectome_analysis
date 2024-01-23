@@ -1,16 +1,189 @@
 """
-Functions to analyze activity across simplices.
-author: Daniela Egas Santander, last update: 11.2023
+Functions to average (functional or structural) metrics across simplices or neighborhoods.
+Author(s): Daniela Egas Santander,
+Last update: 11.2023
 """
 
 import numpy as np
 import pandas as pd
-from scipy.stats import sem
-import conntility
+from scipy import stats
 from tqdm import tqdm
+import operator
 
 
-# Restriction to valid gids i.e., gids that are both in the connectome and that have recorded activity
+def node_stats_per_position_single(simplex_list, values, with_multiplicity=True):
+    """ Get mean, standard deviation and standard error of the mean averaged across simplex lists and filtered per position
+    Parameters
+    ----------
+    simplex list: 2d-array
+        Array of dimension (no. of simplices, dimension) listing simplices to be considered.
+        Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
+        All entries must be an index in values
+    values: Series
+        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+        and values the values on that node to be averaged.
+    with_multiplicity: bool
+        if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node
+        participates in a simplex in a given position
+        if ``False`` repetitions of a node in a given position are ignored.
+
+    Returns
+    -------
+    DataFrame
+        with index, the possible positions of o node in a ``k``-simplex and columns the mean, standard deviation and
+        standard error of the mean for that position
+    """
+    # Filter values
+    if with_multiplicity:
+        vals_sl = values.loc[simplex_list.flatten()].to_numpy().reshape(simplex_list.shape)
+    else:
+        vals_sl = pd.concat([vals.loc[np.unique(simplex_list[:, pos])] for pos in range(simplex_list.shape[1])],
+                            axis=1, keys=range(simplex_list.shape[1]))
+    # Compute stats
+    stats_vals = pd.DataFrame(index=pd.Index(range(simplex_list.shape[1]), name="position"))
+    # Stats per position
+    stats_vals["mean"] = np.nanmean(vals_sl, axis=0)
+    stats_vals["std"] = np.nanstd(vals_sl, axis=0)
+    stats_vals["sem"] = stats.sem(vals_sl, axis=0, nan_policy="omit")
+    # Stats in any position
+    stats_vals.loc["all", "mean"] = np.nanmean(vals_sl)
+    stats_vals.loc["all", "std"] = np.nanstd(vals_sl)
+    stats_vals.loc["all", "sem"] = stats.sem(vals_sl, axis=None, nan_policy="omit")
+    return stats_vals
+
+def node_stats_per_position(simplex_lists, values, dims=None, with_multiplicity=True):
+    """ Get across dimensions mean, standard deviation and standard error of the mean averaged across simplex lists
+    and filtered per position
+    Parameters
+    ----------
+    simplex lists: dict
+        keys: are int values representing dimensions
+        values: for key ``k`` array of dimension (no. of simplices, ``k``) listing simplices to be considered.
+        Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
+        All entries must be an index in values
+    values: Series
+        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+        and values the values on that node to be averaged.
+    with_multiplicity: bool
+        if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node
+        participates in a simplex in a given position
+        if ``False`` repetitions of a node in a given position are ignored.
+    dims: iterable
+        dimensions for which to run the analysis, if ``None`` all the keys of simplex lists will be analyzed
+
+    Returns
+    -------
+    dict
+        keys the dimensions anlayzed and values for key ``k`` a DataFrame
+        with index, the possible positions of o node in a ``k``-simplex and columns the mean, standard deviation and
+        standard error of the mean for that position.
+    """
+    if dims is None:
+        dims = simplex_lists.index
+    stats_dict = {}
+    for dim in tqdm(dims):
+        sl = simplex_lists.loc[dim]
+        stats_dict[dim] = node_stats_per_position_single(sl, values, with_multiplicity=with_multiplicity)
+    return stats_dict
+
+
+def node_stats_participation(participation, vals, condition=operator.eq, dims=None):
+    """ Get statistics of the values in vals across nodes filtered using node participation
+    Parameters
+    ----------
+    participation: DataFrame
+        DataFrame of node participation with index the nodes in nodes of an NxN matrix to consider,
+        columns are dimensions and values are node particpation see HELP AQUI AQUI
+    values: Series
+        pandas Series with index the nodes of the NxN matrix of where node participation has been computed
+        and vals the values on that node to be averaged.
+    condition: operator
+        operator with which to filter the nodes. The default ``operator.eq`` filters nodes such that their maximal
+        dimension of node participation is a given value.
+        Alternatively, ``operator.ge`` filters nodes such that their maximal dimension of node participation is at least a given
+        value.
+    dims: iterable
+        dimensions for which to run the analysis, if ``None`` all the columns of participation will be analyzed
+
+    Returns
+    -------
+    DataFrame
+        with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals
+        where the nodes have been grouped according to the condition given.
+
+    See Also
+    --------
+    [node_stats_per_position_single] (network.md#src.connalysis.network.stats.(network.md#src.connalysis.network.topology.simplex_counts):
+    A similar function where the position of the nodes in the simplex are taken into account.  Note in particular that
+    if condition = ``operator.ge`` the weighted_mean of this analyisis is equivalent than the value given by this function for position ``all``.
+    However the computation using node participation is more efficient.
+    [node_participation](network.md#src.connalysis.network.topology.node_participation) :
+    A function computes the node participation DataFrame of a given network.
+    """
+    par_df = participation.copy()
+    if dims is None:
+        dims = par_df.columns
+    vals = vals.rename("values")
+    par_df["max_dim"] = (par_df > 0).sum(axis=1) - 1  # maximal dimension a node is part of
+    stats_vals = {}
+    for dim in dims:
+        print(dim)
+        mask = condition(par_df.max_dim, dim)
+        c = pd.DataFrame(vals.loc[par_df[mask].index], columns=["values"])
+        c["weight"] = par_df[mask][dim]
+        w_mean = c.apply(np.product, axis=1).sum() / (c["weight"].sum())
+        stats_vals[dim] = (c.shape[0],  # Number of nodes fulfilling the condition
+                           np.nanmean(c["values"]),
+                           np.nanstd(c["values"]),
+                           stats.sem(c["values"], nan_policy="omit"),
+                           w_mean  # mean weighted by participation
+                           )
+    stats_vals = pd.DataFrame.from_dict(stats_vals, orient="index",
+                                        columns=["counts", "mean", "std", "sem", "weighted_mean"])
+    stats_vals.index.name = "dim"
+    return stats_vals
+
+'''###POTENTIALLY USEFUL OR DELETE
+
+def edge_par_filter(edge_par_df, dims = None, id_mapping=None):
+    # TODO: Get edge_par inside function and take adj instead?
+    # Build df with index edges indexed by id_mapping and columns edge_participation per dimension and max_dimension
+    # If id_mapping == None nodes are indexed by range(number of nodes) and edges accordingly
+    # dims = None (do all dimensions), assert dims are in columns
+    # out df
+    pass
+def node_par_filter(node_par_df, dims = None, id_mapping=None):
+    # TODO: Get node_par inside function and take adj instead?
+    # Build df with index nodex indexed by id_mapping and columns edge_participation per dimension and max_dimension
+    # If id_mapping == None nodes are indexed by range(number of nodes)
+    # dims = None (do all dimensions), assert dims are in columns
+    # out df
+    pass
+
+def slist_edge_filter(slists, edge_type, dims=None, mapping_id=None)
+    # TODO: Get slists inside function and take adj instead?
+    # TODO: Multiple edge_types in one go?
+    # Build df with index nodex indexed by id_mapping and columns edge_participation per dimension and max_dimension
+    # If id_mapping == None nodes are indexed by range(number of nodes)
+    # dims = None (do all dimensions) assert dims are in index
+    # edge_type: function that takes dim and gives source an target
+    # out dict
+    pass
+
+def slist_node_filter(slists, position, dims=None, mapping_id=None)
+    # TODO: Get slists inside function and take adj instead?
+    # TODO: Multiple positions in one go.
+    # Build df with index nodex indexed by id_mapping and columns edge_participation per dimension and max_dimension
+    # If id_mapping == None nodes are indexed by range(number of nodes)
+    # dims = None (do all dimensions) assert dims are in index
+    # position: position of node in simplex
+    # out dict
+    pass
+
+
+#### STUFF FROM MICRONS PAPER
+
+#Restriction to valid gids i.e., gids that are both in the connectome and that have recorded activity
 
 def get_valid_gid(conn_gids, record_gids):
     # Return set of gids for which both included in the connectome and whose activity is measured
@@ -83,4 +256,4 @@ def stats_edge_position(simplex_lists, corr_df,map_gids,valid_gids, edge_selecti
         edges=edges[get_valid_edges_mask(edges, valid_gids)]
         c=corr_df.loc[edges.index]
         stats[dim]=(c.shape[0], c.mean(), sem(c))
-    return pd.DataFrame.from_dict(stats, orient="index", columns=["counts", "mean", "sem"])
+    return pd.DataFrame.from_dict(stats, orient="index", columns=["counts", "mean", "sem"])'''

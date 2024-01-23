@@ -37,7 +37,7 @@ def node_stats_per_position_single(simplex_list, values, with_multiplicity=True)
     if with_multiplicity:
         vals_sl = values.loc[simplex_list.flatten()].to_numpy().reshape(simplex_list.shape)
     else:
-        vals_sl = pd.concat([vals.loc[np.unique(simplex_list[:, pos])] for pos in range(simplex_list.shape[1])],
+        vals_sl = pd.concat([values.loc[np.unique(simplex_list[:, pos])] for pos in range(simplex_list.shape[1])],
                             axis=1, keys=range(simplex_list.shape[1]))
     # Compute stats
     stats_vals = pd.DataFrame(index=pd.Index(range(simplex_list.shape[1]), name="position"))

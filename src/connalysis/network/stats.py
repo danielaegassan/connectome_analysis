@@ -10,19 +10,21 @@ from scipy import stats
 from tqdm import tqdm
 import operator
 
+from .local import neighborhood_indices
+
 
 def node_stats_per_position_single(simplex_list, values, with_multiplicity=True):
     """ Get mean, standard deviation and standard error of the mean averaged across simplex lists and filtered per position
     Parameters
     ----------
-    simplex list: 2d-array
+    simplex_list : 2d-array
         Array of dimension (no. of simplices, dimension) listing simplices to be considered.
         Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
         All entries must be an index in values
-    values: Series
+    values : Series
         pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
         and values the values on that node to be averaged.
-    with_multiplicity: bool
+    with_multiplicity : bool
         if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node
         participates in a simplex in a given position
         if ``False`` repetitions of a node in a given position are ignored.
@@ -56,19 +58,19 @@ def node_stats_per_position(simplex_lists, values, dims=None, with_multiplicity=
     and filtered per position
     Parameters
     ----------
-    simplex lists: dict
-        keys: are int values representing dimensions
-        values: for key ``k`` array of dimension (no. of simplices, ``k``) listing simplices to be considered.
+    simplex_lists : dict
+        keys : are int values representing dimensions
+        values : for key ``k`` array of dimension (no. of simplices, ``k``) listing simplices to be considered.
         Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
         All entries must be an index in values
-    values: Series
+    values : Series
         pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
         and values the values on that node to be averaged.
-    with_multiplicity: bool
+    with_multiplicity : bool
         if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node
         participates in a simplex in a given position
         if ``False`` repetitions of a node in a given position are ignored.
-    dims: iterable
+    dims : iterable
         dimensions for which to run the analysis, if ``None`` all the keys of simplex lists will be analyzed
 
     Returns
@@ -91,18 +93,18 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
     """ Get statistics of the values in vals across nodes filtered using node participation
     Parameters
     ----------
-    participation: DataFrame
+    participation : DataFrame
         DataFrame of node participation with index the nodes in nodes of an NxN matrix to consider,
         columns are dimensions and values are node particpation see HELP AQUI AQUI
-    values: Series
+    values : Series
         pandas Series with index the nodes of the NxN matrix of where node participation has been computed
         and vals the values on that node to be averaged.
-    condition: operator
+    condition : operator
         operator with which to filter the nodes. The default ``operator.eq`` filters nodes such that their maximal
         dimension of node participation is a given value.
         Alternatively, ``operator.ge`` filters nodes such that their maximal dimension of node participation is at least a given
         value.
-    dims: iterable
+    dims : iterable
         dimensions for which to run the analysis, if ``None`` all the columns of participation will be analyzed
 
     Returns
@@ -113,7 +115,7 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
 
     See Also
     --------
-    [node_stats_per_position_single] (network.md#src.connalysis.network.stats.(network.md#src.connalysis.network.topology.simplex_counts):
+    [node_stats_per_position_single] (network.md#src.connalysis.network.stats.node_stats_per_position_single):
     A similar function where the position of the nodes in the simplex are taken into account.  Note in particular that
     if condition = ``operator.ge`` the weighted_mean of this analyisis is equivalent than the value given by this function for position ``all``.
     However the computation using node participation is more efficient.
@@ -142,6 +144,76 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
                                         columns=["counts", "mean", "std", "sem", "weighted_mean"])
     stats_vals.index.name = "dim"
     return stats_vals
+
+
+def node_stats_neighborhood(values, adj=None, pre=True, post=True, all_nodes=True, centers=None,
+                            include_center=True, precomputed=False, neighborhoods=None):
+    """ Get basic statistics of the property values on the neighbhood of the nodes in centers in the
+    graph described by adj.
+    Parameters
+    ----------
+    values : Series
+        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+        and values the values on that node to be averaged.
+    adj : sparse matrix or 2d array
+        The adjacency matrix of the graph
+    pre : bool
+        If ``True`` compute the nodes mapping to the nodes in centers (the in-neighbors of the centers)
+    post : bool
+        If ``True`` compute the nodes that the centers map to (the out-neighbors of the centers)
+    all_nodes : bool
+        If ``True`` compute the neighbors of all nodes in adj, if ``False`` compute only the neighbors of the nodes
+        listed in centers
+    centers : 1d-array
+        The indices of the nodes for which the neighbors need to be computed.  This entry is ignored if
+        all_nodes is ``True`` and required if all_nodes is ``False``
+    include_center : bool
+        If ``True`` it includes the center in the computation otherwise it ignores it
+    precomputed : bool
+        If ``False`` it precomputes the neighbhorhoods in adj,
+        if ``False`` it skips the computation and reads it fromt the input
+    neighborhoods : DataFrame
+        DataFrame of neighbhoord indices. Required if precomputed is ``True``
+
+    Returns
+    -------
+    DataFrame
+        with index, centers to be considered and columns the sum, mean, standard deviation and
+        standard error of the mean of the values in that neighborhood.
+
+    See Also
+    --------
+    [neighborhood_indices] (network.md#src.connalysis.network.local.neighborhood_indices):
+    Function to precompute the neighborhood_indices that can be used if precomputed is set ``True``.
+    Precomputing the neighborhoods would increase efficiency if multiple properties are averaged across neighborhoods.
+    """
+
+    # Single value functions for DataFrames
+    def append_center(x):
+        # To include center in the computation
+        return np.append(x["center"], x["neighbors"])
+
+    def mean_nbd(nbd_indices, v):
+        df = v[nbd_indices]
+        return [np.nansum(df), np.nanmean(df), np.nanstd(df), stats.sem(df, nan_policy="omit")]
+
+    # Get neighborhoods
+    if precomputed:
+        assert isinstance(neighborhoods,
+                          pd.Series), "If precomputed a Series of neighbhoords indexed by their center must be provided"
+    else:
+        assert (adj is not None), "If not precomputed and adjancecy matrix must be provided"
+        neighborhoods = neighborhood_indices(adj, pre=pre, post=post, all_nodes=all_nodes, centers=centers)
+    centers = neighborhoods.index
+    if include_center:
+        neighborhoods = neighborhoods.reset_index().apply(append_center, axis=1)
+    else:
+        neighborhoods = neighborhoods.reset_index(drop=True)
+    stat_vals = pd.DataFrame.from_records(neighborhoods.map(lambda x: mean_nbd(x, values)),
+                                          columns=["sum", "mean", "std", "sem"])
+    stat_vals["center"] = centers
+    return stat_vals.set_index("center")
+
 
 '''###POTENTIALLY USEFUL OR DELETE
 

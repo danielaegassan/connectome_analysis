@@ -476,14 +476,16 @@ def nx_to_np(directed_graph):
 
 
 
-def np_to_nx(adjacency_matrix):
+def np_to_nx(adjacency_matrix,graph_type=nx.DiGraph):
     """Converts numpy array of an adjacency matrix to a networkx digraph
 
     Parameters
     ----------
     adjacency_matrix : numpy array
         the adjaceny matrix of the DiGraph as a numpy array
-
+    graph_type : networkx graph type
+        the type of graph to be returned. 
+        avaliable types are: DiGraph, MultiDiGraph
 
     Returns
     -------
@@ -491,7 +493,7 @@ def np_to_nx(adjacency_matrix):
             a directed graph
 
     """
-    return nx.from_numpy_array(adjacency_matrix,create_using=nx.DiGraph)
+    return nx.from_numpy_array(adjacency_matrix,create_using=graph_type)
 
 
 
@@ -746,3 +748,60 @@ def bls_matrix(matrix, reverse_flow=False):
 
 # def out_degree_adjacency(matrix, vertex_index=0):
 #     return np.count_nonzero(matrix[vertex_index])
+
+def get_mean_shortest_path_length(sample_graph:igraph.Graph):
+    n = sample_graph.vcount()
+    shortest_paths =  np.array(sample_graph.shortest_paths(source=np.arange(n),target=np.arange(n)))
+    if np.any(np.isin(shortest_paths,np.inf)):
+        shortest_paths[shortest_paths == np.inf] = np.nan
+    return get_offdiag_mean(shortest_paths)
+
+def get_small_word_score(sample_graph:igraph.Graph,directed=True,loops=False,kind='global',repeat=1):
+    '''
+    Given a igraph.Graph , calculates the small worldness of the graph wrt ER graph with same n & p
+    
+    Inputs:
+    sample_graph: igraph.Graph instance
+    directed: whether to make randomized graph directed
+    loops: whether to allow loops in the randomized graph
+    kind: If global: The ratio of the triangles and connected triplets in the graph. If 'local', gets the 
+    average local clustering coefficient as in watts strogatz algorithm
+    repeat: How many times to generate ER graph to compare the model. Default is 1 but the results may vary. (not implemented yet)
+    
+    Warning : Both kind measures consider the graph as undirected !
+    
+    Returns:
+    small_worldness_score
+    randomized_network
+    
+    TODO: Calculate transitivity directed
+    '''
+    n = sample_graph.vcount()
+    num_edges = sample_graph.ecount()
+    p = sample_graph.density() # different calculation for directed and indirected
+
+    S_list = []
+    for i in range(repeat):
+        # Generate a random graph with same metrics
+        randomized_graph = Graph.Erdos_Renyi(n,p,directed=directed,loops=loops)
+        if kind == 'local':
+            #mean_local_clustering_coeffs_er = np.mean(randomized_graph.transitivity_local_undirected())
+            clustering_coeffs_er = randomized_graph.transitivity_avglocal_undirected()
+            clustering_coeffs_sample_graph = sample_graph.transitivity_avglocal_undirected()
+        if kind == 'global':
+            clustering_coeffs_er = randomized_graph.transitivity_undirected()
+            clustering_coeffs_sample_graph = sample_graph.transitivity_undirected()
+
+        mean_shortest_er = get_mean_shortest_path_length(randomized_graph)
+
+        #calculate score
+        cluster_ratio =  clustering_coeffs_sample_graph / clustering_coeffs_er
+        path_ratio = get_mean_shortest_path_length(sample_graph) / mean_shortest_er 
+        S = cluster_ratio/path_ratio
+        S_list.append(S)
+    
+    S_mean = np.nanmean(S_list)
+    
+    #print(f'gamma = {cluster_ratio} lambda = {path_ratio}')
+
+    return S_mean

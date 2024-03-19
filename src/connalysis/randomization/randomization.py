@@ -586,7 +586,7 @@ def add_rc_connections_skeleta(adj,factors,dimensions=None, skeleta=None, thread
     # Add bidirectional connections
     generator=np.random.default_rng(seed)
     rc_add={dim:((factors[dim]-1)*(rc_submatrix(skeleta[f'dimension_{dim}']).sum()))//2 for dim in dimensions}
-    print("Number of reciprocal connections added per dimension"); display(rc_add) # Remove or add verbose option
+    print("Number of reciprocal connections added per dimension"); print(rc_add) # Remove or add verbose option
     M=adj.copy()
     for dim in dimensions:
         M+=add_bidirectional_connections(skeleta[f'dimension_{dim}'], rc_add[dim], generator).astype(bool)

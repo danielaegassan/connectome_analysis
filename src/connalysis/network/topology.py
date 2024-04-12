@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Network analysis functions based on topological constructions
 #
 # Author(s): D. Egas Santander, M. Santoro, JP. Smith, V. Sood

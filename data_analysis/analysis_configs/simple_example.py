@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 from conntility import ConnectivityMatrix
 from conntility.connectivity import LOCAL_CONNECTOME
 import bluepy

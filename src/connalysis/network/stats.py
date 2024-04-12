@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 """
 Functions to average (functional or structural) metrics across simplices or neighborhoods.
 Author(s): Daniela Egas Santander,

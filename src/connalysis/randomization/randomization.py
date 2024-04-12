@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Functions that implement random controls of a network.  There are two general types of models
 
 # Probability: Random controls implemented by assigning a probability for each edge to be part of the control.

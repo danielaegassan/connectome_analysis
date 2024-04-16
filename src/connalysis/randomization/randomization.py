@@ -189,18 +189,43 @@ def run_DD2_model(adj, node_properties,
                   model_params_dd2=None, #an analysis that could be loaded from the pipeline
                   coord_names= ['x', 'y', 'z'],
                   threads=8, return_params=False, **config_dict):
-    """
-    Wrapper generating a random control graph based on 2nd order distance dependence model
-    Input:
-    adj: original adjacency matrix, if model_params have already been computed can pass empty matrix of the right size
-    node_properties: DataFrame with information on the vertices of adj, it must have columns corresponding to the names
-    the coordinates to be used for distance computation.  Default ['x', 'y', 'z']
-    configdict: Add me --> to generate parameters of 2nd order distance model
-    model_params: optional input of pre-computed model parameters, data frame with rows corresponding to seeds of model estimation
-    (single row if subsampling is not used) and columns:
-    exp_model_scale and exp_model_exponent for the model parameters.  See modelling.conn_prob_2nd_order_model for details.
+    """Wrapper for fitting a model and generating a random control graph based on 2nd order distance dependence model.
 
-    Output: scipy coo matrix, optional model_parameters
+    Parameters
+    ----------
+    adj : sparse matrix or 2d-array
+        Adjacency matrix.
+        If model_params_dd2 have already been computed, one can pass an empty matrix of the right size.
+    node_properties : pandas.DataFrame
+        DataFrame with information on the vertices of adj.
+        It must have columns corresponding to the names of the coord_names to be used for distance computation (Default: ['x', 'y', 'z']).
+    model_params_dd2 : pandas.DataFrame
+        Optional input of pre-computed model parameters as data frame with rows corresponding to seeds of model estimation
+        (single row if subsampling is not used) and columns 'exp_model_scale' and 'exp_model_exponent' for the model parameters.
+        See modelling.conn_prob_2nd_order_model for details.
+    coord_names : list
+        Names of the coordinates (corresponding to columns in neuron properties table) based on which to compute Euclidean distance.
+        Default: ['x', 'y', 'z']
+    threads : int
+        Number of parallel threads to be used.
+    return_params : bool
+        If True, returns model_params_dd2 in addition to the generated control.
+    config_dict : dict
+        Dictionary with 2nd order model building settings.
+        See modelling.conn_prob_2nd_order_model for details.
+
+    Returns
+    -------
+    coo_matrix
+        Matrix of the generated control
+    model_params_dd2
+        pandas.DataFrame with model parameters (optional; if return_params is True)
+
+    See Also
+    --------
+    [conn_prob_2nd_order_model](modelling.md#src.connalysis.modelling.modelling.conn_prob_2nd_order_model) :
+    The modelling function from which model_params_dd2 can be obtained.
+
     """
 
     if model_params_dd2 is None:
@@ -208,6 +233,7 @@ def run_DD2_model(adj, node_properties,
         #TODO:  What to do if coord_names are also given in configdict and do not match coord_names?
         config_dict["coord_names"]=coord_names
         model_params_dd2 = modelling.conn_prob_2nd_order_model(adj, node_properties,**config_dict)
+        LOG.warning("Fit parameters are used directly but should be checked by hand if the proper fit is obtained!")
 
     LOG.info("Run DD2 model with parameters: \n%s", model_params_dd2)
 

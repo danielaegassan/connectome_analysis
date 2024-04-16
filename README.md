@@ -1,5 +1,7 @@
 # connectome_analysis
 
+This package provides a library of general functions to analyze connectomes from a topological persepective.  For documentation and examples see our documentation
+
 [![PyPI](https://img.shields.io/pypi/v/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
 [![PyPI - License](https://img.shields.io/pypi/l/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
@@ -15,15 +17,13 @@
 
 ---
 
-Library of general functions to analyze connectoms.
-
-## Installation
+## User installation
 
 ```sh
 pip install git+https://github.com/danielaegassan/connectome_analysis.git
 ```
 
-## Development
+## Development installation
 
 * Clone this repository
 * Requirements:
@@ -64,3 +64,7 @@ poetry run pytest tests
 The documentation is automatically generated from the content of the [docs directory](./docs) and from the docstrings
  of the public signatures of the source code. The documentation is updated and published as a [Github project page
  ](https://pages.github.com/) automatically as part each release.
+
+ TODO: 
+ [ ] Are we putting this on pypy? 
+ [ ] What about the badges on top?

@@ -43,10 +43,8 @@ def run_ER(n, p, threads=8, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
     Examples
     --------
@@ -66,6 +64,35 @@ def run_ER(n, p, threads=8, seed=(None,None)):
     else:
         adj = gm.ER(n,p,threads,seed[0],seed[1])
     return _dict_to_coo(adj,n)
+
+def ER_model(adj, threads=8, seed=(None,None)):
+    """Creates an Erdos Renyi digraph.
+
+    Parameters
+    ----------
+    adj : sparse matrix or 2d-array
+        Adjacency matrix
+    threads : int
+        Number of parallel threads to be used to generate model
+    seed : pair of ints
+        Random seed to be used, if none is provided a seed is randomly selected
+
+    Returns
+    -------
+    coo matrix
+        Matrix of the generated control
+
+    
+    Raises
+    ------
+    AssertionError
+        If adj is not square
+
+    """
+    assert adj.shape[0] == adj.shape[1], "The matrix is not square"
+    n = adj.shape[0]
+    p = adj.astype(bool).sum()/((n)*(n-1))
+    return randomization.run_ER(n=n, p=p, threads=threads, seed=seed)
 
 
 
@@ -88,10 +115,8 @@ def run_SBM(n, probs, blocks, threads=8, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
     Examples
     --------
@@ -142,10 +167,8 @@ def run_DD2(n,a,b,xyz,threads=8, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
     See Also
     --------
@@ -226,10 +249,8 @@ def run_DD3(n,a1,b1,a2,b2,xyz,depths,threads=8, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
 
     See Also
@@ -272,10 +293,8 @@ def run_DD2_block_pre(n, probs, blocks, xyz, threads=8, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
 
     Raises
@@ -328,10 +347,8 @@ def run_DD2_block(n, probs, blocks, xyz, threads, seed=(None,None)):
 
     Returns
     -------
-    dict
-        The edge list of the new digraph as a dictionary
-        with keys 'row' and 'col'. Where (row[i],col[i]) is a directed edge
-        of the digraph, for all i.
+    coo matrix
+        Matrix of the generated control
 
 
     Raises

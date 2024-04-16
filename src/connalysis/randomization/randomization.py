@@ -92,6 +92,8 @@ def ER_model(adj, threads=8, seed=(None,None)):
     assert adj.shape[0] == adj.shape[1], "The matrix is not square"
     n = adj.shape[0]
     p = adj.astype(bool).sum()/((n)*(n-1))
+    if isinstance(seed, int):
+      seed=(seed,seed)
     return run_ER(n=n, p=p, threads=threads, seed=seed)
 
 

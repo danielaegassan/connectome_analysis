@@ -1,4 +1,4 @@
-# connectome_analysis
+# Connectome Analysis
 
 This package provides a library of general functions to analyze connectomes from a topological persepective.  For documentation, examples and tutorials see our documentation
 

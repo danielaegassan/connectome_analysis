@@ -1,11 +1,6 @@
 # connectome_analysis
 
-This package provides a library of general functions to analyze connectomes from a topological persepective.  For documentation and examples see our documentation
-
-[![PyPI](https://img.shields.io/pypi/v/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-[![PyPI - License](https://img.shields.io/pypi/l/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-
+This package provides a library of general functions to analyze connectomes from a topological persepective.  For documentation, examples and tutorials see our documentation
 
 ---
 
@@ -13,14 +8,27 @@ This package provides a library of general functions to analyze connectomes from
 
 **Source Code**: [https://github.com/danielaegassan/connectome_analysis](https://github.com/danielaegassan/connectome_analysis)
 
-**PyPI**: [https://pypi.org/project/connectome_analysis/](https://pypi.org/project/connectome_analysis/)
-
 ---
 
 ## User installation
 
 ```sh
 pip install git+https://github.com/danielaegassan/connectome_analysis.git
+```
+
+## Citation  
+If you use this software, kindly use the following BibTeX entry for citation:
+
+```
+@article{egas2024efficiency,
+  title={Efficiency and reliability in biological neural network architectures},
+  author={Egas Santander, Daniela and Pokorny, Christoph and Ecker, Andr{\'a}s and Lazovskis, J{\=a}nis and Santoro, Matteo and Smith, Jason P and Hess, Kathryn and Levi, Ran and Reimann, Michael W},
+  journal={bioRxiv},
+  pages={2024--03},
+  year={2024},
+  publisher={Cold Spring Harbor Laboratory},
+  doi = {10.1101/2024.03.15.585196}
+}
 ```
 
 ## Development installation
@@ -53,7 +61,7 @@ This is especially important on MacOS.
 poetry shell
 ```
 
-### Testing
+* Testing
 
 ```sh
 poetry run pytest tests
@@ -64,7 +72,3 @@ poetry run pytest tests
 The documentation is automatically generated from the content of the [docs directory](./docs) and from the docstrings
  of the public signatures of the source code. The documentation is updated and published as a [Github project page
  ](https://pages.github.com/) automatically as part each release.
-
- TODO: 
- [ ] Are we putting this on pypy? 
- [ ] What about the badges on top?

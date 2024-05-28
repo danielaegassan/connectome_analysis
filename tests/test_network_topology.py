@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 #TODO: Design and add small topological tests
 def test_flagser():
     from connalysis.network import simplex_counts, edge_participation

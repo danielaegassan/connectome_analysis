@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Example python file needed to run model building from sbatch script.
 #
 # Author(s): C. Pokorny

@@ -42,7 +42,7 @@ matplotlib = "*"
 progressbar ="2.5"
 tqdm="*"
 pyflagser ="*"
-bigrandomgraphs = ">=0.0.3"
+bigrandomgraphs = ">=0.0.4"
 pyflagsercount = ">=0.2.41"
 networkx="*"
 

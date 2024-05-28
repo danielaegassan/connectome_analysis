@@ -1,9 +1,6 @@
-# connectome_analysis
+# Connectome Analysis
 
-[![PyPI](https://img.shields.io/pypi/v/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-[![PyPI - License](https://img.shields.io/pypi/l/connectome_analysis?style=flat-square)](https://pypi.python.org/pypi/connectome_analysis/)
-
+This package provides a library of general functions to analyze connectomes from a topological perspective.  For documentation, examples and tutorials see our documentation
 
 ---
 
@@ -11,19 +8,30 @@
 
 **Source Code**: [https://github.com/danielaegassan/connectome_analysis](https://github.com/danielaegassan/connectome_analysis)
 
-**PyPI**: [https://pypi.org/project/connectome_analysis/](https://pypi.org/project/connectome_analysis/)
-
 ---
 
-Library of general functions to analyze connectoms.
-
-## Installation
+## User installation
 
 ```sh
 pip install git+https://github.com/danielaegassan/connectome_analysis.git
 ```
 
-## Development
+## Citation  
+If you use this software, kindly use the following BibTeX entry for citation:
+
+```
+@article{egas2024efficiency,
+  title={Efficiency and reliability in biological neural network architectures},
+  author={Egas Santander, Daniela and Pokorny, Christoph and Ecker, Andr{\'a}s and Lazovskis, J{\=a}nis and Santoro, Matteo and Smith, Jason P and Hess, Kathryn and Levi, Ran and Reimann, Michael W},
+  journal={bioRxiv},
+  pages={2024--03},
+  year={2024},
+  publisher={Cold Spring Harbor Laboratory},
+  doi = {10.1101/2024.03.15.585196}
+}
+```
+
+## Development installation
 
 * Clone this repository
 * Requirements:
@@ -53,7 +61,7 @@ This is especially important on MacOS.
 poetry shell
 ```
 
-### Testing
+* Testing
 
 ```sh
 poetry run pytest tests

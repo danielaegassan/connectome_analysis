@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2024 Blue Brain Project / EPFL
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
 # Description: Running SSCx model building from batch script (midrange connectivity)
 # Author: C. Pokorny
 # Last modified: 03/2022

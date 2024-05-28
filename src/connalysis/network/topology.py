@@ -110,7 +110,7 @@ def _flagser_counts(adjacency,
                     max_simplices=False,
                     count_node_participation=False,
                     list_simplices=False,
-                    threads=1,max_dim=-1, edge_containment=False):
+                    threads=8,max_dim=-1, edge_containment=False, vertices_todo=''):
     """Call package `pyflagsercount's flagser_count` method that can be used to compute
     some analyses, getting counts of quantities such as simplices,
     or node-participation (a.k.a. `containment`)
@@ -126,7 +126,8 @@ def _flagser_counts(adjacency,
                                                   containment=count_node_participation,
                                                   return_simplices=list_simplices,
                                                   threads=threads,max_dim=max_dim,
-                                                  edge_containment=edge_containment)
+                                                  edge_containment=edge_containment,
+                                                  vertices_todo=vertices_todo)
 
     counts =  {"euler": flagser_counts.pop("euler"),
                "simplex_counts": _series_by_dim(flagser_counts.pop("cell_counts"),
@@ -274,7 +275,7 @@ def node_k_degree(adj, node_properties=None, direction=("IN", "OUT"), max_dim=-1
 
 
 def simplex_counts(adj, node_properties=None,max_simplices=False,
-                   threads=1,max_dim=-1, simplex_type='directed', **kwargs):
+                   threads=8,max_dim=-1, simplex_type='directed', nodes=None, **kwargs):
     # TODO: ADD TRANSPOSE
     """Compute the number of simplex motifs in the network adj.
     Parameters
@@ -298,6 +299,9 @@ def simplex_counts(adj, node_properties=None,max_simplices=False,
         ’undirected’ - simplices in the underlying undirected graph
 
         ’reciprocal’ - simplices in the undirected graph of reciprocal connections
+    nodes : 1d array or None(default)
+        Restrict to list only the simplices whose source node is in nodes.  If None list all simplices.
+        This only makes sense for directed simplices.
 
     Returns
     -------
@@ -336,14 +340,32 @@ def simplex_counts(adj, node_properties=None,max_simplices=False,
     elif simplex_type=="reciprocal":
         adj=sp.triu(rc_submatrix(adj)) #symmtrize and keep upper triangular only
 
-    flagser_counts = _flagser_counts(adj, threads=threads, max_simplices=max_simplices, max_dim=max_dim)
+    # Only the simplices that have sources stored in this temporary file will be considered.
+    # This only makes sense for directed simplices
+    if not nodes is None:
+        assert simplex_type=='directed', "Sub-selection of source nodes only makes sense for directed simplices"
+        import tempfile
+        import os
+        tmp_file = tempfile.NamedTemporaryFile(delete=False)
+        vertices_todo = tmp_file.name + ".npy"
+        np.save(vertices_todo, nodes, allow_pickle=False)
+    else:
+        vertices_todo = ''
+
+    # Count simplices
+    flagser_counts = _flagser_counts(adj, threads=threads, max_simplices=max_simplices, max_dim=max_dim, vertices_todo=vertices_todo)
+    # Remove temporary file
+    if not nodes is None:
+        os.remove(vertices_todo)
+
     if max_simplices:
         return flagser_counts["max_simplex_counts"]
     else:
         return flagser_counts["simplex_counts"]
 
+
 def normalized_simplex_counts(adj, node_properties=None,
-                   max_simplices=False, threads=1,max_dim=-1,
+                   max_simplices=False, threads=8,max_dim=-1,
                    **kwargs):
     """Compute the ratio of directed/undirected simplex counts normalized to be between 0 and 1.
     See simplex_counts and undirected_simplex_counts for details.
@@ -391,7 +413,7 @@ def normalized_simplex_counts(adj, node_properties=None,
 
 
 def node_participation(adj, node_properties=None, max_simplices=False,
-                       threads=1,max_dim=-1,simplex_type='directed',**kwargs):
+                       threads=8,max_dim=-1,simplex_type='directed',**kwargs):
     """Compute the number of simplex motifs in the network adj each node is part of.
     See simplex_counts for details.
     Parameters
@@ -446,7 +468,7 @@ def node_participation(adj, node_properties=None, max_simplices=False,
     return flagser_counts["node_participation"]
 
 def edge_participation(adj, node_properties=None, max_simplices=False,
-                       threads=1,max_dim=-1,simplex_type='directed', return_simplex_counts=False, verbose=False, **kwargs):
+                       threads=8,max_dim=-1,simplex_type='directed', return_simplex_counts=False, verbose=False, **kwargs):
     """Compute the number of simplex motifs in the network adj each edge is part of.
     See simplex_counts for details.
     Parameters
@@ -604,7 +626,7 @@ def list_simplices_by_dimension(adj, node_properties=None, max_simplices=False,m
         simplices[1] = np.stack([coom.row[mask], coom.col[mask]]).T
     return simplices
 
-def in_degree_from_pop(adj, source_pop, max_simplices=False,threads=1, max_dim=-1, ** kwargs):
+def in_degree_from_pop(adj, source_pop, max_simplices=False,threads=8, max_dim=-1, ** kwargs):
     # TODO: DO THE OUTDEGREE VERSION
     # TODO: Get participation directly from flagsercount via vertices to do?
     """Compute generalized in-degree of nodes source_pop onto the rest of the nodes in adj.
@@ -643,7 +665,7 @@ def in_degree_from_pop(adj, source_pop, max_simplices=False,threads=1, max_dim=-
     return degs
 
 def cross_col_k_in_degree(adj_cross, adj_source, max_simplices=False,
-                          threads=1,max_dim=-1,**kwargs):
+                          threads=8,max_dim=-1,**kwargs):
     #TODO: DO THE OUTDEGREE VERSION
     #TODO: Get participation directly from flagsercount via vertices to do?
     """Compute generalized in-degree of nodes in adj_target from nodes in adj_source.

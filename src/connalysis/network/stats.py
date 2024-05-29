@@ -134,7 +134,6 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
     par_df["max_dim"] = (par_df > 0).sum(axis=1) - 1  # maximal dimension a node is part of
     stats_vals = {}
     for dim in dims:
-        print(dim)
         mask = condition(par_df.max_dim, dim)
         c = pd.DataFrame(vals.loc[par_df[mask].index], columns=["values"])
         c["weight"] = par_df[mask][dim]

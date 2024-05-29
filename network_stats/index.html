@@ -850,7 +850,8 @@ where the nodes have been grouped according to the condition given.</p>
 
           <details class="quote">
             <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">221</span>
+<span class="normal">222</span>
 <span class="normal">223</span>
 <span class="normal">224</span>
 <span class="normal">225</span>
@@ -894,8 +895,7 @@ where the nodes have been grouped according to the condition given.</p>
 <span class="normal">263</span>
 <span class="normal">264</span>
 <span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">edge_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">266</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">edge_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Get statistics of the values in vals across edges filtered using edge participation</span>
 
 <span class="sd">    Parameters</span>
@@ -1142,7 +1142,8 @@ Precomputing the neighborhoods would increase efficiency if multiple properties 
 </details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">153</span>
+<span class="normal">154</span>
 <span class="normal">155</span>
 <span class="normal">156</span>
 <span class="normal">157</span>
@@ -1207,8 +1208,7 @@ Precomputing the neighborhoods would increase efficiency if multiple properties 
 <span class="normal">216</span>
 <span class="normal">217</span>
 <span class="normal">218</span>
-<span class="normal">219</span>
-<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_neighborhood</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">all_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+<span class="normal">219</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_neighborhood</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">all_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                             <span class="n">include_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">precomputed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighborhoods</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Get basic statistics of the property values on the neighbhood of the nodes in centers in the</span>
 <span class="sd">    graph described by adj.</span>
@@ -1464,8 +1464,7 @@ is more efficient.</p>
 <span class="normal">147</span>
 <span class="normal">148</span>
 <span class="normal">149</span>
-<span class="normal">150</span>
-<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">150</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot; Get statistics of the values in vals across nodes filtered using node participation</span>
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1506,7 +1505,6 @@ is more efficient.</p>
     <span class="n">par_df</span><span class="p">[</span><span class="s2">&quot;max_dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">par_df</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># maximal dimension a node is part of</span>
     <span class="n">stats_vals</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
         <span class="n">mask</span> <span class="o">=</span> <span class="n">condition</span><span class="p">(</span><span class="n">par_df</span><span class="o">.</span><span class="n">max_dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">])</span>
         <span class="n">c</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span>

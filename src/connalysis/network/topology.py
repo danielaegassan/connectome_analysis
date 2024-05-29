@@ -270,11 +270,11 @@ def node_k_degree(adj, node_properties=None, direction=("IN", "OUT"), max_dim=-1
             if "OUT" in direction:
                 # getting source participation across dimensions
                 x, y = np.unique(np.array(flagser_out['simplices'][dim])[:, 0], return_counts=True)
-                generalized_degree[f'{dim}_out_degree'] = pd.Series(y, index=x)
+                generalized_degree[f'{dim-1}_out_degree'] = pd.Series(y, index=x)
             if "IN" in direction:
                 # getting sink participation across dimensions
                 x, y = np.unique(np.array(flagser_out['simplices'][dim])[:, dim], return_counts=True)
-                generalized_degree[f'{dim}_in_degree'] = pd.Series(y, index=x)
+                generalized_degree[f'{dim-1}_in_degree'] = pd.Series(y, index=x)
         return generalized_degree.fillna(0)
 
 

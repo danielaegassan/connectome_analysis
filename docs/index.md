@@ -1,4 +1,6 @@
-# connalysis: General analises of connectomes from a topological perspective
+# connalysis
+
+### General analises of connectomes from a topological perspective
 
 ## Overview
 

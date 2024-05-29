@@ -1,0 +1,1977 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="../network_local/">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+    
+    
+      
+        <title>Stats - connalysis</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#these-are-utility-functions-used-to-compute-simple-statistics-across-simplices-and-neighborhoods" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="connalysis" class="md-header__button md-logo" aria-label="connalysis" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            connalysis
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Stats
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/danielaegassan/connectome_analysis" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="connalysis" class="md-nav__button md-logo" aria-label="connalysis" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    connalysis
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/danielaegassan/connectome_analysis" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Introduction
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Modules
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            Modules
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../modelling/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Modelling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../randomization/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Randomization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Network
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_topology/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Topology
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_classic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Classic
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_local/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Local
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Stats
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Stats
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#these-are-utility-functions-used-to-compute-simple-statistics-across-simplices-and-neighborhoods" class="md-nav__link">
+    <span class="md-ellipsis">
+      These are utility functions used to compute simple statistics across simplices and neighborhoods.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      stats
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.edge_stats_participation" class="md-nav__link">
+    <span class="md-ellipsis">
+      edge_stats_participation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_neighborhood" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_neighborhood
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_participation" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_participation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_per_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_per_position
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_per_position_single" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_per_position_single
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../about.md" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    About
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#these-are-utility-functions-used-to-compute-simple-statistics-across-simplices-and-neighborhoods" class="md-nav__link">
+    <span class="md-ellipsis">
+      These are utility functions used to compute simple statistics across simplices and neighborhoods.
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats" class="md-nav__link">
+    <span class="md-ellipsis">
+      stats
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.edge_stats_participation" class="md-nav__link">
+    <span class="md-ellipsis">
+      edge_stats_participation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_neighborhood" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_neighborhood
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_participation" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_participation
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_per_position" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_per_position
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#src.connalysis.network.stats.node_stats_per_position_single" class="md-nav__link">
+    <span class="md-ellipsis">
+      node_stats_per_position_single
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+  <h1>Stats</h1>
+
+<h2 id="these-are-utility-functions-used-to-compute-simple-statistics-across-simplices-and-neighborhoods">These are utility functions used to compute simple statistics across simplices and neighborhoods.</h2>
+
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="src.connalysis.network.stats"></a>
+  <div class="doc doc-contents first">
+  
+      <p>Functions to average (functional or structural) metrics across simplices or neighborhoods.
+Author(s): Daniela Egas Santander,
+Last update: 11.2023</p>
+
+  
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="src.connalysis.network.stats.edge_stats_participation" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">edge_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get statistics of the values in vals across edges filtered using edge participation</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>participation</code></td>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>DataFrame of edge participation with index the edges of an NxN matrix to consider,
+columns are dimensions and values are edge participation.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>values</code></td>
+          <td>
+                <code>Series</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pandas Series with index the edges of the NxN matrix of which edge participation has been computed
+and vals the values on that edge to be averaged.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>condition</code></td>
+          <td>
+                <code>operator</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>operator with which to filter the nodes. The default <code>operator.eq</code> filters nodes such that their maximal
+dimension of edge participation is a given value.
+Alternatively, <code>operator.ge</code> filters edges such that their maximal dimension of node participation is at least a given
+value.</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="operator.eq">eq</span></code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dims</code></td>
+          <td>
+                <code>iterable</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimensions for which to run the analysis, if <code>None</code> all the columns of participation will be analyzed</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals
+where the nodes have been grouped according to the condition given.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">222</span>
+<span class="normal">223</span>
+<span class="normal">224</span>
+<span class="normal">225</span>
+<span class="normal">226</span>
+<span class="normal">227</span>
+<span class="normal">228</span>
+<span class="normal">229</span>
+<span class="normal">230</span>
+<span class="normal">231</span>
+<span class="normal">232</span>
+<span class="normal">233</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span>
+<span class="normal">245</span>
+<span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span>
+<span class="normal">256</span>
+<span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">edge_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get statistics of the values in vals across edges filtered using edge participation</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    participation : DataFrame</span>
+<span class="sd">        DataFrame of edge participation with index the edges of an NxN matrix to consider,</span>
+<span class="sd">        columns are dimensions and values are edge participation.</span>
+<span class="sd">    values : Series</span>
+<span class="sd">        pandas Series with index the edges of the NxN matrix of which edge participation has been computed</span>
+<span class="sd">        and vals the values on that edge to be averaged.</span>
+<span class="sd">    condition : operator</span>
+<span class="sd">        operator with which to filter the nodes. The default ``operator.eq`` filters nodes such that their maximal</span>
+<span class="sd">        dimension of edge participation is a given value.</span>
+<span class="sd">        Alternatively, ``operator.ge`` filters edges such that their maximal dimension of node participation is at least a given</span>
+<span class="sd">        value.</span>
+<span class="sd">    dims : iterable</span>
+<span class="sd">        dimensions for which to run the analysis, if ``None`` all the columns of participation will be analyzed</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DataFrame</span>
+<span class="sd">        with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals</span>
+<span class="sd">        where the nodes have been grouped according to the condition given.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">par_df</span> <span class="o">=</span> <span class="n">participation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="n">par_df</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;values&quot;</span><span class="p">)</span>
+    <span class="n">par_df</span><span class="p">[</span><span class="s2">&quot;max_dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">par_df</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># maximal dimension an edge is part of. Note that edge participation in dimension 0 is 0</span>
+    <span class="n">stats_vals</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">condition</span><span class="p">(</span><span class="n">par_df</span><span class="o">.</span><span class="n">max_dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">])</span>
+        <span class="n">c</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span>
+        <span class="n">w_mean</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">stats_vals</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># Number of nodes fulfilling the condition</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">]),</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">]),</span>
+                           <span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">],</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">),</span>
+                           <span class="n">w_mean</span>  <span class="c1"># mean weighted by participation</span>
+                           <span class="p">)</span>
+    <span class="n">stats_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">stats_vals</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+                                        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;counts&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;sem&quot;</span><span class="p">,</span> <span class="s2">&quot;weighted_mean&quot;</span><span class="p">])</span>
+    <span class="n">stats_vals</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;dim&quot;</span>
+    <span class="k">return</span> <span class="n">stats_vals</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="src.connalysis.network.stats.node_stats_neighborhood" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">node_stats_neighborhood</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">all_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">precomputed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighborhoods</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get basic statistics of the property values on the neighbhood of the nodes in centers in the
+graph described by adj.</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>values</code></td>
+          <td>
+                <code>Series</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+and values the values on that node to be averaged.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>adj</code></td>
+          <td>
+                <code>sparse matrix or 2d array</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The adjacency matrix of the graph</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>pre</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> compute the nodes mapping to the nodes in centers (the in-neighbors of the centers)</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>post</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> compute the nodes that the centers map to (the out-neighbors of the centers)</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>all_nodes</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> compute the neighbors of all nodes in adj, if <code>False</code> compute only the neighbors of the nodes
+listed in centers</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>centers</code></td>
+          <td>
+                <code>1d-array</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>The indices of the nodes for which the neighbors need to be computed.  This entry is ignored if
+all_nodes is <code>True</code> and required if all_nodes is <code>False</code></p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>include_center</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>True</code> it includes the center in the computation otherwise it ignores it</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>precomputed</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>If <code>False</code> it precomputes the neighbhorhoods in adj,
+if <code>False</code> it skips the computation and reads it fromt the input</p>
+            </div>
+          </td>
+          <td>
+                <code>False</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>neighborhoods</code></td>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>DataFrame of neighbhoord indices. Required if precomputed is <code>True</code></p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>with index, centers to be considered and columns the sum, mean, standard deviation and
+standard error of the mean of the values in that neighborhood.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>[neighborhood_indices] (network_local.md#src.connalysis.network.local.neighborhood_indices):
+Function to precompute the neighborhood_indices that can be used if precomputed is set <code>True</code>.
+Precomputing the neighborhoods would increase efficiency if multiple properties are averaged across neighborhoods.</p>
+</details>
+          <details class="quote">
+            <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span>
+<span class="normal">193</span>
+<span class="normal">194</span>
+<span class="normal">195</span>
+<span class="normal">196</span>
+<span class="normal">197</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span>
+<span class="normal">203</span>
+<span class="normal">204</span>
+<span class="normal">205</span>
+<span class="normal">206</span>
+<span class="normal">207</span>
+<span class="normal">208</span>
+<span class="normal">209</span>
+<span class="normal">210</span>
+<span class="normal">211</span>
+<span class="normal">212</span>
+<span class="normal">213</span>
+<span class="normal">214</span>
+<span class="normal">215</span>
+<span class="normal">216</span>
+<span class="normal">217</span>
+<span class="normal">218</span>
+<span class="normal">219</span>
+<span class="normal">220</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_neighborhood</span><span class="p">(</span><span class="n">values</span><span class="p">,</span> <span class="n">adj</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">all_nodes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                            <span class="n">include_center</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">precomputed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">neighborhoods</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get basic statistics of the property values on the neighbhood of the nodes in centers in the</span>
+<span class="sd">    graph described by adj.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    values : Series</span>
+<span class="sd">        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,</span>
+<span class="sd">        and values the values on that node to be averaged.</span>
+<span class="sd">    adj : sparse matrix or 2d array</span>
+<span class="sd">        The adjacency matrix of the graph</span>
+<span class="sd">    pre : bool</span>
+<span class="sd">        If ``True`` compute the nodes mapping to the nodes in centers (the in-neighbors of the centers)</span>
+<span class="sd">    post : bool</span>
+<span class="sd">        If ``True`` compute the nodes that the centers map to (the out-neighbors of the centers)</span>
+<span class="sd">    all_nodes : bool</span>
+<span class="sd">        If ``True`` compute the neighbors of all nodes in adj, if ``False`` compute only the neighbors of the nodes</span>
+<span class="sd">        listed in centers</span>
+<span class="sd">    centers : 1d-array</span>
+<span class="sd">        The indices of the nodes for which the neighbors need to be computed.  This entry is ignored if</span>
+<span class="sd">        all_nodes is ``True`` and required if all_nodes is ``False``</span>
+<span class="sd">    include_center : bool</span>
+<span class="sd">        If ``True`` it includes the center in the computation otherwise it ignores it</span>
+<span class="sd">    precomputed : bool</span>
+<span class="sd">        If ``False`` it precomputes the neighbhorhoods in adj,</span>
+<span class="sd">        if ``False`` it skips the computation and reads it fromt the input</span>
+<span class="sd">    neighborhoods : DataFrame</span>
+<span class="sd">        DataFrame of neighbhoord indices. Required if precomputed is ``True``</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DataFrame</span>
+<span class="sd">        with index, centers to be considered and columns the sum, mean, standard deviation and</span>
+<span class="sd">        standard error of the mean of the values in that neighborhood.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    [neighborhood_indices] (network_local.md#src.connalysis.network.local.neighborhood_indices):</span>
+<span class="sd">    Function to precompute the neighborhood_indices that can be used if precomputed is set ``True``.</span>
+<span class="sd">    Precomputing the neighborhoods would increase efficiency if multiple properties are averaged across neighborhoods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Single value functions for DataFrames</span>
+    <span class="k">def</span> <span class="nf">append_center</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+        <span class="c1"># To include center in the computation</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="s2">&quot;center&quot;</span><span class="p">],</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;neighbors&quot;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">mean_nbd</span><span class="p">(</span><span class="n">nbd_indices</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">nbd_indices</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nansum</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">)]</span>
+
+    <span class="c1"># Get neighborhoods</span>
+    <span class="k">if</span> <span class="n">precomputed</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">neighborhoods</span><span class="p">,</span>
+                          <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">),</span> <span class="s2">&quot;If precomputed a Series of neighbhoords indexed by their center must be provided&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="p">(</span><span class="n">adj</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">),</span> <span class="s2">&quot;If not precomputed and adjancecy matrix must be provided&quot;</span>
+        <span class="n">neighborhoods</span> <span class="o">=</span> <span class="n">neighborhood_indices</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="n">post</span><span class="p">,</span> <span class="n">all_nodes</span><span class="o">=</span><span class="n">all_nodes</span><span class="p">,</span> <span class="n">centers</span><span class="o">=</span><span class="n">centers</span><span class="p">)</span>
+    <span class="n">centers</span> <span class="o">=</span> <span class="n">neighborhoods</span><span class="o">.</span><span class="n">index</span>
+    <span class="k">if</span> <span class="n">include_center</span><span class="p">:</span>
+        <span class="n">neighborhoods</span> <span class="o">=</span> <span class="n">neighborhoods</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">append_center</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">neighborhoods</span> <span class="o">=</span> <span class="n">neighborhoods</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">stat_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">neighborhoods</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">mean_nbd</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">values</span><span class="p">)),</span>
+                                          <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sum&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;sem&quot;</span><span class="p">])</span>
+    <span class="n">stat_vals</span><span class="p">[</span><span class="s2">&quot;center&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">centers</span>
+    <span class="k">return</span> <span class="n">stat_vals</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;center&quot;</span><span class="p">)</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="src.connalysis.network.stats.node_stats_participation" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">node_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get statistics of the values in vals across nodes filtered using node participation</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>participation</code></td>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>DataFrame of node participation with index the nodes in nodes of an NxN matrix to consider,
+columns are dimensions and values are node participation computed with
+<a href="../network_topology/#src.connalysis.network.topology.node_participation">node_participation</a>.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>values</code></td>
+          <td>
+                <code>Series</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pandas Series with index the nodes of the NxN matrix of where node participation has been computed
+and vals the values on that node to be averaged.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>condition</code></td>
+          <td>
+                <code>operator</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>operator with which to filter the nodes. The default <code>operator.eq</code> filters nodes such that their maximal
+dimension of node participation is a given value.
+Alternatively, <code>operator.ge</code> filters nodes such that their maximal dimension of node participation is at least a given
+value.</p>
+            </div>
+          </td>
+          <td>
+                <code><span title="operator.eq">eq</span></code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dims</code></td>
+          <td>
+                <code>iterable</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimensions for which to run the analysis, if <code>None</code> all the columns of participation will be analyzed</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals
+where the nodes have been grouped according to the condition given.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p><a href="./#src.connalysis.network.stats.node_stats_per_position_single">node_stats_per_position_single</a>:
+A similar function where the position of the nodes in the simplex are taken into account.  Note in particular that
+if condition = <code>operator.ge</code> the weighted_mean of this analyisis is equivalent than the value given by this function for position <code>all</code>.
+However the computation using
+<a href="../network_topology/#src.connalysis.network.topology.node_participation">node_participation</a>
+is more efficient.</p>
+</details>
+          <details class="quote">
+            <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_participation</span><span class="p">(</span><span class="n">participation</span><span class="p">,</span> <span class="n">vals</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">eq</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get statistics of the values in vals across nodes filtered using node participation</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    participation : DataFrame</span>
+<span class="sd">        DataFrame of node participation with index the nodes in nodes of an NxN matrix to consider,</span>
+<span class="sd">        columns are dimensions and values are node participation computed with</span>
+<span class="sd">        [node_participation](network_topology.md#src.connalysis.network.topology.node_participation).</span>
+<span class="sd">    values : Series</span>
+<span class="sd">        pandas Series with index the nodes of the NxN matrix of where node participation has been computed</span>
+<span class="sd">        and vals the values on that node to be averaged.</span>
+<span class="sd">    condition : operator</span>
+<span class="sd">        operator with which to filter the nodes. The default ``operator.eq`` filters nodes such that their maximal</span>
+<span class="sd">        dimension of node participation is a given value.</span>
+<span class="sd">        Alternatively, ``operator.ge`` filters nodes such that their maximal dimension of node participation is at least a given</span>
+<span class="sd">        value.</span>
+<span class="sd">    dims : iterable</span>
+<span class="sd">        dimensions for which to run the analysis, if ``None`` all the columns of participation will be analyzed</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DataFrame</span>
+<span class="sd">        with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals</span>
+<span class="sd">        where the nodes have been grouped according to the condition given.</span>
+
+<span class="sd">    See Also</span>
+<span class="sd">    --------</span>
+<span class="sd">    [node_stats_per_position_single](network_stats.md#src.connalysis.network.stats.node_stats_per_position_single):</span>
+<span class="sd">    A similar function where the position of the nodes in the simplex are taken into account.  Note in particular that</span>
+<span class="sd">    if condition = ``operator.ge`` the weighted_mean of this analyisis is equivalent than the value given by this function for position ``all``.</span>
+<span class="sd">    However the computation using</span>
+<span class="sd">    [node_participation](network_topology.md#src.connalysis.network.topology.node_participation)</span>
+<span class="sd">    is more efficient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">par_df</span> <span class="o">=</span> <span class="n">participation</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="n">par_df</span><span class="o">.</span><span class="n">columns</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="s2">&quot;values&quot;</span><span class="p">)</span>
+    <span class="n">par_df</span><span class="p">[</span><span class="s2">&quot;max_dim&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">par_df</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>  <span class="c1"># maximal dimension a node is part of</span>
+    <span class="n">stats_vals</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">dims</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">condition</span><span class="p">(</span><span class="n">par_df</span><span class="o">.</span><span class="n">max_dim</span><span class="p">,</span> <span class="n">dim</span><span class="p">)</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">])</span>
+        <span class="n">c</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">par_df</span><span class="p">[</span><span class="n">mask</span><span class="p">][</span><span class="n">dim</span><span class="p">]</span>
+        <span class="n">w_mean</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">product</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;weight&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+        <span class="n">stats_vals</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># Number of nodes fulfilling the condition</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">]),</span>
+                           <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">]),</span>
+                           <span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s2">&quot;values&quot;</span><span class="p">],</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">),</span>
+                           <span class="n">w_mean</span>  <span class="c1"># mean weighted by participation</span>
+                           <span class="p">)</span>
+    <span class="n">stats_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">stats_vals</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+                                        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;counts&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">,</span> <span class="s2">&quot;sem&quot;</span><span class="p">,</span> <span class="s2">&quot;weighted_mean&quot;</span><span class="p">])</span>
+    <span class="n">stats_vals</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;dim&quot;</span>
+    <span class="k">return</span> <span class="n">stats_vals</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="src.connalysis.network.stats.node_stats_per_position" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">node_stats_per_position</span><span class="p">(</span><span class="n">simplex_lists</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_multiplicity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get across dimensions mean, standard deviation and standard error of the mean averaged across simplex lists
+and filtered per position</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>simplex_lists</code></td>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>keys : are int values representing dimensions
+values : for key <code>k</code> array of dimension (no. of simplices, <code>k</code>) listing simplices to be considered.
+Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
+All entries must be an index in values</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>values</code></td>
+          <td>
+                <code>Series</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+and values the values on that node to be averaged.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>with_multiplicity</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>if <code>True</code> the values are averaged with multiplicity i.e., they are weighted by the number of times a node
+participates in a simplex in a given position
+if <code>False</code> repetitions of a node in a given position are ignored.</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+        <tr>
+          <td><code>dims</code></td>
+          <td>
+                <code>iterable</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>dimensions for which to run the analysis, if <code>None</code> all the keys of simplex lists will be analyzed</p>
+            </div>
+          </td>
+          <td>
+                <code>None</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>dict</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>keys the dimensions anlayzed and values for key <code>k</code> a DataFrame
+with index, the possible positions of o node in a <code>k</code>-simplex and columns the mean, standard deviation and
+standard error of the mean for that position.</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">60</span>
+<span class="normal">61</span>
+<span class="normal">62</span>
+<span class="normal">63</span>
+<span class="normal">64</span>
+<span class="normal">65</span>
+<span class="normal">66</span>
+<span class="normal">67</span>
+<span class="normal">68</span>
+<span class="normal">69</span>
+<span class="normal">70</span>
+<span class="normal">71</span>
+<span class="normal">72</span>
+<span class="normal">73</span>
+<span class="normal">74</span>
+<span class="normal">75</span>
+<span class="normal">76</span>
+<span class="normal">77</span>
+<span class="normal">78</span>
+<span class="normal">79</span>
+<span class="normal">80</span>
+<span class="normal">81</span>
+<span class="normal">82</span>
+<span class="normal">83</span>
+<span class="normal">84</span>
+<span class="normal">85</span>
+<span class="normal">86</span>
+<span class="normal">87</span>
+<span class="normal">88</span>
+<span class="normal">89</span>
+<span class="normal">90</span>
+<span class="normal">91</span>
+<span class="normal">92</span>
+<span class="normal">93</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_per_position</span><span class="p">(</span><span class="n">simplex_lists</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">dims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_multiplicity</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get across dimensions mean, standard deviation and standard error of the mean averaged across simplex lists</span>
+<span class="sd">    and filtered per position</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    simplex_lists : dict</span>
+<span class="sd">        keys : are int values representing dimensions</span>
+<span class="sd">        values : for key ``k`` array of dimension (no. of simplices, ``k``) listing simplices to be considered.</span>
+<span class="sd">        Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.</span>
+<span class="sd">        All entries must be an index in values</span>
+<span class="sd">    values : Series</span>
+<span class="sd">        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,</span>
+<span class="sd">        and values the values on that node to be averaged.</span>
+<span class="sd">    with_multiplicity : bool</span>
+<span class="sd">        if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node</span>
+<span class="sd">        participates in a simplex in a given position</span>
+<span class="sd">        if ``False`` repetitions of a node in a given position are ignored.</span>
+<span class="sd">    dims : iterable</span>
+<span class="sd">        dimensions for which to run the analysis, if ``None`` all the keys of simplex lists will be analyzed</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        keys the dimensions anlayzed and values for key ``k`` a DataFrame</span>
+<span class="sd">        with index, the possible positions of o node in a ``k``-simplex and columns the mean, standard deviation and</span>
+<span class="sd">        standard error of the mean for that position.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">dims</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">dims</span> <span class="o">=</span> <span class="n">simplex_lists</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">stats_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">dims</span><span class="p">):</span>
+        <span class="n">sl</span> <span class="o">=</span> <span class="n">simplex_lists</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+        <span class="n">stats_dict</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span> <span class="o">=</span> <span class="n">node_stats_per_position_single</span><span class="p">(</span><span class="n">sl</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">with_multiplicity</span><span class="o">=</span><span class="n">with_multiplicity</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stats_dict</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+<div class="doc doc-object doc-function">
+
+
+
+<h2 id="src.connalysis.network.stats.node_stats_per_position_single" class="doc doc-heading">
+          <code class="highlight language-python"><span class="n">node_stats_per_position_single</span><span class="p">(</span><span class="n">simplex_list</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">with_multiplicity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+</h2>
+
+
+  <div class="doc doc-contents ">
+  
+      <p>Get mean, standard deviation and standard error of the mean averaged across simplex lists and filtered per position</p>
+
+
+
+  <p><strong>Parameters:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th>Default</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td><code>simplex_list</code></td>
+          <td>
+                <code>2d-array</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>Array of dimension (no. of simplices, dimension) listing simplices to be considered.
+Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.
+All entries must be an index in values</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>values</code></td>
+          <td>
+                <code>Series</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>pandas Series with index the nodes of the NxN matrix of which the simplices are listed,
+and values the values on that node to be averaged.</p>
+            </div>
+          </td>
+          <td>
+              <em>required</em>
+          </td>
+        </tr>
+        <tr>
+          <td><code>with_multiplicity</code></td>
+          <td>
+                <code>bool</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>if <code>True</code> the values are averaged with multiplicity i.e., they are weighted by the number of times a node
+participates in a simplex in a given position
+if <code>False</code> repetitions of a node in a given position are ignored.</p>
+            </div>
+          </td>
+          <td>
+                <code>True</code>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+
+
+  <p><strong>Returns:</strong></p>
+  <table>
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>
+                <code>DataFrame</code>
+          </td>
+          <td>
+            <div class="doc-md-description">
+              <p>with index, the possible positions of o node in a <code>k</code>-simplex and columns the mean, standard deviation and
+standard error of the mean for that position</p>
+            </div>
+          </td>
+        </tr>
+    </tbody>
+  </table>
+
+          <details class="quote">
+            <summary>Source code in <code>src/connalysis/network/stats.py</code></summary>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">20</span>
+<span class="normal">21</span>
+<span class="normal">22</span>
+<span class="normal">23</span>
+<span class="normal">24</span>
+<span class="normal">25</span>
+<span class="normal">26</span>
+<span class="normal">27</span>
+<span class="normal">28</span>
+<span class="normal">29</span>
+<span class="normal">30</span>
+<span class="normal">31</span>
+<span class="normal">32</span>
+<span class="normal">33</span>
+<span class="normal">34</span>
+<span class="normal">35</span>
+<span class="normal">36</span>
+<span class="normal">37</span>
+<span class="normal">38</span>
+<span class="normal">39</span>
+<span class="normal">40</span>
+<span class="normal">41</span>
+<span class="normal">42</span>
+<span class="normal">43</span>
+<span class="normal">44</span>
+<span class="normal">45</span>
+<span class="normal">46</span>
+<span class="normal">47</span>
+<span class="normal">48</span>
+<span class="normal">49</span>
+<span class="normal">50</span>
+<span class="normal">51</span>
+<span class="normal">52</span>
+<span class="normal">53</span>
+<span class="normal">54</span>
+<span class="normal">55</span>
+<span class="normal">56</span>
+<span class="normal">57</span>
+<span class="normal">58</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">node_stats_per_position_single</span><span class="p">(</span><span class="n">simplex_list</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">with_multiplicity</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot; Get mean, standard deviation and standard error of the mean averaged across simplex lists and filtered per position</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    simplex_list : 2d-array</span>
+<span class="sd">        Array of dimension (no. of simplices, dimension) listing simplices to be considered.</span>
+<span class="sd">        Each row corresponds to a list of nodes on a simplex indexed by the order of the nodes in an NxN matrix.</span>
+<span class="sd">        All entries must be an index in values</span>
+<span class="sd">    values : Series</span>
+<span class="sd">        pandas Series with index the nodes of the NxN matrix of which the simplices are listed,</span>
+<span class="sd">        and values the values on that node to be averaged.</span>
+<span class="sd">    with_multiplicity : bool</span>
+<span class="sd">        if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node</span>
+<span class="sd">        participates in a simplex in a given position</span>
+<span class="sd">        if ``False`` repetitions of a node in a given position are ignored.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    DataFrame</span>
+<span class="sd">        with index, the possible positions of o node in a ``k``-simplex and columns the mean, standard deviation and</span>
+<span class="sd">        standard error of the mean for that position</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Filter values</span>
+    <span class="k">if</span> <span class="n">with_multiplicity</span><span class="p">:</span>
+        <span class="n">vals_sl</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">simplex_list</span><span class="o">.</span><span class="n">flatten</span><span class="p">()]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">simplex_list</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">vals_sl</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">values</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">simplex_list</span><span class="p">[:,</span> <span class="n">pos</span><span class="p">])]</span> <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">simplex_list</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+                            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keys</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="n">simplex_list</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="c1"># Compute stats</span>
+    <span class="n">stats_vals</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Index</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">simplex_list</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;position&quot;</span><span class="p">))</span>
+    <span class="c1"># Stats per position</span>
+    <span class="n">stats_vals</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">stats_vals</span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">stats_vals</span><span class="p">[</span><span class="s2">&quot;sem&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">)</span>
+    <span class="c1"># Stats in any position</span>
+    <span class="n">stats_vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">)</span>
+    <span class="n">stats_vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;std&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanstd</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">)</span>
+    <span class="n">stats_vals</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="s2">&quot;sem&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">vals_sl</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nan_policy</span><span class="o">=</span><span class="s2">&quot;omit&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">stats_vals</span>
+</code></pre></div></td></tr></table></div>
+          </details>
+  </div>
+
+</div>
+
+
+
+  </div>
+
+  </div>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

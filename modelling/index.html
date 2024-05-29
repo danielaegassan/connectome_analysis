@@ -12,11 +12,11 @@
         <link rel="prev" href="..">
       
       
-        <link rel="next" href="../network/">
+        <link rel="next" href="../randomization/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.6">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
     
     
       
@@ -24,10 +24,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.35e1ed30.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.356b1318.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -68,16 +68,13 @@
     <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
-    
-      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
-    
     <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
         
-        <a href="#functions-for-modelling" class="md-skip">
+        <a href="#this-page-describes-functions-contained-in-the-modelling-module-used-to-model-or-parametrize-the-connectivity-of-connectomes" class="md-skip">
           Skip to content
         </a>
       
@@ -126,9 +123,9 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
     
-      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 6H7c-3.31 0-6 2.69-6 6s2.69 6 6 6h10c3.31 0 6-2.69 6-6s-2.69-6-6-6zm0 10H7c-2.21 0-4-1.79-4-4s1.79-4 4-4h10c2.21 0 4 1.79 4 4s-1.79 4-4 4zM7 9c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>
       </label>
     
@@ -136,15 +133,18 @@
     
     
     
-    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
     
-      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 7H7a5 5 0 0 0-5 5 5 5 0 0 0 5 5h10a5 5 0 0 0 5-5 5 5 0 0 0-5-5m0 8a3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3 3 3 0 0 1-3 3Z"/></svg>
       </label>
     
   
 </form>
       
+    
+    
+      <script>var media,input,key,value,palette=__md_get("__palette");if(palette&&palette.color){"(prefers-color-scheme)"===palette.color.media&&(media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']"),palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent"));for([key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
     
     
     
@@ -190,7 +190,7 @@
         <a href="https://github.com/danielaegassan/connectome_analysis" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -236,7 +236,7 @@
       <a href="https://github.com/danielaegassan/connectome_analysis" title="Go to repository" class="md-source" data-md-component="source">
   <div class="md-source__icon md-icon">
     
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2023 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
   </div>
   <div class="md-source__repository">
     GitHub
@@ -248,6 +248,7 @@
     
       
       
+  
   
   
   
@@ -272,14 +273,13 @@
     
   
   
-    
+  
     
     
     
     
     <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
-        
         
         
         <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
@@ -289,7 +289,7 @@
             
   
   <span class="md-ellipsis">
-    Functions
+    Modules
   </span>
   
 
@@ -299,7 +299,7 @@
         <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_2">
             <span class="md-nav__icon md-icon"></span>
-            Functions
+            Modules
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
             
@@ -310,12 +310,11 @@
     
   
   
+  
     <li class="md-nav__item md-nav__item--active">
       
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
-      
-        
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
@@ -345,8 +344,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -355,308 +352,101 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#this-page-describes-functions-contained-in-the-modelling-module-used-to-model-or-parametrize-the-connectivity-of-connectomes" class="md-nav__link">
+    <span class="md-ellipsis">
+      This page describes functions contained in the modelling module used to model or parametrize the connectivity of connectomes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling" class="md-nav__link">
-    modelling
+    <span class="md-ellipsis">
+      modelling
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model" class="md-nav__link">
-    conn_prob_2nd_order_model()
+    <span class="md-ellipsis">
+      conn_prob_2nd_order_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_2nd_order_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model" class="md-nav__link">
-    conn_prob_2nd_order_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_2nd_order_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_2nd_order_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model" class="md-nav__link">
-    conn_prob_3rd_order_model()
+    <span class="md-ellipsis">
+      conn_prob_3rd_order_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_3rd_order_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model" class="md-nav__link">
-    conn_prob_3rd_order_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_3rd_order_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_3rd_order_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_model" class="md-nav__link">
-    conn_prob_model()
+    <span class="md-ellipsis">
+      conn_prob_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model" class="md-nav__link">
-    conn_prob_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_batch_model_building" class="md-nav__link">
-    run_batch_model_building()
+    <span class="md-ellipsis">
+      run_batch_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_batch_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_batch_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_batch_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_model_building" class="md-nav__link">
-    run_model_building()
+    <span class="md-ellipsis">
+      run_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_pathway_model_building" class="md-nav__link">
-    run_pathway_model_building()
+    <span class="md-ellipsis">
+      run_pathway_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_pathway_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -672,25 +462,6 @@
               
                 
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../network/" class="md-nav__link">
-        
-  
-  <span class="md-ellipsis">
-    Network
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
   
   
   
@@ -709,6 +480,133 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_2_3" id="__nav_2_3_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Network
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_2_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2_3">
+            <span class="md-nav__icon md-icon"></span>
+            Network
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_topology/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Topology
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_classic/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Classic
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_local/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Local
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../network_stats/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Stats
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -718,6 +616,7 @@
     
       
       
+  
   
   
   
@@ -752,8 +651,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -762,308 +659,101 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#this-page-describes-functions-contained-in-the-modelling-module-used-to-model-or-parametrize-the-connectivity-of-connectomes" class="md-nav__link">
+    <span class="md-ellipsis">
+      This page describes functions contained in the modelling module used to model or parametrize the connectivity of connectomes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling" class="md-nav__link">
-    modelling
+    <span class="md-ellipsis">
+      modelling
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model" class="md-nav__link">
-    conn_prob_2nd_order_model()
+    <span class="md-ellipsis">
+      conn_prob_2nd_order_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_2nd_order_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model" class="md-nav__link">
-    conn_prob_2nd_order_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_2nd_order_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_2nd_order_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model" class="md-nav__link">
-    conn_prob_3rd_order_model()
+    <span class="md-ellipsis">
+      conn_prob_3rd_order_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_3rd_order_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model" class="md-nav__link">
-    conn_prob_3rd_order_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_3rd_order_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_3rd_order_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_model" class="md-nav__link">
-    conn_prob_model()
+    <span class="md-ellipsis">
+      conn_prob_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model" class="md-nav__link">
-    conn_prob_pathway_model()
+    <span class="md-ellipsis">
+      conn_prob_pathway_model
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="conn_prob_pathway_model()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.conn_prob_pathway_model--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_batch_model_building" class="md-nav__link">
-    run_batch_model_building()
+    <span class="md-ellipsis">
+      run_batch_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_batch_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_batch_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_batch_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_model_building" class="md-nav__link">
-    run_model_building()
+    <span class="md-ellipsis">
+      run_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_model_building--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#src.connalysis.modelling.modelling.run_pathway_model_building" class="md-nav__link">
-    run_pathway_model_building()
+    <span class="md-ellipsis">
+      run_pathway_model_building
+    </span>
   </a>
-  
-    <nav class="md-nav" aria-label="run_pathway_model_building()">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--notes" class="md-nav__link">
-    Notes
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--see-also" class="md-nav__link">
-    See Also
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#src.connalysis.modelling.modelling.run_pathway_model_building--references" class="md-nav__link">
-    References
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1085,9 +775,9 @@
   
 
 
-<h1 id="functions-for-modelling">Functions for modelling</h1>
-<p>This page describes functions contained in the <code>modelling</code> module used to  model  or parametrize 
-the connectivity of connectomes</p>
+  <h1>Modelling</h1>
+
+<h2 id="this-page-describes-functions-contained-in-the-modelling-module-used-to-model-or-parametrize-the-connectivity-of-connectomes">This page describes functions contained in the <code>modelling</code> module used to  model  or parametrize the connectivity of connectomes</h2>
 
 
 <div class="doc doc-object doc-module">
@@ -1111,7 +801,6 @@ the connectivity of connectomes</p>
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -1291,8 +980,10 @@ the connectivity of connectomes</p>
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 2nd-order model as defined in [1]_ describes connection probabilities as a function of distance between pre- and post-synaptic neurons. Specifically, we use here an exponential distance-dependent model of the form:
 $$
 p(d) = \mbox{scale} * exp(-\mbox{exponent} * d)
@@ -1308,19 +999,19 @@ with <code>d</code> as distance in <span class="arithmatex">\(\mu m\)</span>, an
 <li><code>coord_names</code> Names of the coordinates (columns in neuron properties table) based on which to compute Euclidean distance (optional; default: ["x", "y", "z"])</li>
 <li><code>N_split</code> Number of data splits (&gt; 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)</li>
 </ul>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_model--see-also">See Also</h4>
-<p>conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node populations
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node populations
 conn_prob_model : Underlying generic model building function wrapper</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">130</span>
-<span class="normal">131</span>
-<span class="normal">132</span>
-<span class="normal">133</span>
-<span class="normal">134</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">134</span>
 <span class="normal">135</span>
 <span class="normal">136</span>
 <span class="normal">137</span>
@@ -1384,7 +1075,11 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 <span class="normal">195</span>
 <span class="normal">196</span>
 <span class="normal">197</span>
-<span class="normal">198</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_2nd_order_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">198</span>
+<span class="normal">199</span>
+<span class="normal">200</span>
+<span class="normal">201</span>
+<span class="normal">202</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_2nd_order_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for 2nd-order probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -1461,7 +1156,6 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -1665,21 +1359,23 @@ conn_prob_model : Underlying generic model building function wrapper</p>
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
-<p>The 2nd-order model as defined in [1]_. See "See Also" for details.</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--see-also">See Also</h4>
-<p>conn_prob_2nd_order_model : Special case of 2nd-order model building function wrapper for same source/target node population; further details to be found here</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_2nd_order_pathway_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
 
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+<p>The 2nd-order model as defined in [1]_. See "See Also" for details.</p>
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_2nd_order_model : Special case of 2nd-order model building function wrapper for same source/target node population; further details to be found here</p>
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">201</span>
-<span class="normal">202</span>
-<span class="normal">203</span>
-<span class="normal">204</span>
-<span class="normal">205</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">205</span>
 <span class="normal">206</span>
 <span class="normal">207</span>
 <span class="normal">208</span>
@@ -1732,7 +1428,11 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 <span class="normal">255</span>
 <span class="normal">256</span>
 <span class="normal">257</span>
-<span class="normal">258</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_2nd_order_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_2nd_order_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for 2nd-order probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -1798,7 +1498,6 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -1978,8 +1677,10 @@ conn_prob_model : Underlying generic model building function wrapper</p>
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 3rd-order model as defined in [1]_ describes connection probabilities as a bipolar function of distance between pre- and post-synaptic neurons. Specifically, we use here an bipolar exponential distance-dependent model of the form:
 $$
 p(d, \Delta depth) = \mbox{scale}_N * exp(-\mbox{exponent}_N * d)~\mbox{if}~\Delta depth &lt; 0
@@ -2002,19 +1703,19 @@ with <code>d</code> as distance in <span class="arithmatex">\(\mu m\)</span>, <s
 <li><code>depth_name</code> Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")</li>
 <li><code>N_split</code> Number of data splits (&gt; 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)</li>
 </ul>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_model--see-also">See Also</h4>
-<p>conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node populations
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node populations
 conn_prob_model : Underlying generic model building function wrapper</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">265</span>
 <span class="normal">266</span>
 <span class="normal">267</span>
 <span class="normal">268</span>
@@ -2085,7 +1786,11 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 <span class="normal">333</span>
 <span class="normal">334</span>
 <span class="normal">335</span>
-<span class="normal">336</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_3rd_order_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">336</span>
+<span class="normal">337</span>
+<span class="normal">338</span>
+<span class="normal">339</span>
+<span class="normal">340</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_3rd_order_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for 3rd-order probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -2169,7 +1874,6 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -2373,21 +2077,23 @@ conn_prob_model : Underlying generic model building function wrapper</p>
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
-<p>The 3rd-order model as defined in [1]_. See "See Also" for details.</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--see-also">See Also</h4>
-<p>conn_prob_3rd_order_model : Special case of 3rd-order model building function wrapper for same source/target node population; further details to be found here</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_3rd_order_pathway_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
 
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+<p>The 3rd-order model as defined in [1]_. See "See Also" for details.</p>
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_3rd_order_model : Special case of 3rd-order model building function wrapper for same source/target node population; further details to be found here</p>
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">339</span>
-<span class="normal">340</span>
-<span class="normal">341</span>
-<span class="normal">342</span>
-<span class="normal">343</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">343</span>
 <span class="normal">344</span>
 <span class="normal">345</span>
 <span class="normal">346</span>
@@ -2440,7 +2146,11 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 <span class="normal">393</span>
 <span class="normal">394</span>
 <span class="normal">395</span>
-<span class="normal">396</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_3rd_order_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">396</span>
+<span class="normal">397</span>
+<span class="normal">398</span>
+<span class="normal">399</span>
+<span class="normal">400</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_3rd_order_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for 3rd-order probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -2506,7 +2216,6 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -2706,8 +2415,10 @@ conn_prob_model : Underlying generic model building function wrapper</p>
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.</p>
 <p><code>kwargs</code> may contain following settings, most of which are optional:</p>
 <ul>
@@ -2721,20 +2432,20 @@ conn_prob_model : Underlying generic model building function wrapper</p>
 <li><code>depth_name</code> Name of depth coordinate (column in neuron properties table) to use in 3rd-order (bipolar) model (optional; default: "depth")</li>
 <li><code>N_split</code> Number of data splits (&gt; 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)</li>
 </ul>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_model--see-also">See Also</h4>
-<p>conn_prob_2nd_order_model : 2nd-order model building function wrapper for same source/target node population
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_2nd_order_model : 2nd-order model building function wrapper for same source/target node population
 conn_prob_3rd_order_model : 3rd-order model building function wrapper for same source/target node population
 conn_prob_pathway_model : Generic model building function wrapper for differet source/target node populations</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">399</span>
-<span class="normal">400</span>
-<span class="normal">401</span>
-<span class="normal">402</span>
-<span class="normal">403</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">403</span>
 <span class="normal">404</span>
 <span class="normal">405</span>
 <span class="normal">406</span>
@@ -2830,7 +2541,11 @@ conn_prob_pathway_model : Generic model building function wrapper for differet s
 <span class="normal">496</span>
 <span class="normal">497</span>
 <span class="normal">498</span>
-<span class="normal">499</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">499</span>
+<span class="normal">500</span>
+<span class="normal">501</span>
+<span class="normal">502</span>
+<span class="normal">503</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for generic probability model building to be used within a processing pipeline, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -2939,7 +2654,6 @@ conn_prob_pathway_model : Generic model building function wrapper for differet s
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -3163,23 +2877,25 @@ conn_prob_pathway_model : Generic model building function wrapper for differet s
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.conn_prob_pathway_model--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_pathway_model--see-also">See Also</h4>
-<p>conn_prob_model : Special case of generic model building function wrapper for same source/target node population; further details to be found here
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>conn_prob_model : Special case of generic model building function wrapper for same source/target node population; further details to be found here
 conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node population
 conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node population</p>
-<h4 id="src.connalysis.modelling.modelling.conn_prob_pathway_model--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">502</span>
-<span class="normal">503</span>
-<span class="normal">504</span>
-<span class="normal">505</span>
-<span class="normal">506</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">506</span>
 <span class="normal">507</span>
 <span class="normal">508</span>
 <span class="normal">509</span>
@@ -3267,7 +2983,11 @@ conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper fo
 <span class="normal">591</span>
 <span class="normal">592</span>
 <span class="normal">593</span>
-<span class="normal">594</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">594</span>
+<span class="normal">595</span>
+<span class="normal">596</span>
+<span class="normal">597</span>
+<span class="normal">598</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">conn_prob_pathway_model</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrapper function for generic probability model building to be used within a processing pipeline for pathways with different source and target node populations, optionally for multiple random subsets of neurons.</span>
 
 <span class="sd">    Parameters</span>
@@ -3368,7 +3088,6 @@ conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper fo
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -3557,8 +3276,10 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.run_batch_model_building--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p><code>cfg_file</code> must be a .json file containing a dictionary with following entries, most of which are optional:</p>
 <ul>
 <li><code>model_name</code> Name of the model (to be used in file names, ...)</li>
@@ -3576,16 +3297,14 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
 <li><code>N_split</code> Number of data splits (&gt; 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)</li>
 <li><code>part_idx</code> Part index (from 0 to N_split-1) to run data extraction only on a specific data split; -1 to merge existing splits and build model (optional; default: data extraction and model building for all splits)</li>
 </ul>
-<h4 id="src.connalysis.modelling.modelling.run_batch_model_building--see-also">See Also</h4>
-<p>run_model_building : Underlying main function for model building</p>
-
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>run_model_building : Underlying main function for model building</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 34</span>
-<span class="normal"> 35</span>
-<span class="normal"> 36</span>
-<span class="normal"> 37</span>
-<span class="normal"> 38</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 38</span>
 <span class="normal"> 39</span>
 <span class="normal"> 40</span>
 <span class="normal"> 41</span>
@@ -3667,7 +3386,11 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
 <span class="normal">117</span>
 <span class="normal">118</span>
 <span class="normal">119</span>
-<span class="normal">120</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_batch_model_building</span><span class="p">(</span><span class="n">adj_file</span><span class="p">,</span> <span class="n">nrn_file</span><span class="p">,</span> <span class="n">cfg_file</span><span class="p">,</span> <span class="n">N_split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">part_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_batch_model_building</span><span class="p">(</span><span class="n">adj_file</span><span class="p">,</span> <span class="n">nrn_file</span><span class="p">,</span> <span class="n">cfg_file</span><span class="p">,</span> <span class="n">N_split</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">part_idx</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function for data extraction and model building to be used in a batch script on different data splits.</span>
 
 <span class="sd">    Parameters</span>
@@ -3762,7 +3485,6 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -3949,8 +3671,10 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.run_model_building--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.</p>
 <p><code>kwargs</code> may contain following (optional) settings:</p>
 <ul>
@@ -3967,20 +3691,20 @@ Range:  0 .. N_split - 1 Run data extraction of given data split
 <li><code>N_split</code> Number of data splits (&gt; 1) to sequentially extract data from, to reduce memory consumption (optional; default: no splitting)</li>
 <li><code>part_idx</code> Part index (from 0 to N_split-1) to run data extraction only on a specific data split; -1 to merge existing splits and build model (optional; default: data extraction and model building for all splits)</li>
 </ul>
-<h4 id="src.connalysis.modelling.modelling.run_model_building--see-also">See Also</h4>
-<p>run_pathway_model_building : Main model building function for differet source/target node populations
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>run_pathway_model_building : Main model building function for differet source/target node populations
 conn_prob_2nd_order_model : 2nd-order model building function wrapper for same source/target node population to be used within a processing pipeline
 conn_prob_3rd_order_model : 3rd-order model building function wrapper for same source/target node population to be used within a processing pipeline</p>
-<h4 id="src.connalysis.modelling.modelling.run_model_building--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">613</span>
-<span class="normal">614</span>
-<span class="normal">615</span>
-<span class="normal">616</span>
-<span class="normal">617</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">617</span>
 <span class="normal">618</span>
 <span class="normal">619</span>
 <span class="normal">620</span>
@@ -4105,7 +3829,11 @@ conn_prob_3rd_order_model : 3rd-order model building function wrapper for same s
 <span class="normal">739</span>
 <span class="normal">740</span>
 <span class="normal">741</span>
-<span class="normal">742</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_model_building</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_order</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">742</span>
+<span class="normal">743</span>
+<span class="normal">744</span>
+<span class="normal">745</span>
+<span class="normal">746</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_model_building</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_order</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function for probability model building, consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization.</span>
 
 <span class="sd">    Parameters</span>
@@ -4243,7 +3971,6 @@ conn_prob_3rd_order_model : 3rd-order model building function wrapper for same s
 
 
 <div class="doc doc-object doc-function">
-
 
 
 
@@ -4454,23 +4181,25 @@ conn_prob_3rd_order_model : 3rd-order model building function wrapper for same s
         </tr>
     </tbody>
   </table>
-      <h4 id="src.connalysis.modelling.modelling.run_pathway_model_building--notes">Notes</h4>
-<p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
+
+<details class="note" open>
+  <summary>Notes</summary>
+  <p>The adjacency matrix encodes connectivity between source (rows) and taget (columns) neurons.</p>
 <p>The 2nd-order and 3rd-order models as defined in [1]_ are supported. See "See Also" for details.</p>
-<h4 id="src.connalysis.modelling.modelling.run_pathway_model_building--see-also">See Also</h4>
-<p>run_model_building : Main model building function for same source/target node populations; further details to be found here
+</details>
+<details class="see-also" open>
+  <summary>See Also</summary>
+  <p>run_model_building : Main model building function for same source/target node populations; further details to be found here
 conn_prob_2nd_order_pathway_model : 2nd-order model building function wrapper for different source/target node populations to be used within a processing pipeline
 conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper for different source/target node populations to be used within a processing pipeline</p>
-<h4 id="src.connalysis.modelling.modelling.run_pathway_model_building--references">References</h4>
-<p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
-
+</details>
+<details class="references" open>
+  <summary>References</summary>
+  <p>.. [1] Gal E, Perin R, Markram H, London M, Segev I, "Neuron Geometry Underlies Universal Network Features in Cortical Microcircuits," bioRxiv, doi: https://doi.org/10.1101/656058.</p>
+</details>
           <details class="quote">
             <summary>Source code in <code>src/connalysis/modelling/modelling.py</code></summary>
-            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">745</span>
-<span class="normal">746</span>
-<span class="normal">747</span>
-<span class="normal">748</span>
-<span class="normal">749</span>
+            <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">749</span>
 <span class="normal">750</span>
 <span class="normal">751</span>
 <span class="normal">752</span>
@@ -4577,7 +4306,11 @@ conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper fo
 <span class="normal">853</span>
 <span class="normal">854</span>
 <span class="normal">855</span>
-<span class="normal">856</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_pathway_model_building</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_order</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<span class="normal">856</span>
+<span class="normal">857</span>
+<span class="normal">858</span>
+<span class="normal">859</span>
+<span class="normal">860</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">run_pathway_model_building</span><span class="p">(</span><span class="n">adj</span><span class="p">,</span> <span class="n">node_properties_src</span><span class="p">,</span> <span class="n">node_properties_tgt</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">model_order</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Main function for probability model building for pathways with different source and target node populations, consisting of three steps: Data extraction, model fitting, and (optionally) data/model visualization.</span>
 
 <span class="sd">    Parameters</span>
@@ -4707,11 +4440,19 @@ conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper fo
 
 
 
+
+
+
+
+
+
+
                 
               </article>
             </div>
           
           
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
         </div>
         
       </main>
@@ -4740,10 +4481,10 @@ conn_prob_3rd_order_pathway_model : 3rd-order model building function wrapper fo
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.aecac24b.min.js"></script>
+      <script src="../assets/javascripts/bundle.bd41221c.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       

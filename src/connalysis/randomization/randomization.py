@@ -445,7 +445,7 @@ def ER_shuffle(adj, neuron_properties=[]):
     return sp.csr_matrix(adj)
 
 
-def configuration_model(adj, seed = None):
+def configuration_model(M, seed = None):
     """Function to generate the configuration control model, obtained by
     shuffling the row and column of coo format independently, to create
     new coo matrix, then removing any multiple edges and loops.
@@ -470,7 +470,7 @@ def configuration_model(adj, seed = None):
     [run_DD2](randomization.md#src.connalysis.randomization.randomization.run_DD2) :
     Function which runs the 2nd distance dependent model
     """
-    adj=adj.tocoo()
+    adj=M.copy().tocoo()
     generator = np.random.default_rng(seed)
     R = adj.row
     C = adj.col

@@ -1,12 +1,15 @@
-# connalysis: Functions to analyze connectomes
+# connalysis: General analises of connectomes from a topological perspective
+
+## Overview
 
 This package provides a library of general functions to analyze connectomes. Functions are divided into three groups:
 
 * [Modelling](modelling.md): Functions to model (parametrize) the connectivity of connectomes
 * [Randomization](randomization.md): Generation of randomized controls of connectomes
-* [Network](network.md): Graph theoretic and topological functions of connectomes
+* [Network](network.md): Network analyses based on metrics of different types
 
-TUTORIALS 
+
+## </br> Tutorials
 
 Check out a few short tutorials showing: 
 

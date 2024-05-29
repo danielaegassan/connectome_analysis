@@ -99,7 +99,8 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
     ----------
     participation : DataFrame
         DataFrame of node participation with index the nodes in nodes of an NxN matrix to consider,
-        columns are dimensions and values are node particpation see HELP AQUI AQUI
+        columns are dimensions and values are node participation computed with
+        [node_participation](network_topology.md#src.connalysis.network.topology.node_participation).
     values : Series
         pandas Series with index the nodes of the NxN matrix of where node participation has been computed
         and vals the values on that node to be averaged.
@@ -119,12 +120,12 @@ def node_stats_participation(participation, vals, condition=operator.eq, dims=No
 
     See Also
     --------
-    [node_stats_per_position_single] (network.md#src.connalysis.network.stats.node_stats_per_position_single):
+    [node_stats_per_position_single](network_stats.md#src.connalysis.network.stats.node_stats_per_position_single):
     A similar function where the position of the nodes in the simplex are taken into account.  Note in particular that
     if condition = ``operator.ge`` the weighted_mean of this analyisis is equivalent than the value given by this function for position ``all``.
-    However the computation using node participation is more efficient.
-    [node_participation](network.md#src.connalysis.network.topology.node_participation) :
-    A function computes the node participation DataFrame of a given network.
+    However the computation using
+    [node_participation](network_topology.md#src.connalysis.network.topology.node_participation)
+    is more efficient.
     """
     par_df = participation.copy()
     if dims is None:
@@ -187,7 +188,7 @@ def node_stats_neighborhood(values, adj=None, pre=True, post=True, all_nodes=Tru
 
     See Also
     --------
-    [neighborhood_indices] (network.md#src.connalysis.network.local.neighborhood_indices):
+    [neighborhood_indices] (network_local.md#src.connalysis.network.local.neighborhood_indices):
     Function to precompute the neighborhood_indices that can be used if precomputed is set ``True``.
     Precomputing the neighborhoods would increase efficiency if multiple properties are averaged across neighborhoods.
     """
@@ -217,6 +218,54 @@ def node_stats_neighborhood(values, adj=None, pre=True, post=True, all_nodes=Tru
                                           columns=["sum", "mean", "std", "sem"])
     stat_vals["center"] = centers
     return stat_vals.set_index("center")
+
+def edge_stats_participation(participation, vals, condition=operator.eq, dims=None):
+    """ Get statistics of the values in vals across edges filtered using edge participation
+
+    Parameters
+    ----------
+    participation : DataFrame
+        DataFrame of edge participation with index the edges of an NxN matrix to consider,
+        columns are dimensions and values are edge participation.
+    values : Series
+        pandas Series with index the edges of the NxN matrix of which edge participation has been computed
+        and vals the values on that edge to be averaged.
+    condition : operator
+        operator with which to filter the nodes. The default ``operator.eq`` filters nodes such that their maximal
+        dimension of edge participation is a given value.
+        Alternatively, ``operator.ge`` filters edges such that their maximal dimension of node participation is at least a given
+        value.
+    dims : iterable
+        dimensions for which to run the analysis, if ``None`` all the columns of participation will be analyzed
+
+    Returns
+    -------
+    DataFrame
+        with index, the dimensions for which the analysis have been run and columns the statistics of the values in vals
+        where the nodes have been grouped according to the condition given.
+    """
+    par_df = participation.copy()
+    if dims is None:
+        dims = par_df.columns
+    vals = vals.rename("values")
+    par_df["max_dim"] = (par_df > 0).sum(axis=1)  # maximal dimension an edge is part of. Note that edge participation in dimension 0 is 0
+    stats_vals = {}
+    for dim in dims:
+        mask = condition(par_df.max_dim, dim)
+        c = pd.DataFrame(vals.loc[par_df[mask].index], columns=["values"])
+        c["weight"] = par_df[mask][dim]
+        w_mean = c.apply(np.product, axis=1).sum() / (c["weight"].sum())
+        stats_vals[dim] = (c.shape[0],  # Number of nodes fulfilling the condition
+                           np.nanmean(c["values"]),
+                           np.nanstd(c["values"]),
+                           stats.sem(c["values"], nan_policy="omit"),
+                           w_mean  # mean weighted by participation
+                           )
+    stats_vals = pd.DataFrame.from_dict(stats_vals, orient="index",
+                                        columns=["counts", "mean", "std", "sem", "weighted_mean"])
+    stats_vals.index.name = "dim"
+    return stats_vals.drop(0)
+
 
 
 '''###POTENTIALLY USEFUL OR DELETE

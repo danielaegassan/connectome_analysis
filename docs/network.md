@@ -1,40 +1,6 @@
-# Functions for working with networks
+## This page describes functions contained in the `network` module.  These are arranged by motivation, either: 
 
-This page describes functions contained in the `network` module. 
-The functions are arranged by motivation, either from classic graph and network theory, or from topology.
-
-## Topology
-
-These functions are topologically motivated.
-
-::: src.connalysis.network.topology
-    options:
-      docstring_style: numpy
-
-
-## Classic
-
-These functions are classic graph theoretic functions.
-
-::: src.connalysis.network.classic
-    options:
-      docstring_style: numpy
-
-## Local
-
-These are utility functions used to restrict analyses to neighborhoods.
-
-::: src.connalysis.network.local
-    options:
-      docstring_style: numpy
-
-## Stats
-
-These are utility functions used to compute simple statistics across simplices and neighborhoods.
-
-::: src.connalysis.network.stats
-    options:
-      docstring_style: numpy
-
-
-
+* [Topology](network_topology.md): Network analyses that are topologically motivated.
+* [Classic](network_classic.md): Network analyses based on classic graph theoretic metrics.
+* [Local](network_local.md): Utility functions to restrict analyses to neighborhoods.
+* [Stats](network_stats.md): Utility functions to compute simple statistics across simplices and neighborhoods.

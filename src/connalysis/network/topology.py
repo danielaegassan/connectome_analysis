@@ -791,7 +791,7 @@ def betti_counts(adj, node_properties=None,
 
     See Also
     --------
-    [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts) :
+    [simplex_counts](network_topology.md#src.connalysis.network.topology.simplex_counts) :
     A function that counts the simplices forming the complex from which bettis are count.
     Simplex types are described there in detail.
 
@@ -1179,7 +1179,7 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
     N: int
         Number of nodes in original graph.
     simple_type: str
-        See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
+        See [simplex_counts](network_topology.md#src.connalysis.network.topology.simplex_counts)
     position: str
         Position of the edges to extract
 
@@ -1208,10 +1208,10 @@ def count_rc_edges_skeleta(adj=None, max_dim=-1, max_simplices=False,
 
     See Also
     --------
-    [edge_participation](network.md#src.connalysis.network.topology.edge_participation) :
+    [edge_participation](network_topology.md#src.connalysis.network.topology.edge_participation) :
     A function that counts the number of times an edge is part of a simplex.
 
-    [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts) :
+    [simplex_counts](network_topology.md#src.connalysis.network.topology.simplex_counts) :
     A function that counts the simplices forming the complex from which bettis are count,
     where simplex types are described in detail.
     """
@@ -1308,7 +1308,7 @@ def bedge_counts(adjacency, simplices=None,
         Maximal dimension up to which simplex motifs are counted.
         The default max_dim = -1 counts all existing dimensions.  Particularly useful for large or dense graphs.
     simplex_type: str
-        See [simplex_counts](network.md#src.connalysis.network.topology.simplex_counts)
+        See [simplex_counts](network_topology.md#src.connalysis.network.topology.simplex_counts)
 
     Returns
     -------

@@ -13,6 +13,9 @@
 ---
 
 ## Citation  
+
+[![DOI:10.1101/2024.03.15.585196](http://img.shields.io/badge/DOI-10.1101/2024.03.15.585196-B31B1B.svg)](https://doi.org/10.1101/2024.03.15.585196)
+
 If you use this software, kindly use the following BibTeX entry for citation:
 
 ```

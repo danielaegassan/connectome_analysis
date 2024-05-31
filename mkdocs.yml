@@ -23,7 +23,7 @@ nav:
       - Classic: 'network_classic.md'
       - Local: 'network_local.md'
       - Stats: 'network_stats.md'
-  - About: 'about.md'
+  #- About: 'about.md'
 
 markdown_extensions:
   #- toc:

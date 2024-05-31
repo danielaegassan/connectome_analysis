@@ -2,7 +2,7 @@
 
 #### General functions to analyze connectomes from a topological perspective.  
 
-![](banner_BPP_connalysis.jpg)
+![](docs/banner_BPP_connalysis.jpg)
 
 ---
 

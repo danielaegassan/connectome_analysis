@@ -35,6 +35,12 @@ To install, in your terminal run:
 pip install git+https://github.com/danielaegassan/connectome_analysis.git
 ```
 
-For the installation to work you require ``gcc 9+``, ``CMake`` and ``Python 3.8+``. Python requirements will be installed directly and are listed 
+For the installation to work you require: 
+
+* [gcc](https://gcc.gnu.org/) 9+
+* [CMake](https://cmake.org/)
+* Python 3.8+
+* 
+Python requirements will be installed directly and are listed 
 [here](https://github.com/danielaegassan/connectome_analysis/blob/e4e23e614f95d7eab8945fcb91d0cf8ecbbe47c0/requirements.txt).
 

@@ -2,9 +2,7 @@
 
 ### General analises of connectomes from a topological perspective
 
-<p align="center">
-  <img src = "../banner_BPP_connalysis.jpg">
-</p>
+![banner](banner_BPP_connalysis.jpg)
 
 ## Overview
 

@@ -6,9 +6,9 @@
 
 ---
 
-**Documentation (including examples and tutorials)**: [https://danielaegassan.github.io/connectome_analysis](https://danielaegassan.github.io/connectome_analysis)
+[**Documentation (including examples and tutorials):**](https://danielaegassan.github.io/connectome_analysis)
 
-**Source Code**: [https://github.com/danielaegassan/connectome_analysis](https://github.com/danielaegassan/connectome_analysis)
+[**Source Code**](src/connalysis)
 
 ---
 

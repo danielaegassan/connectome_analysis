@@ -12,12 +12,6 @@
 
 ---
 
-## User installation
-
-```sh
-pip install git+https://github.com/danielaegassan/connectome_analysis.git
-```
-
 ## Citation  
 If you use this software, kindly use the following BibTeX entry for citation:
 
@@ -31,6 +25,14 @@ If you use this software, kindly use the following BibTeX entry for citation:
   publisher={Cold Spring Harbor Laboratory},
   doi = {10.1101/2024.03.15.585196}
 }
+```
+
+---
+
+## User installation
+
+```sh
+pip install git+https://github.com/danielaegassan/connectome_analysis.git
 ```
 
 ## Development installation

@@ -1,10 +1,12 @@
 # Connectome Analysis
 
-This package provides a library of general functions to analyze connectomes from a topological perspective.  For documentation, examples and tutorials see our documentation
+#### General functions to analyze connectomes from a topological perspective.  
+
+![](banner_BPP_connalysis.jpg)
 
 ---
 
-**Documentation**: [https://danielaegassan.github.io/connectome_analysis](https://danielaegassan.github.io/connectome_analysis)
+**Documentation (including examples and tutorials)**: [https://danielaegassan.github.io/connectome_analysis](https://danielaegassan.github.io/connectome_analysis)
 
 **Source Code**: [https://github.com/danielaegassan/connectome_analysis](https://github.com/danielaegassan/connectome_analysis)
 

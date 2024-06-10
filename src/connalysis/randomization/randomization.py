@@ -427,22 +427,67 @@ def _seed_random_state(shuffler, seeder=np.random.seed):
 
 ####### SHUFFLE #######################
 @_seed_random_state
-def ER_shuffle(adj, neuron_properties=[]):
-    """
-    #Creates an ER control by shuffling entries away from the diagonal in adj
-    TODO: Re-implement this using only sparse matrices
-    """
-    n = adj.get_shape()[0]
-    adj = adj.toarray()
-    LOG.info("Shuffle %s edges following Erdos-Renyi", adj.sum())
-    above_diagonal = adj[np.triu_indices(n, k=1)]
-    below_diagonal = adj[np.tril_indices(n, k=-1)]
-    off_diagonal = np.concatenate([above_diagonal, below_diagonal])
+def ER_shuffle(adj, neuron_properties=[], shuffle_type="sparse"):
+    """Creates an Erdős Renyi digraph with exactly the same number of edges and weights
+    as adj by shuffling the non-diagonla entries of adj.
 
-    np.random.shuffle(off_diagonal)
-    adj[np.triu_indices(n,k=1)] = off_diagonal[0:n*(n-1)//2]
-    adj[np.tril_indices(n,k=-1)] = off_diagonal[n*(n-1)//2:]
-    return sp.csr_matrix(adj)
+    Parameters
+    ----------
+    adj : sparse matrix or 2d array
+        Base digraph for which the ER control is built.
+    shuffle_type : string
+        If ``dense`` if first converts adj to a dense array and then shuffle.
+        If ``sparse`` it keeps sparsity during the shuffle.
+    seed : int
+        Random seed to be used, if none is provided a seed is randomly selected
+
+    Returns
+    -------
+    coo matrix
+        Matrix of the generated control
+
+    Raises
+    ------
+    AssertionError
+        If adj is not not sparse and ``shuffle_type`` is set to sparse.  A sparse shuffle can only be done to a sparse matrix.
+
+    """
+    N = adj.shape[0]
+    if shuffle_type == "dense":
+        if sp.issparse(adj):
+            adj = adj.toarray()
+        above_diagonal = adj[np.triu_indices(N, k=1)]
+        below_diagonal = adj[np.tril_indices(N, k=-1)]
+        off_diagonal = np.concatenate([above_diagonal, below_diagonal])
+
+        # Shuffle away from the diagonal
+        np.random.shuffle(off_diagonal)
+        adj[np.triu_indices(N, k=1)] = off_diagonal[0:N * (N - 1) // 2]
+        adj[np.tril_indices(N, k=-1)] = off_diagonal[N * (N - 1) // 2:]
+        # Return matrix
+        return sp.coo_matrix(adj)
+    elif shuffle_type == "sparse":
+        # Keep matrix sparse
+        assert sp.issparse(adj), "Matrix must be sparse for sparse shuffle"
+        data = adj.data
+        K = adj.nnz  # number of non zero entries
+        T = N * (N - 1)  # number of entries away from the diagonal
+
+        # Select K entries in np.arange(T) representing the indices of the array of
+        # pairs of tuples of entries away from the diagonal
+        # [(0,1), (0,2), (0,3), ...,(0,n),
+        #  (1,0) (1,2) (1,3) ... (1,n),
+        # ....
+        #  (n,0) (n,1) (n,2) ... (n,n-1)]
+        rnd_index = np.random.choice(T, size=K, replace=False)
+
+        # Get corresponding row and column indices
+        rows = rnd_index // (N - 1)  # row indices
+        alpha = rnd_index % (N - 1)  # colum indices candidates shifted by 1
+        cols = alpha + 1 - (alpha < rows).astype(int)  # column indices
+
+        # Return matrix
+        return sp.coo_matrix((data, (rows, cols)), shape=(N, N))
 
 
 def configuration_model(M, seed = None):

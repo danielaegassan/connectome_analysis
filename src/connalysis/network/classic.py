@@ -34,7 +34,7 @@ def closeness_connected_components(adj, neuron_properties=[], directed=False, re
     from sknetwork.ranking import Closeness
     from scipy.sparse.csgraph import connected_components
 
-    matrix=adj.toarray()
+    matrix=adj.copy()
     if directed:
         n_comp, comp = connected_components(matrix, directed=True, connection="strong")
     else:
@@ -64,14 +64,6 @@ def closeness(adj, neuron_properties, directed=False):
     """Compute closeness centrality using sknetwork on all connected components or strongly connected
     component (if directed==True)"""
     return closeness_connected_components(adj, directed=directed)
-
-def centrality(self, sub_gids, kind="closenesgit rebases", directed=False):
-    """Compute a centrality of the graph. `kind` can be 'betweeness' or 'closeness'"""
-    if kind == "closeness":
-        return self.closeness(sub_gids, directed)
-    else:
-        ValueError("Kind must be 'closeness'!")
-        #TODO:  Implement betweeness
 
 def connected_components(adj,neuron_properties=[]):
     """Returns a list of the size of the connected components of the underlying undirected graph on sub_gids,

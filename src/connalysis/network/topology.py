@@ -1486,7 +1486,7 @@ def count_triads_fully_connected(adj, max_num_sampled=5000000, return_normalized
 
     # Finding and counting triads
     import time
-    adj = adj.toarray()  # Casting to array makes finding triads an order of magnitude faster
+    adj = adj.toarray().astype(bool)  # Casting to array makes finding triads an order of magnitude faster.  Need to cast to bool for the sorting to work.
     t0 = time.time()
     undirected_adj = underlying_undirected_matrix(adj).toarray()
     # Matrix with i,j entries number of undirected paths between i and j in adj

@@ -380,7 +380,7 @@ def generate_degree_based_control(M, direction="efferent"):
     If direction = "efferent", then the out-degree is exactly preserved, while the in-degree is
     approximately preseved. Otherwise it's the other way around.
     """
-    if direction == "efferent":
+    if direction == "efferent" or direction == "both":
         M = M.tocsr()
         idxx = np.arange(M.shape[1])
         p_out = np.array(M.mean(axis=0))[0]
@@ -409,6 +409,7 @@ def _randomized_control_rich_club_curve(m, direction='efferent', n=10):
     res = pd.concat(res, axis=1)
     #TODO: Something is wrong here. rr is not defined. Should it be res?
     #      But changing rr to res causing 
+    
     df = pd.DataFrame.from_dict(
         {
             "mean": np.nanmean(res, axis=1),
@@ -432,11 +433,12 @@ def normalized_rich_club_curve(m, direction='efferent', normalize='std',
     Ar = ctrl.index.values
     mn_r = ctrl["mean"].values
     sd_r = ctrl["std"].values
-
+    max_filt = min(len(mn_r),len(B))
+    
     if normalize == 'mean':
-        return pd.Series(B[:len(mn_r)] / mn_r, index=A[:len(mn_r)])
+        return pd.Series(B[:max_filt] / mn_r[:max_filt], index=A[:max_filt])
     elif normalize == 'std':
-        return pd.Series((B[:len(mn_r)] - mn_r) / sd_r, index=A[:len(mn_r)])
+        return pd.Series((B[:max_filt] - mn_r[:max_filt]) / sd_r[:max_filt], index=A[:max_filt])
     else:
         raise Exception("Unknown normalization: %s" % normalize)
 

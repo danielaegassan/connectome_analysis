@@ -405,7 +405,7 @@ def _randomized_control_rich_club_curve(m, direction='efferent', n=10):
     res = []
     for _ in range(n):
         m_shuf = generate_degree_based_control(m, direction=direction)
-        res.append(efficient_rich_club_curve(m_shuf))
+        res.append(efficient_rich_club_curve(m_shuf, direction=direction))
     res = pd.concat(res, axis=1)
     #TODO: Something is wrong here. rr is not defined. Should it be res?
     #      But changing rr to res causing 

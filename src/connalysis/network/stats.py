@@ -17,7 +17,7 @@ import operator
 from .local import neighborhood_indices
 
 
-def node_stats_per_position_single(simplex_list, values, with_multiplicity=True):
+def node_stats_per_position_single(simplex_list, values, with_multiplicity=True, array_valued=None):
     """ Get mean, standard deviation and standard error of the mean averaged across simplex lists and filtered per position
     Parameters
     ----------
@@ -32,6 +32,12 @@ def node_stats_per_position_single(simplex_list, values, with_multiplicity=True)
         if ``True`` the values are averaged with multiplicity i.e., they are weighted by the number of times a node
         participates in a simplex in a given position
         if ``False`` repetitions of a node in a given position are ignored.
+    array_valued : bool
+        if ``False`` assumes that the values are scalar, i.e. a single value per node.
+        if ``True`` assumes that ``values`` are a numpy.array of scalar values. In that case, stats are calculated as if
+        the lists associated with nodes participating in a dimension are concatenated. If ``with_multiplicity`` is also
+        True, the corresponding lists are conceptually concatenated multiple times.
+        if ``None`` (default) will try to guess the data type from the actual data.
 
     Returns
     -------
@@ -39,23 +45,36 @@ def node_stats_per_position_single(simplex_list, values, with_multiplicity=True)
         with index, the possible positions of o node in a ``k``-simplex and columns the mean, standard deviation and
         standard error of the mean for that position
     """
-    # Filter values
-    if with_multiplicity:
-        vals_sl = values.loc[simplex_list.flatten()].to_numpy().reshape(simplex_list.shape)
-    else:
-        vals_sl = pd.concat([values.loc[np.unique(simplex_list[:, pos])] for pos in range(simplex_list.shape[1])],
-                            axis=1, keys=range(simplex_list.shape[1]))
-    # Compute stats
-    stats_vals = pd.DataFrame(index=pd.Index(range(simplex_list.shape[1]), name="position"))
-    # Stats per position
-    stats_vals["mean"] = np.nanmean(vals_sl, axis=0)
-    stats_vals["std"] = np.nanstd(vals_sl, axis=0)
-    stats_vals["sem"] = stats.sem(vals_sl, axis=0, nan_policy="omit")
-    # Stats in any position
-    stats_vals.loc["all", "mean"] = np.nanmean(vals_sl)
-    stats_vals.loc["all", "std"] = np.nanstd(vals_sl)
-    stats_vals.loc["all", "sem"] = stats.sem(vals_sl, axis=None, nan_policy="omit")
-    return stats_vals
+    def _stats(w, v, array_valued):
+        if array_valued:
+            l = v.apply(len)
+            nrmlz = (l * w).to_numpy().sum()
+            mn = (v.apply(np.sum) * w).to_numpy().sum() / nrmlz
+        else:
+            nrmlz = w.to_numpy().sum()
+            mn = (v * w).to_numpy().sum() / nrmlz
+        
+        v_var = (v - mn) ** 2
+        if array_valued:
+            sd = np.sqrt((v_var.apply(np.sum) * w).to_numpy().sum() / nrmlz)
+        else:
+            sd = np.sqrt((v_var * w).to_numpy().sum() / nrmlz)
+        sem = sd / np.sqrt(nrmlz - 1)
+        return pd.Series({"mean": mn, "std": sd, "sem": sem})
+
+    
+    if array_valued is None:
+        array_valued = (values.dtype == np.object_)
+        values = values.apply(np.array)
+        
+    per_pos = pd.DataFrame(simplex_list, columns=pd.Index(range(simplex_list.shape[1]), name="position"))
+    per_pos = per_pos.apply(lambda _x: _x.value_counts().reindex(values.index, fill_value=0))
+    if not with_multiplicity:
+        per_pos = (per_pos > 0).astype(int)
+    
+    res = per_pos.apply(_stats, axis=0, args=(values, array_valued))
+    res["all"] = _stats(per_pos.transpose(), values, array_valued)
+    return res.transpose()
 
 def node_stats_per_position(simplex_lists, values, dims=None, with_multiplicity=True):
     """ Get across dimensions mean, standard deviation and standard error of the mean averaged across simplex lists
